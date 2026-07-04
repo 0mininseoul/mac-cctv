@@ -1,0 +1,199 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "ios_navigation_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Mac CCTV" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "Mac CCTV" } }
+      }
+    },
+    "mac_menu_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CCTV for Mac" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "CCTV for Mac" } }
+      }
+    },
+    "probe_account_check" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Check iCloud" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "iCloud 확인" } }
+      }
+    },
+    "probe_actions_section" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Actions" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "동작" } }
+      }
+    },
+    "probe_cloudkit_section" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CloudKit" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "CloudKit" } }
+      }
+    },
+    "probe_container_label" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Container" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "컨테이너" } }
+      }
+    },
+    "probe_created_label" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Created" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "생성됨" } }
+      }
+    },
+    "probe_device_label" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Device" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "기기" } }
+      }
+    },
+    "probe_latest_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Latest probe" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "최근 probe" } }
+      }
+    },
+    "probe_message_m0" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "M0 private database smoke test" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "M0 private database 연동 테스트" } }
+      }
+    },
+    "probe_private_db_label" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Private database only" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "private database만 사용" } }
+      }
+    },
+    "probe_read" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Read latest" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "최근 항목 읽기" } }
+      }
+    },
+    "probe_source_ios" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "iPhone" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "iPhone" } }
+      }
+    },
+    "probe_source_label" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Source" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "출처" } }
+      }
+    },
+    "probe_source_mac" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Mac" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "Mac" } }
+      }
+    },
+    "probe_status_account_available" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "iCloud account is available." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "iCloud 계정을 사용할 수 있습니다." } }
+      }
+    },
+    "probe_status_account_no_account" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No iCloud account is signed in." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "로그인된 iCloud 계정이 없습니다." } }
+      }
+    },
+    "probe_status_account_restricted" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "iCloud account access is restricted." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "iCloud 계정 접근이 제한되어 있습니다." } }
+      }
+    },
+    "probe_status_account_temporarily_unavailable" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "iCloud is temporarily unavailable." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "iCloud를 일시적으로 사용할 수 없습니다." } }
+      }
+    },
+    "probe_status_account_unknown" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Could not determine iCloud account status." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "iCloud 계정 상태를 확인할 수 없습니다." } }
+      }
+    },
+    "probe_status_checking_account" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Checking iCloud account..." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "iCloud 계정 확인 중..." } }
+      }
+    },
+    "probe_status_empty" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No TestProbe records found." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "TestProbe 레코드가 없습니다." } }
+      }
+    },
+    "probe_status_failed_format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Failed: %@" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "실패: %@" } }
+      }
+    },
+    "probe_status_latest_format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Read latest probe from %@." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "%@에서 쓴 최근 probe를 읽었습니다." } }
+      }
+    },
+    "probe_status_reading" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Reading latest probe..." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "최근 probe 읽는 중..." } }
+      }
+    },
+    "probe_status_ready" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Ready." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "준비됨." } }
+      }
+    },
+    "probe_status_saved_format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Saved probe from %@." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "%@에서 probe를 저장했습니다." } }
+      }
+    },
+    "probe_status_section" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Status" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "상태" } }
+      }
+    },
+    "probe_status_writing" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Writing probe..." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "probe 쓰는 중..." } }
+      }
+    },
+    "probe_subtitle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "M0 checks that both apps use the same private iCloud database." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "M0는 두 앱이 같은 private iCloud database를 쓰는지 확인합니다." } }
+      }
+    },
+    "probe_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CloudKit Probe" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "CloudKit Probe" } }
+      }
+    },
+    "probe_write" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Write probe" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "probe 쓰기" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}
+

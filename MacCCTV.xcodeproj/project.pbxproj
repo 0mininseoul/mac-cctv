@@ -1,0 +1,548 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		18BA45D094281A9E2FC6F104 /* CCTVCompanionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CACEC2A30F0B0D28EA4EB50 /* CCTVCompanionApp.swift */; };
+		301F46300732B79417FB9267 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FFD661A51CF049749A8C8324 /* Localizable.xcstrings */; };
+		434C172014244A3C3DA21989 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 41D23F8132B953408C8898E3 /* Localizable.xcstrings */; };
+		55759B8EEFF384FAE555ABB0 /* CCTVKit in Frameworks */ = {isa = PBXBuildFile; productRef = B40ECCDF8CA0C6C97F9149F9 /* CCTVKit */; };
+		74FC0CC21FDFE4AD73A56A64 /* IOSCloudKitProbeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66765A1D067DA4C98A98EAFA /* IOSCloudKitProbeView.swift */; };
+		7E0CEE6E8E123BF8ABB3BF81 /* MacCloudKitProbeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00FC6C92024FFCAA3C14711 /* MacCloudKitProbeView.swift */; };
+		81BAF4E07BF9D010B62437FE /* MacCloudKitProbeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 986F9BF51E2C7CF3035542ED /* MacCloudKitProbeViewModel.swift */; };
+		E083CB53ABF4B7571A53B3D4 /* CCTVKit in Frameworks */ = {isa = PBXBuildFile; productRef = CC4F4F57FC77F80795CA379E /* CCTVKit */; };
+		E96ABB53B915A1B8395F4D71 /* MacCCTVApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7C453536705C4C6664DE1A /* MacCCTVApp.swift */; };
+		F7399BBEAB1D0915E7EF81DF /* IOSCloudKitProbeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37522887D38BD77AAEA88C31 /* IOSCloudKitProbeViewModel.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		282FCA4FE21DB7980D7DCB36 /* MacCCTV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacCCTV.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		37522887D38BD77AAEA88C31 /* IOSCloudKitProbeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSCloudKitProbeViewModel.swift; sourceTree = "<group>"; };
+		41D23F8132B953408C8898E3 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		5CACEC2A30F0B0D28EA4EB50 /* CCTVCompanionApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CCTVCompanionApp.swift; sourceTree = "<group>"; };
+		66765A1D067DA4C98A98EAFA /* IOSCloudKitProbeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSCloudKitProbeView.swift; sourceTree = "<group>"; };
+		6F7FB823419F5127C79AC9E4 /* CCTVKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = CCTVKit; path = Packages/CCTVKit; sourceTree = SOURCE_ROOT; };
+		724AE9EC4072B23097D6D434 /* CCTVCompanion.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CCTVCompanion.entitlements; sourceTree = "<group>"; };
+		75369F92F71E501939D44CAC /* MacCCTV.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MacCCTV.entitlements; sourceTree = "<group>"; };
+		986F9BF51E2C7CF3035542ED /* MacCloudKitProbeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacCloudKitProbeViewModel.swift; sourceTree = "<group>"; };
+		A938A391B4B6EC6DBFAF54A5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		B00FC6C92024FFCAA3C14711 /* MacCloudKitProbeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacCloudKitProbeView.swift; sourceTree = "<group>"; };
+		D5E4ED2EEA66A4191D22F7EB /* CCTVCompanion.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CCTVCompanion.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F49EACFCA3D177BB27CABED5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		FA7C453536705C4C6664DE1A /* MacCCTVApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacCCTVApp.swift; sourceTree = "<group>"; };
+		FFD661A51CF049749A8C8324 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		38FF459AE86F51350C1C6208 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E083CB53ABF4B7571A53B3D4 /* CCTVKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		95A463F38DF7FB5E7BFB828F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				55759B8EEFF384FAE555ABB0 /* CCTVKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1427F1D57BF14490A7AE16DB /* App */ = {
+			isa = PBXGroup;
+			children = (
+				FA7C453536705C4C6664DE1A /* MacCCTVApp.swift */,
+				986F9BF51E2C7CF3035542ED /* MacCloudKitProbeViewModel.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		2466A4D45D6578AEF9ED3A08 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				B00FC6C92024FFCAA3C14711 /* MacCloudKitProbeView.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		63445A31D417EB800567EB96 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				5CACEC2A30F0B0D28EA4EB50 /* CCTVCompanionApp.swift */,
+				37522887D38BD77AAEA88C31 /* IOSCloudKitProbeViewModel.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		7FB8639A6D67E84B7DA9808D = {
+			isa = PBXGroup;
+			children = (
+				BFE46FF26C8F9A64766C1ADB /* CCTVCompanion */,
+				CCC5293A5352136F4CD955B9 /* MacCCTV */,
+				AC6F0C7BF7020799A40A941C /* Packages */,
+				A191BA3C98E4C1911E50D330 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A191BA3C98E4C1911E50D330 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D5E4ED2EEA66A4191D22F7EB /* CCTVCompanion.app */,
+				282FCA4FE21DB7980D7DCB36 /* MacCCTV.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		AC6F0C7BF7020799A40A941C /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				6F7FB823419F5127C79AC9E4 /* CCTVKit */,
+			);
+			path = Packages;
+			sourceTree = "<group>";
+		};
+		BFE46FF26C8F9A64766C1ADB /* CCTVCompanion */ = {
+			isa = PBXGroup;
+			children = (
+				63445A31D417EB800567EB96 /* App */,
+				FDA8F313003C44B3DA819C31 /* Live */,
+				EBD288FFED42D8F19FAEB82E /* Support */,
+			);
+			name = CCTVCompanion;
+			path = apps/ios/CCTVCompanion;
+			sourceTree = "<group>";
+		};
+		CAFA55BAD10AA79BD1475AE2 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				F49EACFCA3D177BB27CABED5 /* Info.plist */,
+				41D23F8132B953408C8898E3 /* Localizable.xcstrings */,
+				75369F92F71E501939D44CAC /* MacCCTV.entitlements */,
+			);
+			path = Support;
+			sourceTree = "<group>";
+		};
+		CCC5293A5352136F4CD955B9 /* MacCCTV */ = {
+			isa = PBXGroup;
+			children = (
+				1427F1D57BF14490A7AE16DB /* App */,
+				CAFA55BAD10AA79BD1475AE2 /* Support */,
+				2466A4D45D6578AEF9ED3A08 /* UI */,
+			);
+			name = MacCCTV;
+			path = apps/mac/MacCCTV;
+			sourceTree = "<group>";
+		};
+		EBD288FFED42D8F19FAEB82E /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				724AE9EC4072B23097D6D434 /* CCTVCompanion.entitlements */,
+				A938A391B4B6EC6DBFAF54A5 /* Info.plist */,
+				FFD661A51CF049749A8C8324 /* Localizable.xcstrings */,
+			);
+			path = Support;
+			sourceTree = "<group>";
+		};
+		FDA8F313003C44B3DA819C31 /* Live */ = {
+			isa = PBXGroup;
+			children = (
+				66765A1D067DA4C98A98EAFA /* IOSCloudKitProbeView.swift */,
+			);
+			path = Live;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		54374CA213092B0F091EBD9E /* CCTVCompanion */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8737DF63AA6C7858EA53E64F /* Build configuration list for PBXNativeTarget "CCTVCompanion" */;
+			buildPhases = (
+				51385E035421DBB3CBF83044 /* Sources */,
+				4E30BC6E95970F0C3BB25823 /* Resources */,
+				38FF459AE86F51350C1C6208 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CCTVCompanion;
+			packageProductDependencies = (
+				CC4F4F57FC77F80795CA379E /* CCTVKit */,
+			);
+			productName = CCTVCompanion;
+			productReference = D5E4ED2EEA66A4191D22F7EB /* CCTVCompanion.app */;
+			productType = "com.apple.product-type.application";
+		};
+		D14D4B0E61026724F28C6167 /* MacCCTV */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 356C20C4AA4AE413513E238E /* Build configuration list for PBXNativeTarget "MacCCTV" */;
+			buildPhases = (
+				3DD39D777ABF326DAE551B97 /* Sources */,
+				E8F2152A4F6B0BBC50DBF1DF /* Resources */,
+				95A463F38DF7FB5E7BFB828F /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MacCCTV;
+			packageProductDependencies = (
+				B40ECCDF8CA0C6C97F9149F9 /* CCTVKit */,
+			);
+			productName = MacCCTV;
+			productReference = 282FCA4FE21DB7980D7DCB36 /* MacCCTV.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		3482E8B71A7996F81EA01B43 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					54374CA213092B0F091EBD9E = {
+						DevelopmentTeam = XQLWN777G4;
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = "[\"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.iCloud\": [\"enabled\": 1]]";
+					};
+					D14D4B0E61026724F28C6167 = {
+						DevelopmentTeam = XQLWN777G4;
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = "[\"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.ApplicationGroups.Mac\": [\"enabled\": 1]]";
+					};
+				};
+			};
+			buildConfigurationList = 64836F53E5D82440573875B0 /* Build configuration list for PBXProject "MacCCTV" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+				ko,
+			);
+			mainGroup = 7FB8639A6D67E84B7DA9808D;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				2F8782AAE53ABA293972BFC3 /* XCLocalSwiftPackageReference "Packages/CCTVKit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = A191BA3C98E4C1911E50D330 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				54374CA213092B0F091EBD9E /* CCTVCompanion */,
+				D14D4B0E61026724F28C6167 /* MacCCTV */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		4E30BC6E95970F0C3BB25823 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				301F46300732B79417FB9267 /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E8F2152A4F6B0BBC50DBF1DF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				434C172014244A3C3DA21989 /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3DD39D777ABF326DAE551B97 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E96ABB53B915A1B8395F4D71 /* MacCCTVApp.swift in Sources */,
+				7E0CEE6E8E123BF8ABB3BF81 /* MacCloudKitProbeView.swift in Sources */,
+				81BAF4E07BF9D010B62437FE /* MacCloudKitProbeViewModel.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		51385E035421DBB3CBF83044 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				18BA45D094281A9E2FC6F104 /* CCTVCompanionApp.swift in Sources */,
+				74FC0CC21FDFE4AD73A56A64 /* IOSCloudKitProbeView.swift in Sources */,
+				F7399BBEAB1D0915E7EF81DF /* IOSCloudKitProbeViewModel.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		03D8621E85228E40C1B3986E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = apps/ios/CCTVCompanion/Support/CCTVCompanion.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = apps/ios/CCTVCompanion/Support/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.youngminpark.maccctv.ios;
+				PRODUCT_NAME = CCTVCompanion;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		0891BE9A69ED223634C0986F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = XQLWN777G4;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		17AFC17EDB95A923CF91DDB8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = apps/mac/MacCCTV/Support/MacCCTV.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = apps/mac/MacCCTV/Support/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.youngminpark.maccctv.mac;
+				PRODUCT_NAME = MacCCTV;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		321D9C6D62A7DDCA931D0CA5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = XQLWN777G4;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		48DDF35D8165B5B1B1FC63F8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = apps/mac/MacCCTV/Support/MacCCTV.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = apps/mac/MacCCTV/Support/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.youngminpark.maccctv.mac;
+				PRODUCT_NAME = MacCCTV;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		C8989AB0387703FAC47851E8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = apps/ios/CCTVCompanion/Support/CCTVCompanion.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = apps/ios/CCTVCompanion/Support/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.youngminpark.maccctv.ios;
+				PRODUCT_NAME = CCTVCompanion;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		356C20C4AA4AE413513E238E /* Build configuration list for PBXNativeTarget "MacCCTV" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				17AFC17EDB95A923CF91DDB8 /* Debug */,
+				48DDF35D8165B5B1B1FC63F8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		64836F53E5D82440573875B0 /* Build configuration list for PBXProject "MacCCTV" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				321D9C6D62A7DDCA931D0CA5 /* Debug */,
+				0891BE9A69ED223634C0986F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		8737DF63AA6C7858EA53E64F /* Build configuration list for PBXNativeTarget "CCTVCompanion" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				03D8621E85228E40C1B3986E /* Debug */,
+				C8989AB0387703FAC47851E8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		2F8782AAE53ABA293972BFC3 /* XCLocalSwiftPackageReference "Packages/CCTVKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/CCTVKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B40ECCDF8CA0C6C97F9149F9 /* CCTVKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CCTVKit;
+		};
+		CC4F4F57FC77F80795CA379E /* CCTVKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CCTVKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 3482E8B71A7996F81EA01B43 /* Project object */;
+}
