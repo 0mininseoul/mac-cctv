@@ -38,4 +38,12 @@ final class InputActivityTrackerTests: XCTestCase {
 
         XCTAssertFalse(detected)
     }
+
+    func testInvalidIdleObservationDoesNotBecomeBaseline() {
+        var tracker = InputActivityTracker()
+        let now = Date(timeIntervalSince1970: 1_000)
+
+        XCTAssertFalse(tracker.observe(now: now, idleSeconds: .greatestFiniteMagnitude))
+        XCTAssertFalse(tracker.observe(now: now.addingTimeInterval(1), idleSeconds: 0.1))
+    }
 }

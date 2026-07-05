@@ -9,6 +9,10 @@ public struct InputActivityTracker: Equatable, Sendable {
     }
 
     public mutating func observe(now: Date, idleSeconds: TimeInterval) -> Bool {
+        guard idleSeconds.isFinite, idleSeconds < .greatestFiniteMagnitude else {
+            return false
+        }
+
         let normalizedIdleSeconds = max(0, idleSeconds)
         let observedActivityAt = now.addingTimeInterval(-normalizedIdleSeconds)
 
