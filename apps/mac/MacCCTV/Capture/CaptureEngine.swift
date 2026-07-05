@@ -21,7 +21,7 @@ enum CaptureEngineError: LocalizedError {
     }
 }
 
-final class CaptureEngine: NSObject {
+final class CaptureEngine: NSObject, @unchecked Sendable {
     private let settings: CaptureSettings
     private let outputDirectory: URL
     private let session = AVCaptureSession()

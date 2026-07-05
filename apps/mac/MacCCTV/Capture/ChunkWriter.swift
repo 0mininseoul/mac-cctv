@@ -63,8 +63,11 @@ final class ChunkWriter {
     func waitForFinishedChunks(timeout: TimeInterval) -> [CaptureChunk] {
         _ = finishGroup.wait(timeout: .now() + timeout)
         lock.lock()
-        defer { lock.unlock() }
-        return completedChunks.sorted { $0.index < $1.index }
+        let chunks = completedChunks.sorted { $0.index < $1.index }
+        lock.unlock()
+        let trackedURLs = Set(chunks.map { URL(fileURLWithPath: $0.path) })
+        try? store.removeUntrackedMP4s(in: outputDirectory, keeping: trackedURLs)
+        return chunks
     }
 
     private func startChunk(at sourceStartTime: CMTime) {

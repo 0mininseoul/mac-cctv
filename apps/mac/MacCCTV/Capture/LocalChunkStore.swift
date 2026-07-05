@@ -38,6 +38,22 @@ final class LocalChunkStore {
         }
     }
 
+    func removeUntrackedMP4s(in directory: URL, keeping trackedURLs: Set<URL>) throws {
+        let urls = try fileManager.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        )
+
+        for url in urls where url.pathExtension.lowercased() == "mp4" {
+            let values = try url.resourceValues(forKeys: [.isRegularFileKey])
+            guard values.isRegularFile == true, !trackedURLs.contains(url) else {
+                continue
+            }
+            try fileManager.removeItem(at: url)
+        }
+    }
+
     func byteCount(for url: URL) -> Int64 {
         let value = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize
         return Int64(value ?? 0)

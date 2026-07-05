@@ -152,7 +152,7 @@ enum M2UploadLaunchHandler {
             _ = try await store.saveSession(manifest.session)
             try writePendingManifest(manifest, to: manifestURL)
             try? FileManager.default.removeItem(at: manifestURL)
-            return "M2_UPLOAD_OK session=\(manifest.session.id) uploaded=\(manifest.uploadedChunkIDs.count) pending=0 output=\(manifest.outputDirectory) manifest=\(manifestURL.path)"
+            return "M2_UPLOAD_OK session=\(manifest.session.id) uploaded=\(manifest.uploadedChunkIDs.count) pending=0 output=\(manifest.outputDirectory) manifest=\(outputManifestURL(for: manifest).path)"
         }
 
         try writePendingManifest(manifest, to: manifestURL)
@@ -223,8 +223,11 @@ enum M2UploadLaunchHandler {
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         let data = try JSONEncoder.m2Manifest.encode(manifest)
         try data.write(to: url, options: .atomic)
-        let outputManifestURL = URL(fileURLWithPath: manifest.outputDirectory).appendingPathComponent("m2-upload-manifest.json")
-        try? data.write(to: outputManifestURL, options: .atomic)
+        try? data.write(to: outputManifestURL(for: manifest), options: .atomic)
+    }
+
+    private static func outputManifestURL(for manifest: M2UploadManifest) -> URL {
+        URL(fileURLWithPath: manifest.outputDirectory).appendingPathComponent("m2-upload-manifest.json")
     }
 
     private static func pendingManifestURLs() throws -> [URL] {
