@@ -5,8 +5,10 @@
 ## 1. 앱 아이콘 / 스크린샷
 
 - [x] Mac + iOS 앱 아이콘 생성·적용 (`apps/mac/MacCCTV/Assets.xcassets`, `apps/ios/CCTVCompanion/Assets.xcassets`) — 두 타겟 빌드 검증 완료
-- [ ] App Store 스크린샷 — `store-assets/screenshots/` (진행 중, `SCREENSHOTS.md`에 캡처 목록·한계 기록 예정)
-- [ ] **사람 작업**: 실기기에서 "감시 중" 라이브 화면 스크린샷 (자동화 스크립트는 실제 카메라를 켜는 것을 의도적으로 피함 — 개인정보 이유)
+- [x] Mac 스크린샷 2장 (대기 팝오버, 온보딩 1/3단계) — `store-assets/screenshots/mac/`, App Store 제출용으로 사용 가능
+- [ ] iOS 스크린샷 — `store-assets/screenshots/ios/`에 1장 있으나 시뮬레이터 iCloud 미로그인으로 인증 에러가 노출된 상태라 **제출용 아님** (한계는 `SCREENSHOTS.md` 참고)
+- [ ] **사람 작업**: Mac "감시 중" 팝오버 + iOS 라이브 화면 스크린샷 — 실제 카메라를 켜고 iCloud 업로드가 발생하는 상태라 자동화하지 않음. 같은 세션에서 함께 찍으면 5분 내 가능
+- [ ] **사람 작업**: Mac 온보딩 2/3단계 스크린샷 — 카메라 권한을 실제로 허용해야 진행되는 시스템 다이얼로그라 자동화하지 않음
 - [ ] **사람 작업**: 영문 로케일 스크린샷 (필요 시 — 현재는 시스템 언어인 한국어로만 캡처됨)
 
 ## 2. App Store Connect — 프라이버시 · 심사 노트
