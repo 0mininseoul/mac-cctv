@@ -12,7 +12,7 @@ struct MacCCTVApp: App {
 
     var body: some Scene {
         MenuBarExtra("mac_menu_title", systemImage: controller.menuSystemImage) {
-            SurveillancePopoverView(controller: controller)
+            MacCCTVRootView(controller: controller)
         }
         .menuBarExtraStyle(.window)
     }

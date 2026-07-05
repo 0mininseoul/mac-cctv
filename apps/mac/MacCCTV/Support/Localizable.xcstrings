@@ -193,6 +193,162 @@
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "probe 쓰기" } }
       }
     },
+    "onboarding_back" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Back" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "뒤로" } }
+      }
+    },
+    "onboarding_camera_message" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Camera access is required before surveillance can start." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "감시를 시작하려면 카메라 접근이 필요합니다." } }
+      }
+    },
+    "onboarding_camera_request" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Allow Camera" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "카메라 허용" } }
+      }
+    },
+    "onboarding_camera_status_authorized" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Camera access allowed." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "카메라 접근이 허용되었습니다." } }
+      }
+    },
+    "onboarding_camera_status_denied" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Camera access is blocked in System Settings." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "시스템 설정에서 카메라 접근이 차단되어 있습니다." } }
+      }
+    },
+    "onboarding_camera_status_not_determined" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Camera access has not been requested." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "아직 카메라 접근을 요청하지 않았습니다." } }
+      }
+    },
+    "onboarding_camera_status_restricted" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Camera access is restricted." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "카메라 접근이 제한되어 있습니다." } }
+      }
+    },
+    "onboarding_camera_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Allow camera" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "카메라 허용" } }
+      }
+    },
+    "onboarding_continue" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Continue" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "계속" } }
+      }
+    },
+    "onboarding_finish" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Finish" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "완료" } }
+      }
+    },
+    "onboarding_icloud_check" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Check iCloud" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "iCloud 확인" } }
+      }
+    },
+    "onboarding_icloud_message" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Mac CCTV stores recordings only in your private iCloud database." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "Mac CCTV는 녹화본을 사용자 private iCloud database에만 저장합니다." } }
+      }
+    },
+    "onboarding_icloud_status_available" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "iCloud account is available." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "iCloud 계정을 사용할 수 있습니다." } }
+      }
+    },
+    "onboarding_icloud_status_no_account" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No iCloud account is signed in." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "로그인된 iCloud 계정이 없습니다." } }
+      }
+    },
+    "onboarding_icloud_status_not_checked" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "iCloud has not been checked." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "아직 iCloud를 확인하지 않았습니다." } }
+      }
+    },
+    "onboarding_icloud_status_restricted" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "iCloud account access is restricted." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "iCloud 계정 접근이 제한되어 있습니다." } }
+      }
+    },
+    "onboarding_icloud_status_temporarily_unavailable" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "iCloud is temporarily unavailable." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "iCloud를 일시적으로 사용할 수 없습니다." } }
+      }
+    },
+    "onboarding_icloud_status_unknown" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Could not determine iCloud account status." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "iCloud 계정 상태를 확인할 수 없습니다." } }
+      }
+    },
+    "onboarding_icloud_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Check iCloud" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "iCloud 확인" } }
+      }
+    },
+    "onboarding_iphone_message" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Scan the QR code on your iPhone and install the companion app." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "iPhone으로 QR 코드를 스캔해 컴패니언 앱을 설치하세요." } }
+      }
+    },
+    "onboarding_iphone_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Install iPhone app" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "iPhone 앱 설치" } }
+      }
+    },
+    "onboarding_lock_recommendation" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Lock the screen before you step away (⌃⌘Q)." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "자리를 뜰 땐 화면을 잠그세요 (⌃⌘Q)." } }
+      }
+    },
+    "onboarding_open_camera_settings" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Open Camera Settings" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "카메라 설정 열기" } }
+      }
+    },
+    "onboarding_qr_unavailable" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "QR code unavailable." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "QR 코드를 표시할 수 없습니다." } }
+      }
+    },
+    "onboarding_subtitle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Three steps, then surveillance is ready." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "세 단계만 끝내면 감시를 시작할 수 있습니다." } }
+      }
+    },
+    "onboarding_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Set up Mac CCTV" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "Mac CCTV 설정" } }
+      }
+    },
     "surveillance_hotkey_failed_format" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Shortcut unavailable: %@" } },
