@@ -8,8 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		0DDB2489A41A68278C836EFE /* SurveillanceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AACA2D3BFFEAFBB1894AC674 /* SurveillanceController.swift */; };
+		110F222E22059DB633A9751C /* SessionPlaybackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB54624CDB1A553B4C6712A6 /* SessionPlaybackView.swift */; };
 		18BA45D094281A9E2FC6F104 /* CCTVCompanionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CACEC2A30F0B0D28EA4EB50 /* CCTVCompanionApp.swift */; };
 		1E4DDB35A9D729B8626CE86B /* CaptureSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A398E53B0362902D775BF7 /* CaptureSettings.swift */; };
+		2CB2F7D91BF32EA91CF90B23 /* SessionPlaybackViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B6EC5F4857C375A251B8AAE /* SessionPlaybackViewModel.swift */; };
 		2D9FE6114734D60ACD06DA7C /* M0ProbeLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F4F93FC1015721C90A7951F /* M0ProbeLaunchHandler.swift */; };
 		2E31E0E8B1C5662D7C0269D4 /* M0ProbeLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0598E0BDD1D1C294A62A94AB /* M0ProbeLaunchHandler.swift */; };
 		301F46300732B79417FB9267 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FFD661A51CF049749A8C8324 /* Localizable.xcstrings */; };
@@ -18,11 +20,13 @@
 		437399AF3869AC00D5426F75 /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28B65B440D4B33CCC1962465 /* HotkeyManager.swift */; };
 		55759B8EEFF384FAE555ABB0 /* CCTVKit in Frameworks */ = {isa = PBXBuildFile; productRef = B40ECCDF8CA0C6C97F9149F9 /* CCTVKit */; };
 		5CF59D2FB28A5BBEC0C7864C /* M1CaptureLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = B04A9EFC2FAC915F59F62D14 /* M1CaptureLaunchHandler.swift */; };
+		71C3FA8A11FEA42D432C1BCA /* SessionLibraryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74590EDC7780A3EB3C5122EE /* SessionLibraryViewModel.swift */; };
 		74FC0CC21FDFE4AD73A56A64 /* IOSCloudKitProbeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66765A1D067DA4C98A98EAFA /* IOSCloudKitProbeView.swift */; };
 		7E0CEE6E8E123BF8ABB3BF81 /* MacCloudKitProbeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00FC6C92024FFCAA3C14711 /* MacCloudKitProbeView.swift */; };
 		80EC96F963190C140EB587BE /* SleepBlocker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311655DA13AF3752B298F3B1 /* SleepBlocker.swift */; };
 		81BAF4E07BF9D010B62437FE /* MacCloudKitProbeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 986F9BF51E2C7CF3035542ED /* MacCloudKitProbeViewModel.swift */; };
 		8D690B860CF39D4456809C7A /* M2UploadLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E1054ADF924B134952F92A1 /* M2UploadLaunchHandler.swift */; };
+		90F84CD00B18EEB6B3B87C80 /* SessionLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E94F7C32CF3A354413CADE4C /* SessionLibraryView.swift */; };
 		A3171676E215A4D82088EC99 /* LocalChunkStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D78207AB6F5951B117E39E8 /* LocalChunkStore.swift */; };
 		BAF86A2F9766ED7D90FE5841 /* CaptureEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 999F7E6549C53818BB9CA6BE /* CaptureEngine.swift */; };
 		E083CB53ABF4B7571A53B3D4 /* CCTVKit in Frameworks */ = {isa = PBXBuildFile; productRef = CC4F4F57FC77F80795CA379E /* CCTVKit */; };
@@ -40,11 +44,13 @@
 		311655DA13AF3752B298F3B1 /* SleepBlocker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepBlocker.swift; sourceTree = "<group>"; };
 		37522887D38BD77AAEA88C31 /* IOSCloudKitProbeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSCloudKitProbeViewModel.swift; sourceTree = "<group>"; };
 		41D23F8132B953408C8898E3 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		4B6EC5F4857C375A251B8AAE /* SessionPlaybackViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPlaybackViewModel.swift; sourceTree = "<group>"; };
 		4F036433EE186BB61B57073B /* SurveillancePopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveillancePopoverView.swift; sourceTree = "<group>"; };
 		5CACEC2A30F0B0D28EA4EB50 /* CCTVCompanionApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CCTVCompanionApp.swift; sourceTree = "<group>"; };
 		66765A1D067DA4C98A98EAFA /* IOSCloudKitProbeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSCloudKitProbeView.swift; sourceTree = "<group>"; };
 		6F7FB823419F5127C79AC9E4 /* CCTVKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = CCTVKit; path = Packages/CCTVKit; sourceTree = SOURCE_ROOT; };
 		724AE9EC4072B23097D6D434 /* CCTVCompanion.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CCTVCompanion.entitlements; sourceTree = "<group>"; };
+		74590EDC7780A3EB3C5122EE /* SessionLibraryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLibraryViewModel.swift; sourceTree = "<group>"; };
 		75369F92F71E501939D44CAC /* MacCCTV.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MacCCTV.entitlements; sourceTree = "<group>"; };
 		7D78207AB6F5951B117E39E8 /* LocalChunkStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalChunkStore.swift; sourceTree = "<group>"; };
 		8F4F93FC1015721C90A7951F /* M0ProbeLaunchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M0ProbeLaunchHandler.swift; sourceTree = "<group>"; };
@@ -55,6 +61,8 @@
 		B00FC6C92024FFCAA3C14711 /* MacCloudKitProbeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacCloudKitProbeView.swift; sourceTree = "<group>"; };
 		B04A9EFC2FAC915F59F62D14 /* M1CaptureLaunchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M1CaptureLaunchHandler.swift; sourceTree = "<group>"; };
 		D5E4ED2EEA66A4191D22F7EB /* CCTVCompanion.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CCTVCompanion.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E94F7C32CF3A354413CADE4C /* SessionLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLibraryView.swift; sourceTree = "<group>"; };
+		EB54624CDB1A553B4C6712A6 /* SessionPlaybackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPlaybackView.swift; sourceTree = "<group>"; };
 		F49EACFCA3D177BB27CABED5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F8A398E53B0362902D775BF7 /* CaptureSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureSettings.swift; sourceTree = "<group>"; };
 		FA7C453536705C4C6664DE1A /* MacCCTVApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacCCTVApp.swift; sourceTree = "<group>"; };
@@ -81,6 +89,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		048EF1AF1A92FAAF4574A975 /* Library */ = {
+			isa = PBXGroup;
+			children = (
+				E94F7C32CF3A354413CADE4C /* SessionLibraryView.swift */,
+				74590EDC7780A3EB3C5122EE /* SessionLibraryViewModel.swift */,
+			);
+			path = Library;
+			sourceTree = "<group>";
+		};
 		1427F1D57BF14490A7AE16DB /* App */ = {
 			isa = PBXGroup;
 			children = (
@@ -171,6 +188,7 @@
 			isa = PBXGroup;
 			children = (
 				63445A31D417EB800567EB96 /* App */,
+				048EF1AF1A92FAAF4574A975 /* Library */,
 				FDA8F313003C44B3DA819C31 /* Live */,
 				EBD288FFED42D8F19FAEB82E /* Support */,
 			);
@@ -216,6 +234,8 @@
 			isa = PBXGroup;
 			children = (
 				66765A1D067DA4C98A98EAFA /* IOSCloudKitProbeView.swift */,
+				EB54624CDB1A553B4C6712A6 /* SessionPlaybackView.swift */,
+				4B6EC5F4857C375A251B8AAE /* SessionPlaybackViewModel.swift */,
 			);
 			path = Live;
 			sourceTree = "<group>";
@@ -275,12 +295,12 @@
 					54374CA213092B0F091EBD9E = {
 						DevelopmentTeam = 878FAHTFQJ;
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.iCloud\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1]]";
 					};
 					D14D4B0E61026724F28C6167 = {
 						DevelopmentTeam = 878FAHTFQJ;
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.ApplicationGroups.Mac\": [\"enabled\": 1], \"com.apple.iCloud\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.ApplicationGroups.Mac\": [\"enabled\": 1]]";
 					};
 				};
 			};
@@ -357,6 +377,10 @@
 				74FC0CC21FDFE4AD73A56A64 /* IOSCloudKitProbeView.swift in Sources */,
 				F7399BBEAB1D0915E7EF81DF /* IOSCloudKitProbeViewModel.swift in Sources */,
 				2D9FE6114734D60ACD06DA7C /* M0ProbeLaunchHandler.swift in Sources */,
+				90F84CD00B18EEB6B3B87C80 /* SessionLibraryView.swift in Sources */,
+				71C3FA8A11FEA42D432C1BCA /* SessionLibraryViewModel.swift in Sources */,
+				110F222E22059DB633A9751C /* SessionPlaybackView.swift in Sources */,
+				2CB2F7D91BF32EA91CF90B23 /* SessionPlaybackViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
