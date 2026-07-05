@@ -17,39 +17,37 @@
 - [ ] **사람 작업**: App Review Information → Notes에 `docs/app-store/review-notes.md`의 영문 블록 붙여넣기 (두 앱 각각)
 - [ ] **사람 작업**: 카메라 사용 목적 문구는 이미 Info.plist에 반영되어 있음 (재확인만) — `NSCameraUsageDescription`
 
-## 3. 앱 등록 — 중요: 두 개의 별도 App Store Connect 앱 레코드 필요
+## 3. 앱 등록 — 완료
 
-Mac 타겟과 iOS 타겟의 번들 ID를 분리했다 (`com.youngminpark.maccctv.mac` / `com.youngminpark.maccctv.ios` — 이전에는 실수로 동일했음, 이번 세션에서 수정·검증됨). 즉 **Universal Purchase 단일 앱이 아니라 App Store Connect에 앱을 2개 따로 등록**해야 한다:
+Mac 타겟과 iOS 타겟의 번들 ID를 분리했다 (`com.youngminpark.maccctv.mac` / `com.youngminpark.maccctv.ios`). App Store Connect에 앱 2개가 등록되어 있다:
 
-- [ ] **사람 작업**: App Store Connect에서 "CCTV for Mac" (macOS, `com.youngminpark.maccctv.mac`) 앱 레코드 생성
-- [ ] **사람 작업**: App Store Connect에서 "CCTV for Mac 컴패니언" (iOS, `com.youngminpark.maccctv.ios`) 앱 레코드 생성 — 표시명은 아직 미확정이면 "CCTV for Mac Companion" 등으로 결정 필요
+- [x] **"CCTV for Mac"** — macOS, `com.youngminpark.maccctv.mac`, SKU `maccctv-macos-20260705` (App Store Connect app id `6787679673`). 원래 번들 ID가 `.ios`로 잘못 연결되어 있었는데(과거 번들 ID 공유 버그의 흔적), 빌드가 아직 없는 상태라 App Store Connect에서 번들 ID 드롭다운만 바꿔 재사용함 — 앱 삭제·재생성 불필요했음
+- [x] **"CCTV for Mac Companion"** — iOS, `com.youngminpark.maccctv.ios`, SKU `maccctv-ios-20260706` (app id `6787729272`)
 - [ ] **사람 작업**: 두 앱 모두 App Store 카테고리 = Utilities (Mac Info.plist에 `LSApplicationCategoryType: public.app-category.utilities` 이미 반영됨 — iOS는 App Store Connect 등록 화면에서 직접 선택)
 - [ ] **사람 작업**: 가격 = 무료 (PRD §11), 연령 등급 설문 작성
 
-## 4. CloudKit 프로덕션 스키마 배포 — TestFlight 전 필수 선행 작업
+## 4. CloudKit 프로덕션 스키마 배포 — 완료
 
-- [ ] **사람 작업**: CloudKit Console에서 Development 스키마를 **Production으로 배포**. Release/TestFlight 빌드는 Production CloudKit 환경을 사용하므로(이번 세션에서 entitlements의 하드코딩된 `Development` 환경 키를 제거해 자동 전환되도록 수정함), 이 배포가 안 되어 있으면 TestFlight 빌드에서 CloudKit 호출이 전부 실패한다. **가장 먼저 확인할 항목.**
+- [x] **사람 작업 완료**: CloudKit Console에서 Production 스키마 배포함
 
-## 5. TestFlight 빌드 — 로컬 아카이브/익스포트 검증 완료
+## 5. TestFlight 빌드 — 업로드 완료
 
-두 타겟 모두 Release 아카이브 → 익스포트까지 실제로 실행해 서명된 산출물을 만들어 확인했다. 재현 가능한 형태로 `script/archive_and_export.sh [mac|ios|all]`에 정리되어 있다:
+두 타겟 모두 Release 아카이브 → 익스포트 → 업로드까지 실행 완료. 재현 가능한 아카이브/익스포트 명령은 `script/archive_and_export.sh [mac|ios|all]`.
+
+업로드는 `xcodebuild -exportArchive -destination upload`가 두 가지 이유로 막혀서 (① 자동 서명 세션은 업로드 API 인증까지 못 미침 — `IDEDistribution.DistributionCredentialedProviderLocatorError`, ② App Store Connect API 키(`~/.appstoreconnect/private_keys/AuthKey_TMC3PCHDCF.p8`, Key ID `TMC3PCHDCF`)는 인증서를 새로 발급하는 권한이 없어 iOS Cloud 서명이 거부됨), 대신 **이미 서명까지 끝난 `.pkg`/`.ipa`를 `xcrun altool --upload-app`으로 업로드**했다 (서명과 업로드를 분리 — 서명은 앞서 `-allowProvisioningUpdates`로 이미 끝나 있었고, altool은 인증서 발급 권한 없이 업로드 API 권한만 있으면 됨):
 
 ```
-script/archive_and_export.sh all
-# → build/export/mac/CCTV for Mac.pkg   (Cloud Managed Apple Distribution 서명 확인됨)
-# → build/export/ios/CCTV Companion.ipa (Cloud Managed Apple Distribution 서명 확인됨)
+xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
+  --apiKey TMC3PCHDCF --apiIssuer 0d693e18-2317-4107-8b26-26afd98e64ae
+# Delivery UUID: 8871917e-5464-4fed-b897-0a99b7fcbc86 — build 1, processingState VALID 확인됨
+
+xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
+  --apiKey TMC3PCHDCF --apiIssuer 0d693e18-2317-4107-8b26-26afd98e64ae
+# Delivery UUID: c0aade2c-c197-4472-8fe1-2bc03d5c1ff3 — 업로드 직후 Apple 처리 대기 중
 ```
 
-두 파일 모두 `pkgutil --check-signature` / `DistributionSummary.plist` 확인 결과 유효한 Apple Distribution 인증서로 서명된, 업로드 가능한 상태다.
-
-`script/ExportOptions-{mac,ios}.plist`의 `destination`은 현재 `export`(로컬 저장)로 설정되어 있다. **실제 App Store Connect 업로드는 이 문서 기준으로는 아직 실행하지 않았다** — 업로드는 Apple 계정에 실제로 빌드를 생성하는, 되돌리기 어렵고 외부에 영향을 주는 작업이라 명시적 승인 없이 실행하지 않았다. 업로드 방법 중 택1:
-
-- **권장(사람)**: Xcode → Window → Organizer → Archives에서 두 아카이브(`build/archives/*.xcarchive`, 또는 Xcode로 새로 아카이브)를 선택해 "Distribute App" → App Store Connect
-- **또는**: Transporter.app에 위 `.pkg` / `.ipa` 드래그
-- **또는(자동화, 승인 시)**: `script/ExportOptions-*.plist`의 `destination`을 `upload`로 바꾼 뒤 동일한 `xcodebuild -exportArchive` 명령을 다시 실행 — 이 경우 Xcode에 로그인된 Apple ID로 즉시 업로드된다
-
-- [ ] **사람 작업 (또는 승인 후 자동화)**: 위 방법 중 하나로 두 빌드를 App Store Connect에 업로드
-- [ ] **사람 작업**: TestFlight에서 두 빌드 각각 "내부 테스트" 그룹에 배정 → 외부 테스터 초대 전 베타 검토(Beta App Review) 통과 확인
+- [x] 두 빌드 App Store Connect에 업로드 완료
+- [ ] **사람 작업**: TestFlight에서 두 빌드 각각 "내부 테스트" 그룹에 배정 → 외부 테스터 초대 전 베타 검토(Beta App Review) 통과 확인 (Export Compliance 질문 — 암호화 사용 여부 — 이 처음 뜰 수 있음: 이 앱은 표준 HTTPS/TLS 외 자체 암호화가 없으므로 "표준 암호화만 사용" 응답)
 - [ ] **사람 작업**: 외부 테스터로 설치 → 온보딩부터 사이렌까지 전 시나리오 수동 검증 (계획 M9 검증 기준)
 
 ### 버전 번호 참고
