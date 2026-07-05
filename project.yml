@@ -17,6 +17,9 @@ settings:
 packages:
   CCTVKit:
     path: Packages/CCTVKit
+  WebRTC:
+    url: https://github.com/stasel/WebRTC.git
+    from: 149.0.0
 
 targets:
   MacCCTV:
@@ -28,6 +31,8 @@ targets:
     dependencies:
       - package: CCTVKit
         product: CCTVKit
+      - package: WebRTC
+        product: WebRTC
     attributes:
       SystemCapabilities:
         com.apple.iCloud:
@@ -51,6 +56,8 @@ targets:
     dependencies:
       - package: CCTVKit
         product: CCTVKit
+      - package: WebRTC
+        product: WebRTC
     attributes:
       SystemCapabilities:
         com.apple.iCloud:

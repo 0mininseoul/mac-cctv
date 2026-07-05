@@ -9,9 +9,11 @@
 /* Begin PBXBuildFile section */
 		0DDB2489A41A68278C836EFE /* SurveillanceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AACA2D3BFFEAFBB1894AC674 /* SurveillanceController.swift */; };
 		110F222E22059DB633A9751C /* SessionPlaybackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB54624CDB1A553B4C6712A6 /* SessionPlaybackView.swift */; };
+		166778B9A12723A0EC59BEF6 /* WebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = E14849FBC7E7D2DF3F2C10A0 /* WebRTC */; };
 		18BA45D094281A9E2FC6F104 /* CCTVCompanionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CACEC2A30F0B0D28EA4EB50 /* CCTVCompanionApp.swift */; };
 		1AB2E18EBAD3149A367D6AD3 /* M4PlaybackLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D2565259B1F3723D408EBCD /* M4PlaybackLaunchHandler.swift */; };
 		1E4DDB35A9D729B8626CE86B /* CaptureSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A398E53B0362902D775BF7 /* CaptureSettings.swift */; };
+		2AE9EDC79DC87791030AAFE0 /* WebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = 23F2B3C5E4BC0EFB8F215515 /* WebRTC */; };
 		2CB2F7D91BF32EA91CF90B23 /* SessionPlaybackViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B6EC5F4857C375A251B8AAE /* SessionPlaybackViewModel.swift */; };
 		2D9FE6114734D60ACD06DA7C /* M0ProbeLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F4F93FC1015721C90A7951F /* M0ProbeLaunchHandler.swift */; };
 		2E31E0E8B1C5662D7C0269D4 /* M0ProbeLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0598E0BDD1D1C294A62A94AB /* M0ProbeLaunchHandler.swift */; };
@@ -87,6 +89,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E083CB53ABF4B7571A53B3D4 /* CCTVKit in Frameworks */,
+				166778B9A12723A0EC59BEF6 /* WebRTC in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -95,6 +98,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				55759B8EEFF384FAE555ABB0 /* CCTVKit in Frameworks */,
+				2AE9EDC79DC87791030AAFE0 /* WebRTC in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -284,6 +288,7 @@
 			name = CCTVCompanion;
 			packageProductDependencies = (
 				CC4F4F57FC77F80795CA379E /* CCTVKit */,
+				E14849FBC7E7D2DF3F2C10A0 /* WebRTC */,
 			);
 			productName = CCTVCompanion;
 			productReference = D5E4ED2EEA66A4191D22F7EB /* CCTVCompanion.app */;
@@ -304,6 +309,7 @@
 			name = MacCCTV;
 			packageProductDependencies = (
 				B40ECCDF8CA0C6C97F9149F9 /* CCTVKit */,
+				23F2B3C5E4BC0EFB8F215515 /* WebRTC */,
 			);
 			productName = MacCCTV;
 			productReference = 282FCA4FE21DB7980D7DCB36 /* MacCCTV.app */;
@@ -321,12 +327,12 @@
 					54374CA213092B0F091EBD9E = {
 						DevelopmentTeam = 878FAHTFQJ;
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.Push\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.Push\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1]]";
 					};
 					D14D4B0E61026724F28C6167 = {
 						DevelopmentTeam = 878FAHTFQJ;
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.ApplicationGroups.Mac\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.ApplicationGroups.Mac\": [\"enabled\": 1], \"com.apple.iCloud\": [\"enabled\": 1]]";
 					};
 				};
 			};
@@ -341,6 +347,7 @@
 			mainGroup = 7FB8639A6D67E84B7DA9808D;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				BA60ECC5551984618A28763B /* XCRemoteSwiftPackageReference "WebRTC" */,
 				2F8782AAE53ABA293972BFC3 /* XCLocalSwiftPackageReference "Packages/CCTVKit" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -661,7 +668,23 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		BA60ECC5551984618A28763B /* XCRemoteSwiftPackageReference "WebRTC" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/stasel/WebRTC.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 149.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
+		23F2B3C5E4BC0EFB8F215515 /* WebRTC */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BA60ECC5551984618A28763B /* XCRemoteSwiftPackageReference "WebRTC" */;
+			productName = WebRTC;
+		};
 		B40ECCDF8CA0C6C97F9149F9 /* CCTVKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = CCTVKit;
@@ -669,6 +692,11 @@
 		CC4F4F57FC77F80795CA379E /* CCTVKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = CCTVKit;
+		};
+		E14849FBC7E7D2DF3F2C10A0 /* WebRTC */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BA60ECC5551984618A28763B /* XCRemoteSwiftPackageReference "WebRTC" */;
+			productName = WebRTC;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
