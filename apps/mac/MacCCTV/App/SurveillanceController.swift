@@ -88,6 +88,11 @@ final class SurveillanceController: ObservableObject {
                 await self?.recordSecurityEvent(type: event.type, confidence: event.confidence)
             }
         }
+        eventDetector.onDiagnostic = { [weak self] line in
+            Task { @MainActor [weak self] in
+                self?.writeDiagnostic(line, filename: "m5-detector.txt")
+            }
+        }
         registerHotkey()
         Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: 750_000_000)

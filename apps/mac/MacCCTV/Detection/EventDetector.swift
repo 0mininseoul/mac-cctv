@@ -11,6 +11,7 @@ struct DetectedSecurityEvent: Sendable {
 
 final class EventDetector {
     var onEvent: (@Sendable (DetectedSecurityEvent) -> Void)?
+    var onDiagnostic: (@Sendable (String) -> Void)?
 
     private var globalMonitor: Any?
     private var localMonitor: Any?
@@ -65,6 +66,10 @@ final class EventDetector {
     }
 
     private func startInputMonitoring() {
+        let hadListenAccess = CGPreflightListenEventAccess()
+        let hasListenAccess = hadListenAccess || CGRequestListenEventAccess()
+        onDiagnostic?("M5_INPUT_MONITORING_ACCESS granted=\(hasListenAccess) preflight=\(hadListenAccess)")
+
         let mask = Self.inputEventMask
         globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: mask) { [weak self] _ in
             self?.emit(.inputTouch, confidence: 1)
@@ -82,12 +87,14 @@ final class EventDetector {
             callback: Self.eventTapCallback,
             userInfo: Unmanaged.passUnretained(self).toOpaque()
         ) else {
+            onDiagnostic?("M5_INPUT_EVENT_TAP unavailable")
             return
         }
 
         let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0)
         CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
         CGEvent.tapEnable(tap: eventTap, enable: true)
+        onDiagnostic?("M5_INPUT_EVENT_TAP ready")
         self.eventTap = eventTap
         self.eventTapRunLoopSource = runLoopSource
     }
