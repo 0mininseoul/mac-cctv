@@ -60,4 +60,18 @@ final class LiveConnectionPolicyTests: XCTestCase {
 
         XCTAssertEqual(mode, .delayedFallback(reason: .connectionFailed))
     }
+
+    func testConnectionFailureOverridesPreviouslyReceivedRemoteVideo() {
+        let policy = LiveConnectionPolicy(timeout: 10)
+        let startedAt = Date(timeIntervalSince1970: 1_000)
+
+        let mode = policy.mode(
+            startedAt: startedAt,
+            now: startedAt.addingTimeInterval(12),
+            hasReceivedRemoteVideo: true,
+            peerConnectionFailed: true
+        )
+
+        XCTAssertEqual(mode, .delayedFallback(reason: .connectionFailed))
+    }
 }

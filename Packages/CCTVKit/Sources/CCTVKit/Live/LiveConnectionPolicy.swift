@@ -24,12 +24,12 @@ public struct LiveConnectionPolicy: Equatable, Sendable {
         hasReceivedRemoteVideo: Bool,
         peerConnectionFailed: Bool
     ) -> LiveViewingMode {
-        if hasReceivedRemoteVideo {
-            return .realtime
-        }
-
         if peerConnectionFailed {
             return .delayedFallback(reason: .connectionFailed)
+        }
+
+        if hasReceivedRemoteVideo {
+            return .realtime
         }
 
         let elapsed = max(0, now.timeIntervalSince(startedAt))
