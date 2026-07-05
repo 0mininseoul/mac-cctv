@@ -487,6 +487,24 @@
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "중" } }
       }
     },
+    "surveillance_siren_warning_text_label" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Siren warning text" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "사이렌 경고 문구" } }
+      }
+    },
+    "surveillance_siren_warning_text_placeholder" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This device is recording and tracked" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "이 기기는 녹화·추적 중" } }
+      }
+    },
+    "surveillance_siren_warning_text_reset" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Default" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "기본값" } }
+      }
+    },
     "surveillance_start" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Start Surveillance" } },

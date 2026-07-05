@@ -12,7 +12,7 @@ final class SirenController {
 
     private(set) var isActive = false
 
-    func start() {
+    func start(warningText: String) {
         guard !isActive else {
             return
         }
@@ -23,7 +23,7 @@ final class SirenController {
         try? volumeController.setOutputMuted(false)
         try? volumeController.setOutputVolume(1)
         startSoundLoop()
-        showWarningWindows()
+        showWarningWindows(warningText: warningText)
     }
 
     func stop() {
@@ -56,7 +56,7 @@ final class SirenController {
         sound = alarmSound
     }
 
-    private func showWarningWindows() {
+    private func showWarningWindows(warningText: String) {
         warningWindows = NSScreen.screens.map { screen in
             let screenFrame = screen.frame
             let window = SirenWarningWindow(
@@ -82,7 +82,7 @@ final class SirenController {
             window.setFrame(screenFrame, display: false)
 
             let hostingView = NSHostingView(
-                rootView: SirenWarningView()
+                rootView: SirenWarningView(warningText: warningText)
                     .frame(width: screenFrame.width, height: screenFrame.height)
             )
             hostingView.frame = NSRect(origin: .zero, size: screenFrame.size)
@@ -111,6 +111,8 @@ private final class SirenWarningWindow: NSWindow {
 }
 
 private struct SirenWarningView: View {
+    let warningText: String
+
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
@@ -120,7 +122,7 @@ private struct SirenWarningView: View {
                     .font(.system(size: 84, weight: .bold))
                     .foregroundStyle(.red)
 
-                Text("siren_warning_title")
+                Text(warningText)
                     .font(.system(size: 64, weight: .black))
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)

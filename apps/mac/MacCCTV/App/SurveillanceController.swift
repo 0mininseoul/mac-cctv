@@ -33,6 +33,11 @@ final class SurveillanceController: ObservableObject {
     }
     @Published var selectedQuality = SurveillanceQuality.medium
     @Published var notificationsEnabled = true
+    @Published var sirenWarningText = "" {
+        didSet {
+            UserDefaults.standard.set(sirenWarningText, forKey: Self.sirenWarningTextKey)
+        }
+    }
 
     private let hotkeyManager = HotkeyManager()
     private let sleepBlocker = SleepBlocker()
@@ -51,6 +56,11 @@ final class SurveillanceController: ObservableObject {
     private var autoSirenEvidence: [AutoSirenEvidence] = []
     private var autoSirenTriggered = false
     private var isTransitioning = false
+
+    private static let sirenWarningTextKey = "siren.warningText"
+    private static var defaultSirenWarningText: String {
+        String(localized: "siren_warning_title")
+    }
 
     var state: SurveillanceState {
         machine.state
@@ -82,6 +92,7 @@ final class SurveillanceController: ObservableObject {
     }
 
     init() {
+        sirenWarningText = UserDefaults.standard.string(forKey: Self.sirenWarningTextKey) ?? Self.defaultSirenWarningText
         hotkeyManager.onPressed = { [weak self] in
             Task { @MainActor in
                 self?.writeHotkeyDiagnostic("M3_HOTKEY_PRESSED shortcut=\(self?.selectedShortcut.display ?? "unknown")")
@@ -120,6 +131,10 @@ final class SurveillanceController: ObservableObject {
             hotkeyStatusText = String(format: String(localized: "surveillance_hotkey_failed_format"), error.localizedDescription)
             writeHotkeyDiagnostic("M3_HOTKEY_FAILED shortcut=\(selectedShortcut.display) error=\(error.localizedDescription)")
         }
+    }
+
+    func resetSirenWarningText() {
+        sirenWarningText = Self.defaultSirenWarningText
     }
 
     private func toggleFromHotkey() async {
@@ -393,7 +408,7 @@ final class SurveillanceController: ObservableObject {
         }
 
         autoSirenTriggered = true
-        sirenController.start()
+        sirenController.start(warningText: effectiveSirenWarningText)
         statusText = String(localized: "surveillance_status_siren")
         writeDiagnostic(
             "M7_SIREN_STARTED session=\(sessionID) source=\(source.rawValue) elapsed=\(String(format: "%.2f", triggeredAt.timeIntervalSince(startedAt)))",
@@ -520,6 +535,11 @@ final class SurveillanceController: ObservableObject {
         eventRateLimiter.reset()
         autoSirenEvidence.removeAll()
         autoSirenTriggered = false
+    }
+
+    private var effectiveSirenWarningText: String {
+        let trimmedText = sirenWarningText.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmedText.isEmpty ? Self.defaultSirenWarningText : trimmedText
     }
 
     private func stopSirenIfNeeded(reason: String) {

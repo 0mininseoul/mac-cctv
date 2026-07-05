@@ -36,6 +36,37 @@ struct SurveillancePopoverView: View {
                 }
 
                 Toggle("surveillance_notifications_label", isOn: $controller.notificationsEnabled)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("surveillance_siren_warning_text_label")
+                            .font(.caption.weight(.semibold))
+                        Spacer()
+                        Button("surveillance_siren_warning_text_reset") {
+                            controller.resetSirenWarningText()
+                        }
+                        .controlSize(.small)
+                    }
+
+                    TextField(
+                        "surveillance_siren_warning_text_placeholder",
+                        text: $controller.sirenWarningText,
+                        axis: .vertical
+                    )
+                    .lineLimit(2)
+                    .textFieldStyle(.plain)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
+                    .frame(minHeight: 46, alignment: .topLeading)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(Color.primary.opacity(0.06))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .stroke(Color.primary.opacity(0.16), lineWidth: 1)
+                    )
+                }
             }
 
             Text(controller.hotkeyStatusText)
