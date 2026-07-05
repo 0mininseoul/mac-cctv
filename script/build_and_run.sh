@@ -6,7 +6,7 @@ if [ "$#" -gt 0 ]; then
   shift
 fi
 APP_NAME="MacCCTV"
-BUNDLE_ID="com.youngminpark.maccctv.ios"
+BUNDLE_ID="com.youngminpark.maccctv.mac"
 SCHEME="MacCCTV"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

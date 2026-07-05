@@ -42,7 +42,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: MacCCTV
-        PRODUCT_BUNDLE_IDENTIFIER: com.youngminpark.maccctv.ios
+        PRODUCT_BUNDLE_IDENTIFIER: com.youngminpark.maccctv.mac
         INFOPLIST_FILE: apps/mac/MacCCTV/Support/Info.plist
         CODE_SIGN_ENTITLEMENTS: apps/mac/MacCCTV/Support/MacCCTV.entitlements
         ENABLE_HARDENED_RUNTIME: YES
