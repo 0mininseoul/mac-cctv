@@ -2,12 +2,18 @@
 
 Single static page, no build step. `index.html` is deploy-ready as-is.
 
-## Deploy to Vercel (manual — one-time, human step)
+## Live
 
-1. `vercel login` (or connect the GitHub repo in the Vercel dashboard)
-2. From this directory: `vercel --prod` (or import the repo in the Vercel dashboard and set **Root Directory** to `web/`)
-3. Vercel auto-detects a static site (no framework, no build command needed)
-4. Free tier (Hobby plan) is fine as long as the app stays free — see PRD §9/§14 for when Pro ($20/mo) becomes necessary
+**https://mac-cctv.vercel.app** — deployed via `vercel` CLI under the `0minseouls-projects` team (Hobby plan). Lighthouse: Accessibility/Best Practices/SEO/Agentic Browsing all 100 on the live URL.
+
+## Redeploy after editing `index.html`
+
+```
+cd web
+vercel --yes --prod --scope 0minseouls-projects
+```
+
+`.vercel/project.json` (gitignored) already links this directory to the `mac-cctv` project, so no re-linking is needed.
 
 ## Before going live
 

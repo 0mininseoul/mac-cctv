@@ -59,8 +59,8 @@ script/archive_and_export.sh all
 ## 6. 웹 랜딩 페이지
 
 - [x] `web/index.html` — 정적 1페이지, 한/영 토글, Lighthouse Accessibility/Best Practices/SEO/Agentic Browsing 전부 100점, LCP 174ms/CLS 0.00
-- [ ] **사람 작업**: Vercel 계정 연결 및 배포 (`web/README.md`의 배포 절차 참고)
-- [ ] **사람 작업**: 앱 승인 후 `web/index.html`의 "Coming Soon" App Store 배지 2곳(hero, 최종 CTA)을 실제 스토어 링크로 교체
+- [x] Vercel 배포 완료 — **https://mac-cctv.vercel.app** (`0minseouls-projects` 팀, Hobby 플랜). 라이브 URL에서도 Lighthouse 전 항목 100점 재확인
+- [ ] **사람 작업**: 앱 승인 후 `web/index.html`의 "Coming Soon" App Store 배지 2곳(hero, 최종 CTA)을 실제 스토어 링크로 교체 후 `web/README.md`의 재배포 명령으로 반영
 
 ## 7. 최종 확인
 
