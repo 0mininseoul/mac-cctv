@@ -19,8 +19,10 @@ let package = Package(
         .target(name: "CCTVKit"),
         .testTarget(
             name: "CCTVKitTests",
-            dependencies: ["CCTVKit"]
+            dependencies: ["CCTVKit"],
+            resources: [
+                .process("Resources")
+            ]
         )
     ]
 )
-

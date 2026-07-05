@@ -46,6 +46,33 @@ targets:
         INFOPLIST_FILE: apps/mac/MacCCTV/Support/Info.plist
         CODE_SIGN_ENTITLEMENTS: apps/mac/MacCCTV/Support/MacCCTV.entitlements
         ENABLE_HARDENED_RUNTIME: YES
+    scheme:
+      management:
+        shared: true
+      storeKitConfiguration: Packages/CCTVKit/Tests/CCTVKitTests/Resources/MacCCTVTips.storekit
+      testTargets:
+        - MacCCTVTests
+
+  MacCCTVTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: tests/mac/MacCCTVTests
+      - path: Packages/CCTVKit/Tests/CCTVKitTests/Resources/MacCCTVTips.storekit
+        buildPhase: resources
+    dependencies:
+      - target: MacCCTV
+      - package: CCTVKit
+        product: CCTVKit
+      - sdk: StoreKitTest.framework
+        root: DEVELOPER_DIR
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.youngminpark.maccctv.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/MacCCTV.app/Contents/MacOS/MacCCTV"
+        BUNDLE_LOADER: "$(TEST_HOST)"
 
   CCTVCompanion:
     type: application
@@ -72,3 +99,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.youngminpark.maccctv.ios
         INFOPLIST_FILE: apps/ios/CCTVCompanion/Support/Info.plist
         CODE_SIGN_ENTITLEMENTS: apps/ios/CCTVCompanion/Support/CCTVCompanion.entitlements
+    scheme:
+      management:
+        shared: true
+      storeKitConfiguration: Packages/CCTVKit/Tests/CCTVKitTests/Resources/MacCCTVTips.storekit

@@ -1,0 +1,147 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      },
+      {
+        "locale" : "ko_KR",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "878FAHTFQJ-MacCCTV-Tips",
+  "nonRenewingSubscriptions" : [
+  ],
+  "products" : [
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "A0000001",
+      "localizations" : [
+        {
+          "description" : "Optional support for keeping Mac CCTV free.",
+          "displayName" : "Small Tip",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "Mac CCTV를 무료 앱으로 유지하기 위한 선택적 후원입니다.",
+          "displayName" : "작은 팁",
+          "locale" : "ko_KR"
+        }
+      ],
+      "productID" : "com.youngminpark.maccctv.tip.small",
+      "referenceName" : "Small Tip",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "2.99",
+      "familyShareable" : false,
+      "internalID" : "A0000002",
+      "localizations" : [
+        {
+          "description" : "Optional support for keeping Mac CCTV free.",
+          "displayName" : "Large Tip",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "Mac CCTV를 무료 앱으로 유지하기 위한 선택적 후원입니다.",
+          "displayName" : "큰 팁",
+          "locale" : "ko_KR"
+        }
+      ],
+      "productID" : "com.youngminpark.maccctv.tip.large",
+      "referenceName" : "Large Tip",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "9.99",
+      "familyShareable" : false,
+      "internalID" : "A0000003",
+      "localizations" : [
+        {
+          "description" : "Optional support for keeping Mac CCTV free.",
+          "displayName" : "Supporter Tip",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "Mac CCTV를 무료 앱으로 유지하기 위한 선택적 후원입니다.",
+          "displayName" : "서포터 팁",
+          "locale" : "ko_KR"
+        }
+      ],
+      "productID" : "com.youngminpark.maccctv.tip.supporter",
+      "referenceName" : "Supporter Tip",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_askToBuyEnabled" : false,
+    "_billingGracePeriodEnabled" : false,
+    "_billingIssuesEnabled" : false,
+    "_applicationInternalID" : "0000000000",
+    "_developerTeamID" : "878FAHTFQJ",
+    "_disableDialogs" : false,
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_lastSynchronizedDate" : 0,
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Load Products"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Purchase"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Verification"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Store Sync"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Subscription Status"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Transaction"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Manage Subscriptions Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Refund Request Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Offer Code Redeem Sheet"
+      }
+    ]
+  },
+  "subscriptionGroups" : [
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}
