@@ -142,6 +142,12 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
 
         switch message.kind {
         case .answer:
+            guard peerConnection.signalingState == .haveLocalOffer else {
+                diagnostics(
+                    "M6_BROADCAST_ANSWER_IGNORED session=\(sessionID) state=\(peerConnection.signalingState.rawValue)"
+                )
+                return
+            }
             let payload = try decoder.decode(SessionDescriptionSignalPayload.self, from: Data(message.payload.utf8))
             let description = RTCSessionDescription(
                 type: RTCSessionDescription.type(for: payload.type),
