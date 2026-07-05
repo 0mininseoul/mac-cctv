@@ -4,6 +4,10 @@ import SwiftUI
 struct MacCCTVApp: App {
     @StateObject private var viewModel = MacCloudKitProbeViewModel()
 
+    init() {
+        M0ProbeLaunchHandler.runIfRequested()
+    }
+
     var body: some Scene {
         MenuBarExtra("mac_menu_title", systemImage: viewModel.isWorking ? "icloud.and.arrow.up" : "video.badge.checkmark") {
             MacCloudKitProbeView(viewModel: viewModel)
@@ -11,4 +15,3 @@ struct MacCCTVApp: App {
         .menuBarExtraStyle(.window)
     }
 }
-

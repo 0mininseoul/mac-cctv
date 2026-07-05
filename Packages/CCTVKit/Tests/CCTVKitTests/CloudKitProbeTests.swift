@@ -27,5 +27,8 @@ final class CloudKitProbeTests: XCTestCase {
         XCTAssertEqual(CKSchema.RecordType.event, "Event")
         XCTAssertEqual(CKSchema.RecordType.signal, "Signal")
     }
-}
 
+    func testM0SharedProbeUsesStableRecordName() {
+        XCTAssertEqual(CloudKitStore.m0SharedProbeRecordName, "m0-shared-probe")
+    }
+}

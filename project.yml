@@ -9,7 +9,7 @@ options:
 settings:
   base:
     CODE_SIGN_STYLE: Automatic
-    DEVELOPMENT_TEAM: XQLWN777G4
+    DEVELOPMENT_TEAM: 878FAHTFQJ
     CURRENT_PROJECT_VERSION: 1
     MARKETING_VERSION: 0.1.0
     SWIFT_VERSION: 5.0
@@ -37,7 +37,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: MacCCTV
-        PRODUCT_BUNDLE_IDENTIFIER: com.youngminpark.maccctv.mac
+        PRODUCT_BUNDLE_IDENTIFIER: com.youngminpark.maccctv.ios
         INFOPLIST_FILE: apps/mac/MacCCTV/Support/Info.plist
         CODE_SIGN_ENTITLEMENTS: apps/mac/MacCCTV/Support/MacCCTV.entitlements
         ENABLE_HARDENED_RUNTIME: YES
@@ -63,4 +63,3 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.youngminpark.maccctv.ios
         INFOPLIST_FILE: apps/ios/CCTVCompanion/Support/Info.plist
         CODE_SIGN_ENTITLEMENTS: apps/ios/CCTVCompanion/Support/CCTVCompanion.entitlements
-

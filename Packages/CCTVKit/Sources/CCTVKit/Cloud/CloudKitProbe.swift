@@ -48,11 +48,14 @@ public struct CloudKitProbe: Identifiable, Equatable, Sendable {
             recordType: CKSchema.RecordType.testProbe,
             recordID: CKRecord.ID(recordName: id)
         )
+        applyFields(to: record)
+        return record
+    }
+
+    public func applyFields(to record: CKRecord) {
         record[CKSchema.TestProbe.source] = source.rawValue as CKRecordValue
         record[CKSchema.TestProbe.message] = message as CKRecordValue
         record[CKSchema.TestProbe.createdAt] = createdAt as CKRecordValue
         record[CKSchema.TestProbe.deviceName] = deviceName as CKRecordValue
-        return record
     }
 }
-

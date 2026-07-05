@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		18BA45D094281A9E2FC6F104 /* CCTVCompanionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CACEC2A30F0B0D28EA4EB50 /* CCTVCompanionApp.swift */; };
+		2D9FE6114734D60ACD06DA7C /* M0ProbeLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F4F93FC1015721C90A7951F /* M0ProbeLaunchHandler.swift */; };
+		2E31E0E8B1C5662D7C0269D4 /* M0ProbeLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0598E0BDD1D1C294A62A94AB /* M0ProbeLaunchHandler.swift */; };
 		301F46300732B79417FB9267 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FFD661A51CF049749A8C8324 /* Localizable.xcstrings */; };
 		434C172014244A3C3DA21989 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 41D23F8132B953408C8898E3 /* Localizable.xcstrings */; };
 		55759B8EEFF384FAE555ABB0 /* CCTVKit in Frameworks */ = {isa = PBXBuildFile; productRef = B40ECCDF8CA0C6C97F9149F9 /* CCTVKit */; };
@@ -20,6 +22,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0598E0BDD1D1C294A62A94AB /* M0ProbeLaunchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M0ProbeLaunchHandler.swift; sourceTree = "<group>"; };
 		282FCA4FE21DB7980D7DCB36 /* MacCCTV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacCCTV.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		37522887D38BD77AAEA88C31 /* IOSCloudKitProbeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSCloudKitProbeViewModel.swift; sourceTree = "<group>"; };
 		41D23F8132B953408C8898E3 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
@@ -28,6 +31,7 @@
 		6F7FB823419F5127C79AC9E4 /* CCTVKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = CCTVKit; path = Packages/CCTVKit; sourceTree = SOURCE_ROOT; };
 		724AE9EC4072B23097D6D434 /* CCTVCompanion.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CCTVCompanion.entitlements; sourceTree = "<group>"; };
 		75369F92F71E501939D44CAC /* MacCCTV.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MacCCTV.entitlements; sourceTree = "<group>"; };
+		8F4F93FC1015721C90A7951F /* M0ProbeLaunchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M0ProbeLaunchHandler.swift; sourceTree = "<group>"; };
 		986F9BF51E2C7CF3035542ED /* MacCloudKitProbeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacCloudKitProbeViewModel.swift; sourceTree = "<group>"; };
 		A938A391B4B6EC6DBFAF54A5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		B00FC6C92024FFCAA3C14711 /* MacCloudKitProbeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacCloudKitProbeView.swift; sourceTree = "<group>"; };
@@ -60,6 +64,7 @@
 		1427F1D57BF14490A7AE16DB /* App */ = {
 			isa = PBXGroup;
 			children = (
+				0598E0BDD1D1C294A62A94AB /* M0ProbeLaunchHandler.swift */,
 				FA7C453536705C4C6664DE1A /* MacCCTVApp.swift */,
 				986F9BF51E2C7CF3035542ED /* MacCloudKitProbeViewModel.swift */,
 			);
@@ -79,6 +84,7 @@
 			children = (
 				5CACEC2A30F0B0D28EA4EB50 /* CCTVCompanionApp.swift */,
 				37522887D38BD77AAEA88C31 /* IOSCloudKitProbeViewModel.swift */,
+				8F4F93FC1015721C90A7951F /* M0ProbeLaunchHandler.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -213,12 +219,12 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					54374CA213092B0F091EBD9E = {
-						DevelopmentTeam = XQLWN777G4;
+						DevelopmentTeam = 878FAHTFQJ;
 						ProvisioningStyle = Automatic;
 						SystemCapabilities = "[\"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.iCloud\": [\"enabled\": 1]]";
 					};
 					D14D4B0E61026724F28C6167 = {
-						DevelopmentTeam = XQLWN777G4;
+						DevelopmentTeam = 878FAHTFQJ;
 						ProvisioningStyle = Automatic;
 						SystemCapabilities = "[\"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.ApplicationGroups.Mac\": [\"enabled\": 1]]";
 					};
@@ -272,6 +278,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2E31E0E8B1C5662D7C0269D4 /* M0ProbeLaunchHandler.swift in Sources */,
 				E96ABB53B915A1B8395F4D71 /* MacCCTVApp.swift in Sources */,
 				7E0CEE6E8E123BF8ABB3BF81 /* MacCloudKitProbeView.swift in Sources */,
 				81BAF4E07BF9D010B62437FE /* MacCloudKitProbeViewModel.swift in Sources */,
@@ -285,6 +292,7 @@
 				18BA45D094281A9E2FC6F104 /* CCTVCompanionApp.swift in Sources */,
 				74FC0CC21FDFE4AD73A56A64 /* IOSCloudKitProbeView.swift in Sources */,
 				F7399BBEAB1D0915E7EF81DF /* IOSCloudKitProbeViewModel.swift in Sources */,
+				2D9FE6114734D60ACD06DA7C /* M0ProbeLaunchHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -347,7 +355,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = XQLWN777G4;
+				DEVELOPMENT_TEAM = 878FAHTFQJ;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -383,7 +391,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.youngminpark.maccctv.mac;
+				PRODUCT_BUNDLE_IDENTIFIER = com.youngminpark.maccctv.ios;
 				PRODUCT_NAME = MacCCTV;
 				SDKROOT = macosx;
 			};
@@ -426,7 +434,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = XQLWN777G4;
+				DEVELOPMENT_TEAM = 878FAHTFQJ;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -469,7 +477,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.youngminpark.maccctv.mac;
+				PRODUCT_BUNDLE_IDENTIFIER = com.youngminpark.maccctv.ios;
 				PRODUCT_NAME = MacCCTV;
 				SDKROOT = macosx;
 			};

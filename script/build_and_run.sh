@@ -24,6 +24,7 @@ xcodebuild \
   -derivedDataPath "$DERIVED_DATA" \
   -destination "platform=macOS" \
   -allowProvisioningUpdates \
+  -allowProvisioningDeviceRegistration \
   build
 
 open_app() {
@@ -55,4 +56,3 @@ case "$MODE" in
     exit 2
     ;;
 esac
-
