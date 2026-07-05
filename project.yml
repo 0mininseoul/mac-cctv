@@ -19,7 +19,7 @@ packages:
     path: Packages/CCTVKit
   WebRTC:
     url: https://github.com/stasel/WebRTC.git
-    from: 149.0.0
+    exactVersion: 128.0.0
 
 targets:
   MacCCTV:

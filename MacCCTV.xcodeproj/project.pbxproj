@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0DDB2489A41A68278C836EFE /* SurveillanceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AACA2D3BFFEAFBB1894AC674 /* SurveillanceController.swift */; };
+		108268D93371ACF10565F6E5 /* M6LiveLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ED163759E0D7AD735CD8321 /* M6LiveLaunchHandler.swift */; };
 		110F222E22059DB633A9751C /* SessionPlaybackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB54624CDB1A553B4C6712A6 /* SessionPlaybackView.swift */; };
 		166778B9A12723A0EC59BEF6 /* WebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = E14849FBC7E7D2DF3F2C10A0 /* WebRTC */; };
 		18BA45D094281A9E2FC6F104 /* CCTVCompanionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CACEC2A30F0B0D28EA4EB50 /* CCTVCompanionApp.swift */; };
@@ -21,6 +22,7 @@
 		341E8B3B38C68988ADDCB631 /* ChunkWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30DF144D2C9E6F0DAE977038 /* ChunkWriter.swift */; };
 		434C172014244A3C3DA21989 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 41D23F8132B953408C8898E3 /* Localizable.xcstrings */; };
 		437399AF3869AC00D5426F75 /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28B65B440D4B33CCC1962465 /* HotkeyManager.swift */; };
+		47C0CC79E30E86495698DE08 /* BroadcastSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F9E9F68FED9F5530D4C6F5A /* BroadcastSession.swift */; };
 		50B494ED430814DAEA9FC796 /* M5EventPollLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7BC98ED03143CCA620A64BB /* M5EventPollLaunchHandler.swift */; };
 		54D21C7F058327548EA5C88C /* EventNotificationBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32503C81F9675A50B06C20EB /* EventNotificationBootstrap.swift */; };
 		55759B8EEFF384FAE555ABB0 /* CCTVKit in Frameworks */ = {isa = PBXBuildFile; productRef = B40ECCDF8CA0C6C97F9149F9 /* CCTVKit */; };
@@ -36,6 +38,7 @@
 		90F84CD00B18EEB6B3B87C80 /* SessionLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E94F7C32CF3A354413CADE4C /* SessionLibraryView.swift */; };
 		A3171676E215A4D82088EC99 /* LocalChunkStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D78207AB6F5951B117E39E8 /* LocalChunkStore.swift */; };
 		AA6E199B798F2FF1571CFF5F /* EventDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3672181E21D2A1495C2960D8 /* EventDetector.swift */; };
+		B0407BA3B9C0707E2145ECCD /* WebRTCReceiver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51286E4EF4D6CBA34A8DF3E8 /* WebRTCReceiver.swift */; };
 		BAF86A2F9766ED7D90FE5841 /* CaptureEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 999F7E6549C53818BB9CA6BE /* CaptureEngine.swift */; };
 		E083CB53ABF4B7571A53B3D4 /* CCTVKit in Frameworks */ = {isa = PBXBuildFile; productRef = CC4F4F57FC77F80795CA379E /* CCTVKit */; };
 		E96ABB53B915A1B8395F4D71 /* MacCCTVApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7C453536705C4C6664DE1A /* MacCCTVApp.swift */; };
@@ -56,14 +59,17 @@
 		41D23F8132B953408C8898E3 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		4B6EC5F4857C375A251B8AAE /* SessionPlaybackViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPlaybackViewModel.swift; sourceTree = "<group>"; };
 		4F036433EE186BB61B57073B /* SurveillancePopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveillancePopoverView.swift; sourceTree = "<group>"; };
+		51286E4EF4D6CBA34A8DF3E8 /* WebRTCReceiver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebRTCReceiver.swift; sourceTree = "<group>"; };
 		5CACEC2A30F0B0D28EA4EB50 /* CCTVCompanionApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CCTVCompanionApp.swift; sourceTree = "<group>"; };
 		66765A1D067DA4C98A98EAFA /* IOSCloudKitProbeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSCloudKitProbeView.swift; sourceTree = "<group>"; };
+		6ED163759E0D7AD735CD8321 /* M6LiveLaunchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M6LiveLaunchHandler.swift; sourceTree = "<group>"; };
 		6F7FB823419F5127C79AC9E4 /* CCTVKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = CCTVKit; path = Packages/CCTVKit; sourceTree = SOURCE_ROOT; };
 		724AE9EC4072B23097D6D434 /* CCTVCompanion.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CCTVCompanion.entitlements; sourceTree = "<group>"; };
 		74590EDC7780A3EB3C5122EE /* SessionLibraryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLibraryViewModel.swift; sourceTree = "<group>"; };
 		75369F92F71E501939D44CAC /* MacCCTV.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MacCCTV.entitlements; sourceTree = "<group>"; };
 		7D2565259B1F3723D408EBCD /* M4PlaybackLaunchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M4PlaybackLaunchHandler.swift; sourceTree = "<group>"; };
 		7D78207AB6F5951B117E39E8 /* LocalChunkStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalChunkStore.swift; sourceTree = "<group>"; };
+		7F9E9F68FED9F5530D4C6F5A /* BroadcastSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BroadcastSession.swift; sourceTree = "<group>"; };
 		8F4F93FC1015721C90A7951F /* M0ProbeLaunchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M0ProbeLaunchHandler.swift; sourceTree = "<group>"; };
 		986F9BF51E2C7CF3035542ED /* MacCloudKitProbeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacCloudKitProbeViewModel.swift; sourceTree = "<group>"; };
 		999F7E6549C53818BB9CA6BE /* CaptureEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureEngine.swift; sourceTree = "<group>"; };
@@ -165,6 +171,7 @@
 				8F4F93FC1015721C90A7951F /* M0ProbeLaunchHandler.swift */,
 				7D2565259B1F3723D408EBCD /* M4PlaybackLaunchHandler.swift */,
 				A7BC98ED03143CCA620A64BB /* M5EventPollLaunchHandler.swift */,
+				6ED163759E0D7AD735CD8321 /* M6LiveLaunchHandler.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -194,6 +201,14 @@
 				6F7FB823419F5127C79AC9E4 /* CCTVKit */,
 			);
 			path = Packages;
+			sourceTree = "<group>";
+		};
+		B371A20957663F6A8ADFE57C /* Live */ = {
+			isa = PBXGroup;
+			children = (
+				7F9E9F68FED9F5530D4C6F5A /* BroadcastSession.swift */,
+			);
+			path = Live;
 			sourceTree = "<group>";
 		};
 		BAB1A5F0D41202DFFE3F2B6C /* Hotkey */ = {
@@ -233,6 +248,7 @@
 				3F1212949FAB1CC23F49D508 /* Capture */,
 				E608356A9A6A7018D5E8C7A2 /* Detection */,
 				BAB1A5F0D41202DFFE3F2B6C /* Hotkey */,
+				B371A20957663F6A8ADFE57C /* Live */,
 				6233649331AEA17D0B45C41A /* Power */,
 				CAFA55BAD10AA79BD1475AE2 /* Support */,
 				2466A4D45D6578AEF9ED3A08 /* UI */,
@@ -266,6 +282,7 @@
 				EB54624CDB1A553B4C6712A6 /* SessionPlaybackView.swift */,
 				4B6EC5F4857C375A251B8AAE /* SessionPlaybackViewModel.swift */,
 				B6FC6D9931743074BDB09BB5 /* SessionRouteView.swift */,
+				51286E4EF4D6CBA34A8DF3E8 /* WebRTCReceiver.swift */,
 			);
 			path = Live;
 			sourceTree = "<group>";
@@ -327,7 +344,7 @@
 					54374CA213092B0F091EBD9E = {
 						DevelopmentTeam = 878FAHTFQJ;
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.Push\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.Push\": [\"enabled\": 1], \"com.apple.iCloud\": [\"enabled\": 1]]";
 					};
 					D14D4B0E61026724F28C6167 = {
 						DevelopmentTeam = 878FAHTFQJ;
@@ -385,6 +402,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				47C0CC79E30E86495698DE08 /* BroadcastSession.swift in Sources */,
 				BAF86A2F9766ED7D90FE5841 /* CaptureEngine.swift in Sources */,
 				1E4DDB35A9D729B8626CE86B /* CaptureSettings.swift in Sources */,
 				341E8B3B38C68988ADDCB631 /* ChunkWriter.swift in Sources */,
@@ -415,11 +433,13 @@
 				2D9FE6114734D60ACD06DA7C /* M0ProbeLaunchHandler.swift in Sources */,
 				1AB2E18EBAD3149A367D6AD3 /* M4PlaybackLaunchHandler.swift in Sources */,
 				50B494ED430814DAEA9FC796 /* M5EventPollLaunchHandler.swift in Sources */,
+				108268D93371ACF10565F6E5 /* M6LiveLaunchHandler.swift in Sources */,
 				90F84CD00B18EEB6B3B87C80 /* SessionLibraryView.swift in Sources */,
 				71C3FA8A11FEA42D432C1BCA /* SessionLibraryViewModel.swift in Sources */,
 				110F222E22059DB633A9751C /* SessionPlaybackView.swift in Sources */,
 				2CB2F7D91BF32EA91CF90B23 /* SessionPlaybackViewModel.swift in Sources */,
 				7F127430D9512FF354779283 /* SessionRouteView.swift in Sources */,
+				B0407BA3B9C0707E2145ECCD /* WebRTCReceiver.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -673,8 +693,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/stasel/WebRTC.git";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 149.0.0;
+				kind = exactVersion;
+				version = 128.0.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

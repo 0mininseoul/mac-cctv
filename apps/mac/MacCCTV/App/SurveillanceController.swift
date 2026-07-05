@@ -43,6 +43,7 @@ final class SurveillanceController: ObservableObject {
     private var activeOutputDirectory: URL?
     private var activeStartedAt: Date?
     private var liveUploadTask: Task<Void, Never>?
+    private var broadcastSession: BroadcastSession?
     private var uploadPlanner = ChunkUploadPlanner()
     private var eventRateLimiter = EventRateLimiter(cooldown: 30)
     private var isTransitioning = false
@@ -170,11 +171,15 @@ final class SurveillanceController: ObservableObject {
             activeOutputDirectory = outputDirectory
             activeStartedAt = startedAt
             uploadPlanner = ChunkUploadPlanner()
+            await startBroadcastSession(sessionID: sessionID, engine: engine)
             startLiveUploadLoop(sessionID: sessionID, sessionStartedAt: startedAt, engine: engine)
             eventDetector.start()
             statusText = String(localized: "surveillance_status_armed")
             writeDiagnostic("M3_ARMED session=\(sessionID) output=\(outputDirectory.path)")
         } catch {
+            let broadcast = broadcastSession
+            broadcastSession = nil
+            await broadcast?.stop()
             _ = captureEngine?.stopAndWaitForChunks(timeout: 5)
             sleepBlocker.stop()
             captureEngine = nil
@@ -204,6 +209,7 @@ final class SurveillanceController: ObservableObject {
         }
 
         eventDetector.stop()
+        await stopBroadcastSession()
         await stopLiveUploadLoop()
         let chunks = engine.stopAndWaitForChunks(timeout: 30)
         sleepBlocker.stop()
@@ -239,6 +245,40 @@ final class SurveillanceController: ObservableObject {
             statusText = String(format: String(localized: "surveillance_status_failed_format"), error.localizedDescription)
             writeDiagnostic("M3_FAILED \(error.localizedDescription)")
         }
+    }
+
+    private func startBroadcastSession(sessionID: String, engine: CaptureEngine) async {
+        let channel = CloudKitSignalingChannel(sessionID: sessionID, localSender: .mac, store: store)
+        let broadcast = BroadcastSession(
+            sessionID: sessionID,
+            channel: channel,
+            diagnostics: { [weak self] line in
+                Task { @MainActor [weak self] in
+                    self?.writeDiagnostic(line, filename: "m6-result.txt")
+                }
+            }
+        )
+        broadcastSession = broadcast
+        engine.onVideoSampleBuffer = { [weak broadcast] sampleBuffer in
+            broadcast?.ingest(sampleBuffer: sampleBuffer)
+        }
+
+        do {
+            try await broadcast.start()
+            writeDiagnostic("M6_BROADCAST_STARTED session=\(sessionID)", filename: "m6-result.txt")
+        } catch {
+            writeDiagnostic(
+                "M6_BROADCAST_FAILED session=\(sessionID) error=\(error.localizedDescription)",
+                filename: "m6-result.txt"
+            )
+        }
+    }
+
+    private func stopBroadcastSession() async {
+        captureEngine?.onVideoSampleBuffer = nil
+        let broadcast = broadcastSession
+        broadcastSession = nil
+        await broadcast?.stop()
     }
 
     private func recordMotionClassification(_ classification: MotionClassification) async {
@@ -348,6 +388,12 @@ final class SurveillanceController: ObservableObject {
 
     private func resetToIdle() {
         eventDetector.stop()
+        captureEngine?.onVideoSampleBuffer = nil
+        let broadcast = broadcastSession
+        broadcastSession = nil
+        Task {
+            await broadcast?.stop()
+        }
         liveUploadTask?.cancel()
         liveUploadTask = nil
         sleepBlocker.stop()

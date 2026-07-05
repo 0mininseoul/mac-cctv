@@ -14,6 +14,7 @@ enum EventNotificationBootstrap {
                 UIApplication.shared.registerForRemoteNotifications()
             }
             try? await CloudKitStore().ensureEventSubscription()
+            try? await CloudKitStore().ensureSignalSubscription()
         }
     }
 }

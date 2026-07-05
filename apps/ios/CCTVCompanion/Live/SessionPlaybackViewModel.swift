@@ -14,6 +14,7 @@ final class SessionPlaybackViewModel: ObservableObject {
     private let store = CloudKitStore()
     private var pollingTask: Task<Void, Never>?
     private var loadedChunkIDs: [String] = []
+    private var playbackActive = true
 
     init(session: SurveillanceSession) {
         self.session = session
@@ -37,6 +38,17 @@ final class SessionPlaybackViewModel: ObservableObject {
         pollingTask?.cancel()
         pollingTask = nil
         player.pause()
+    }
+
+    func setPlaybackActive(_ active: Bool) {
+        playbackActive = active
+        if active {
+            if !loadedChunkIDs.isEmpty {
+                player.play()
+            }
+        } else {
+            player.pause()
+        }
     }
 
     private func loadLoop() async {
@@ -86,7 +98,7 @@ final class SessionPlaybackViewModel: ObservableObject {
         }
 
         loadedChunkIDs = nextIDs
-        if !nextIDs.isEmpty {
+        if playbackActive, !nextIDs.isEmpty {
             player.play()
         }
     }

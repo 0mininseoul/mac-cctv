@@ -30,7 +30,7 @@ final class EventNavigationRouter: ObservableObject {
         await open(eventRecordName: recordName)
     }
 
-    static let pendingEventRecordNameKey = "lastOpenedEventRecordName"
+    nonisolated static let pendingEventRecordNameKey = "lastOpenedEventRecordName"
 
     private func writeDiagnostic(_ line: String) {
         guard let appGroupURL = FileManager.default.containerURL(

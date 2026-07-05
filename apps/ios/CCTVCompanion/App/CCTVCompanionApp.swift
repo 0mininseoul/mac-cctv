@@ -7,6 +7,9 @@ struct CCTVCompanionApp: App {
     init() {
         M0ProbeLaunchHandler.runIfRequested()
         M4PlaybackLaunchHandler.runIfRequested()
+        if M6LiveLaunchHandler.runIfRequested() {
+            return
+        }
         if M5EventPollLaunchHandler.runIfRequested() {
             return
         }

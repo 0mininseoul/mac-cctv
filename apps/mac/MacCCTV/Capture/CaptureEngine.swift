@@ -35,6 +35,7 @@ final class CaptureEngine: NSObject, @unchecked Sendable {
     private var lastMotionSampleSeconds = -Double.greatestFiniteMagnitude
 
     var onMotionClassification: (@Sendable (MotionClassification) -> Void)?
+    var onVideoSampleBuffer: ((CMSampleBuffer) -> Void)?
 
     init(outputDirectory: URL, settings: CaptureSettings = .m1Default) throws {
         self.outputDirectory = outputDirectory
@@ -136,6 +137,7 @@ extension CaptureEngine: AVCaptureVideoDataOutputSampleBufferDelegate {
         from connection: AVCaptureConnection
     ) {
         writer.append(sampleBuffer)
+        onVideoSampleBuffer?(sampleBuffer)
         classifyMotionIfNeeded(sampleBuffer)
     }
 

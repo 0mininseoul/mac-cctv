@@ -295,6 +295,18 @@
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "모드" } }
       }
     },
+    "playback_mode_connecting" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Connecting WebRTC" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "WebRTC 연결 중" } }
+      }
+    },
+    "playback_mode_realtime" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Realtime WebRTC" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "WebRTC 실시간" } }
+      }
+    },
     "playback_mode_live" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Delayed live" } },
@@ -347,6 +359,60 @@
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Waiting for video assets." } },
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "영상 asset을 기다리는 중입니다." } }
+      }
+    },
+    "live_status_answer_sent" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "WebRTC answer sent." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "WebRTC 응답을 보냈습니다." } }
+      }
+    },
+    "live_status_connecting" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Connecting WebRTC..." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "WebRTC 연결 중..." } }
+      }
+    },
+    "live_status_connecting_format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Connecting WebRTC... %.0fs" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "WebRTC 연결 중... %.0f초" } }
+      }
+    },
+    "live_status_connection_fallback" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "WebRTC disconnected. Playing delayed live." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "WebRTC 연결이 끊겨 지연 라이브로 재생합니다." } }
+      }
+    },
+    "live_status_failed_format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "WebRTC failed: %@" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "WebRTC 실패: %@" } }
+      }
+    },
+    "live_status_realtime" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Realtime WebRTC." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "WebRTC 실시간." } }
+      }
+    },
+    "live_status_signal_failed_format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Signal failed: %@" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "Signal 실패: %@" } }
+      }
+    },
+    "live_status_timeout_fallback" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "WebRTC timed out. Playing delayed live." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "WebRTC 시간이 초과되어 지연 라이브로 재생합니다." } }
+      }
+    },
+    "live_status_waiting_for_frame" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Waiting for WebRTC video..." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "WebRTC 영상을 기다리는 중..." } }
       }
     },
     "event_notification_body_format" : {
