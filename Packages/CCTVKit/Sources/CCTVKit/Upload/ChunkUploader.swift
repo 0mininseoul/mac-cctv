@@ -1,16 +1,30 @@
 import Foundation
 
-public struct PendingChunkUpload: Equatable, Sendable {
+public struct PendingChunkUpload: Codable, Equatable, Sendable {
     public let id: String
     public let sessionID: String
     public let index: Int
     public let fileURL: URL
+    public let startedAt: Date
+    public let duration: TimeInterval
+    public let byteCount: Int64
 
-    public init(id: String, sessionID: String, index: Int, fileURL: URL) {
+    public init(
+        id: String,
+        sessionID: String,
+        index: Int,
+        fileURL: URL,
+        startedAt: Date = Date(timeIntervalSince1970: 0),
+        duration: TimeInterval = 0,
+        byteCount: Int64 = 0
+    ) {
         self.id = id
         self.sessionID = sessionID
         self.index = index
         self.fileURL = fileURL
+        self.startedAt = startedAt
+        self.duration = duration
+        self.byteCount = byteCount
     }
 }
 

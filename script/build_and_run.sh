@@ -38,6 +38,22 @@ run_m1_capture() {
   "$APP_BUNDLE/Contents/MacOS/$APP_NAME" --m1-capture "$@"
 }
 
+run_m2_capture_upload() {
+  "$APP_BUNDLE/Contents/MacOS/$APP_NAME" --m2-capture-upload "$@"
+}
+
+run_m2_upload_pending() {
+  "$APP_BUNDLE/Contents/MacOS/$APP_NAME" --m2-upload-pending "$@"
+}
+
+run_m2_sweep() {
+  "$APP_BUNDLE/Contents/MacOS/$APP_NAME" --m2-sweep "$@"
+}
+
+run_m2_verify_upload() {
+  "$APP_BUNDLE/Contents/MacOS/$APP_NAME" --m2-verify-upload "$@"
+}
+
 case "$MODE" in
   run)
     open_app
@@ -61,8 +77,20 @@ case "$MODE" in
   --m1-capture|m1-capture)
     run_m1_capture "$@"
     ;;
+  --m2-capture-upload|m2-capture-upload)
+    run_m2_capture_upload "$@"
+    ;;
+  --m2-upload-pending|m2-upload-pending)
+    run_m2_upload_pending "$@"
+    ;;
+  --m2-sweep|m2-sweep)
+    run_m2_sweep "$@"
+    ;;
+  --m2-verify-upload|m2-verify-upload)
+    run_m2_verify_upload "$@"
+    ;;
   *)
-    echo "usage: $0 [run|--debug|--logs|--telemetry|--verify|--m1-capture]" >&2
+    echo "usage: $0 [run|--debug|--logs|--telemetry|--verify|--m1-capture|--m2-capture-upload|--m2-upload-pending|--m2-sweep|--m2-verify-upload]" >&2
     exit 2
     ;;
 esac

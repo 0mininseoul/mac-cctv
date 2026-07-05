@@ -19,6 +19,7 @@
 		74FC0CC21FDFE4AD73A56A64 /* IOSCloudKitProbeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66765A1D067DA4C98A98EAFA /* IOSCloudKitProbeView.swift */; };
 		7E0CEE6E8E123BF8ABB3BF81 /* MacCloudKitProbeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00FC6C92024FFCAA3C14711 /* MacCloudKitProbeView.swift */; };
 		81BAF4E07BF9D010B62437FE /* MacCloudKitProbeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 986F9BF51E2C7CF3035542ED /* MacCloudKitProbeViewModel.swift */; };
+		8D690B860CF39D4456809C7A /* M2UploadLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E1054ADF924B134952F92A1 /* M2UploadLaunchHandler.swift */; };
 		A3171676E215A4D82088EC99 /* LocalChunkStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D78207AB6F5951B117E39E8 /* LocalChunkStore.swift */; };
 		BAF86A2F9766ED7D90FE5841 /* CaptureEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 999F7E6549C53818BB9CA6BE /* CaptureEngine.swift */; };
 		E083CB53ABF4B7571A53B3D4 /* CCTVKit in Frameworks */ = {isa = PBXBuildFile; productRef = CC4F4F57FC77F80795CA379E /* CCTVKit */; };
@@ -28,6 +29,7 @@
 
 /* Begin PBXFileReference section */
 		0598E0BDD1D1C294A62A94AB /* M0ProbeLaunchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M0ProbeLaunchHandler.swift; sourceTree = "<group>"; };
+		1E1054ADF924B134952F92A1 /* M2UploadLaunchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M2UploadLaunchHandler.swift; sourceTree = "<group>"; };
 		282FCA4FE21DB7980D7DCB36 /* MacCCTV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacCCTV.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		30DF144D2C9E6F0DAE977038 /* ChunkWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChunkWriter.swift; sourceTree = "<group>"; };
 		37522887D38BD77AAEA88C31 /* IOSCloudKitProbeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSCloudKitProbeViewModel.swift; sourceTree = "<group>"; };
@@ -76,6 +78,7 @@
 			children = (
 				0598E0BDD1D1C294A62A94AB /* M0ProbeLaunchHandler.swift */,
 				B04A9EFC2FAC915F59F62D14 /* M1CaptureLaunchHandler.swift */,
+				1E1054ADF924B134952F92A1 /* M2UploadLaunchHandler.swift */,
 				FA7C453536705C4C6664DE1A /* MacCCTVApp.swift */,
 				986F9BF51E2C7CF3035542ED /* MacCloudKitProbeViewModel.swift */,
 			);
@@ -244,12 +247,12 @@
 					54374CA213092B0F091EBD9E = {
 						DevelopmentTeam = 878FAHTFQJ;
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.iCloud\": [\"enabled\": 1]]";
 					};
 					D14D4B0E61026724F28C6167 = {
 						DevelopmentTeam = 878FAHTFQJ;
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.ApplicationGroups.Mac\": [\"enabled\": 1], \"com.apple.iCloud\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.ApplicationGroups.Mac\": [\"enabled\": 1]]";
 					};
 				};
 			};
@@ -307,6 +310,7 @@
 				A3171676E215A4D82088EC99 /* LocalChunkStore.swift in Sources */,
 				2E31E0E8B1C5662D7C0269D4 /* M0ProbeLaunchHandler.swift in Sources */,
 				5CF59D2FB28A5BBEC0C7864C /* M1CaptureLaunchHandler.swift in Sources */,
+				8D690B860CF39D4456809C7A /* M2UploadLaunchHandler.swift in Sources */,
 				E96ABB53B915A1B8395F4D71 /* MacCCTVApp.swift in Sources */,
 				7E0CEE6E8E123BF8ABB3BF81 /* MacCloudKitProbeView.swift in Sources */,
 				81BAF4E07BF9D010B62437FE /* MacCloudKitProbeViewModel.swift in Sources */,

@@ -7,6 +7,7 @@ struct MacCCTVApp: App {
     init() {
         M0ProbeLaunchHandler.runIfRequested()
         M1CaptureLaunchHandler.runIfRequested()
+        M2UploadLaunchHandler.runIfRequested()
     }
 
     var body: some Scene {

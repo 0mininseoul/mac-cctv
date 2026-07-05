@@ -24,6 +24,8 @@ public enum CKSchema {
         public static let index = "index"
         public static let startedAt = "startedAt"
         public static let duration = "duration"
+        public static let byteCount = "byteCount"
+        public static let uploadedAt = "uploadedAt"
         public static let video = "video"
     }
 
@@ -49,4 +51,3 @@ public enum CKSchema {
         public static let deviceName = "deviceName"
     }
 }
-

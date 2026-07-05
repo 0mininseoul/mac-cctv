@@ -1,12 +1,12 @@
 import Foundation
 
-public enum SessionStatus: String, CaseIterable, Sendable {
+public enum SessionStatus: String, CaseIterable, Codable, Sendable {
     case recording
     case ended
     case interrupted
 }
 
-public struct SurveillanceSession: Identifiable, Equatable, Sendable {
+public struct SurveillanceSession: Identifiable, Codable, Equatable, Sendable {
     public let id: String
     public var startedAt: Date
     public var endedAt: Date?
@@ -28,7 +28,7 @@ public struct SurveillanceSession: Identifiable, Equatable, Sendable {
     }
 }
 
-public struct VideoChunk: Identifiable, Equatable, Sendable {
+public struct VideoChunk: Identifiable, Codable, Equatable, Sendable {
     public let id: String
     public var sessionID: String
     public var index: Int
@@ -106,4 +106,3 @@ public struct SignalMessage: Identifiable, Equatable, Sendable {
         self.createdAt = createdAt
     }
 }
-
