@@ -15,6 +15,8 @@ public enum CloudKitStoreError: Error, Equatable, LocalizedError {
 public final class CloudKitStore: @unchecked Sendable {
     public static let m0SharedProbeRecordName = "m0-shared-probe"
 
+    private static let retentionQueryUpperBound = Date(timeIntervalSince1970: 4_102_444_800)
+
     private let container: CKContainer
     private let database: CKDatabase
 
@@ -172,7 +174,14 @@ public final class CloudKitStore: @unchecked Sendable {
     }
 
     private func fetchRetentionSessions(limit: Int) async throws -> [RetentionSession] {
-        let query = CKQuery(recordType: CKSchema.RecordType.session, predicate: NSPredicate(value: true))
+        let query = CKQuery(
+            recordType: CKSchema.RecordType.session,
+            predicate: NSPredicate(
+                format: "%K <= %@",
+                CKSchema.Session.startedAt,
+                Self.retentionQueryUpperBound as NSDate
+            )
+        )
         let response = try await database.records(
             matching: query,
             desiredKeys: [
@@ -190,7 +199,14 @@ public final class CloudKitStore: @unchecked Sendable {
     }
 
     private func fetchRetentionChunks(limit: Int) async throws -> [RetentionChunk] {
-        let query = CKQuery(recordType: CKSchema.RecordType.chunk, predicate: NSPredicate(value: true))
+        let query = CKQuery(
+            recordType: CKSchema.RecordType.chunk,
+            predicate: NSPredicate(
+                format: "%K <= %@",
+                CKSchema.Chunk.startedAt,
+                Self.retentionQueryUpperBound as NSDate
+            )
+        )
         let response = try await database.records(
             matching: query,
             desiredKeys: [
