@@ -41,6 +41,8 @@ final class SurveillanceController: ObservableObject {
     private var activeSessionID: String?
     private var activeOutputDirectory: URL?
     private var activeStartedAt: Date?
+    private var liveUploadTask: Task<Void, Never>?
+    private var uploadPlanner = ChunkUploadPlanner()
     private var isTransitioning = false
 
     var state: SurveillanceState {
@@ -150,6 +152,8 @@ final class SurveillanceController: ObservableObject {
             activeSessionID = sessionID
             activeOutputDirectory = outputDirectory
             activeStartedAt = startedAt
+            uploadPlanner = ChunkUploadPlanner()
+            startLiveUploadLoop(sessionID: sessionID, sessionStartedAt: startedAt, engine: engine)
             statusText = String(localized: "surveillance_status_armed")
             writeDiagnostic("M3_ARMED session=\(sessionID) output=\(outputDirectory.path)")
         } catch {
@@ -181,6 +185,7 @@ final class SurveillanceController: ObservableObject {
             return
         }
 
+        await stopLiveUploadLoop()
         let chunks = engine.stopAndWaitForChunks(timeout: 30)
         sleepBlocker.stop()
         captureEngine = nil
@@ -194,8 +199,11 @@ final class SurveillanceController: ObservableObject {
                 deviceName: Host.current().localizedName ?? "Mac",
                 status: .ended
             )
-            let pendingChunks = makePendingChunks(sessionID: sessionID, sessionStartedAt: startedAt, chunks: chunks)
+            let allPendingChunks = makePendingChunks(sessionID: sessionID, sessionStartedAt: startedAt, chunks: chunks)
+            let pendingChunks = uploadPlanner.pendingUploads(from: allPendingChunks)
             let uploadResult = await ChunkUploader(client: CloudKitChunkUploadClient(store: store)).upload(pendingChunks)
+            uploadPlanner.markUploaded(uploadResult.uploaded)
+            let uploadedCount = allPendingChunks.count - uploadPlanner.pendingUploads(from: allPendingChunks).count
             _ = try await store.saveSession(session)
             try? LocalChunkStore(maxBytes: selectedQuality.captureSettings.maxLocalBytes).removeUntrackedMP4s(
                 in: outputDirectory,
@@ -204,8 +212,9 @@ final class SurveillanceController: ObservableObject {
             try machine.apply(.disarm(endedAt: endedAt))
             statusText = String(format: String(localized: "surveillance_status_stopped_format"), chunks.count)
             writeDiagnostic(
-                "M3_IDLE session=\(sessionID) chunks=\(chunks.count) uploaded=\(uploadResult.uploaded.count) pending=\(uploadResult.remaining.count) output=\(outputDirectory.path)"
+                "M3_IDLE session=\(sessionID) chunks=\(chunks.count) uploaded=\(uploadedCount) pending=\(uploadResult.remaining.count) finalUploaded=\(uploadResult.uploaded.count) output=\(outputDirectory.path)"
             )
+            clearActiveSession()
         } catch {
             resetToIdle()
             statusText = String(format: String(localized: "surveillance_status_failed_format"), error.localizedDescription)
@@ -213,14 +222,67 @@ final class SurveillanceController: ObservableObject {
         }
     }
 
+    private func startLiveUploadLoop(sessionID: String, sessionStartedAt: Date, engine: CaptureEngine) {
+        liveUploadTask?.cancel()
+        liveUploadTask = Task { [weak self] in
+            while !Task.isCancelled {
+                do {
+                    try await Task.sleep(nanoseconds: 3_000_000_000)
+                } catch {
+                    break
+                }
+                guard !Task.isCancelled else {
+                    break
+                }
+                await self?.uploadFinishedChunks(sessionID: sessionID, sessionStartedAt: sessionStartedAt, engine: engine)
+            }
+        }
+    }
+
+    private func stopLiveUploadLoop() async {
+        guard let task = liveUploadTask else {
+            return
+        }
+        liveUploadTask = nil
+        task.cancel()
+        await task.value
+    }
+
+    private func uploadFinishedChunks(sessionID: String, sessionStartedAt: Date, engine: CaptureEngine) async {
+        let chunks = engine.finishedChunksSnapshot()
+        guard !chunks.isEmpty else {
+            return
+        }
+
+        let allPendingChunks = makePendingChunks(sessionID: sessionID, sessionStartedAt: sessionStartedAt, chunks: chunks)
+        let pendingChunks = uploadPlanner.pendingUploads(from: allPendingChunks)
+        guard !pendingChunks.isEmpty else {
+            return
+        }
+
+        let uploadResult = await ChunkUploader(client: CloudKitChunkUploadClient(store: store)).upload(pendingChunks)
+        uploadPlanner.markUploaded(uploadResult.uploaded)
+        let uploadedCount = allPendingChunks.count - uploadPlanner.pendingUploads(from: allPendingChunks).count
+        writeDiagnostic(
+            "M4_LIVE_UPLOAD session=\(sessionID) finished=\(chunks.count) uploaded=\(uploadedCount) batch=\(uploadResult.uploaded.count) pending=\(uploadResult.remaining.count)"
+        )
+    }
+
     private func resetToIdle() {
+        liveUploadTask?.cancel()
+        liveUploadTask = nil
         sleepBlocker.stop()
         captureEngine = nil
+        clearActiveSession()
+        uploadPlanner = ChunkUploadPlanner()
+        machine = SurveillanceStateMachine()
+        statusText = String(localized: "surveillance_status_idle")
+    }
+
+    private func clearActiveSession() {
         activeSessionID = nil
         activeOutputDirectory = nil
         activeStartedAt = nil
-        machine = SurveillanceStateMachine()
-        statusText = String(localized: "surveillance_status_idle")
     }
 
     private static func outputDirectory(for sessionID: String) throws -> URL {

@@ -58,6 +58,10 @@ final class CaptureEngine: NSObject, @unchecked Sendable {
         return writer.waitForFinishedChunks(timeout: timeout)
     }
 
+    func finishedChunksSnapshot() -> [CaptureChunk] {
+        writer.finishedChunksSnapshot()
+    }
+
     private func requestCameraAccess() async throws {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:

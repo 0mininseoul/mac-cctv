@@ -10,6 +10,7 @@
 		0DDB2489A41A68278C836EFE /* SurveillanceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AACA2D3BFFEAFBB1894AC674 /* SurveillanceController.swift */; };
 		110F222E22059DB633A9751C /* SessionPlaybackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB54624CDB1A553B4C6712A6 /* SessionPlaybackView.swift */; };
 		18BA45D094281A9E2FC6F104 /* CCTVCompanionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CACEC2A30F0B0D28EA4EB50 /* CCTVCompanionApp.swift */; };
+		1AB2E18EBAD3149A367D6AD3 /* M4PlaybackLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D2565259B1F3723D408EBCD /* M4PlaybackLaunchHandler.swift */; };
 		1E4DDB35A9D729B8626CE86B /* CaptureSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A398E53B0362902D775BF7 /* CaptureSettings.swift */; };
 		2CB2F7D91BF32EA91CF90B23 /* SessionPlaybackViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B6EC5F4857C375A251B8AAE /* SessionPlaybackViewModel.swift */; };
 		2D9FE6114734D60ACD06DA7C /* M0ProbeLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F4F93FC1015721C90A7951F /* M0ProbeLaunchHandler.swift */; };
@@ -52,6 +53,7 @@
 		724AE9EC4072B23097D6D434 /* CCTVCompanion.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CCTVCompanion.entitlements; sourceTree = "<group>"; };
 		74590EDC7780A3EB3C5122EE /* SessionLibraryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLibraryViewModel.swift; sourceTree = "<group>"; };
 		75369F92F71E501939D44CAC /* MacCCTV.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MacCCTV.entitlements; sourceTree = "<group>"; };
+		7D2565259B1F3723D408EBCD /* M4PlaybackLaunchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M4PlaybackLaunchHandler.swift; sourceTree = "<group>"; };
 		7D78207AB6F5951B117E39E8 /* LocalChunkStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalChunkStore.swift; sourceTree = "<group>"; };
 		8F4F93FC1015721C90A7951F /* M0ProbeLaunchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M0ProbeLaunchHandler.swift; sourceTree = "<group>"; };
 		986F9BF51E2C7CF3035542ED /* MacCloudKitProbeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacCloudKitProbeViewModel.swift; sourceTree = "<group>"; };
@@ -145,6 +147,7 @@
 				5CACEC2A30F0B0D28EA4EB50 /* CCTVCompanionApp.swift */,
 				37522887D38BD77AAEA88C31 /* IOSCloudKitProbeViewModel.swift */,
 				8F4F93FC1015721C90A7951F /* M0ProbeLaunchHandler.swift */,
+				7D2565259B1F3723D408EBCD /* M4PlaybackLaunchHandler.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -377,6 +380,7 @@
 				74FC0CC21FDFE4AD73A56A64 /* IOSCloudKitProbeView.swift in Sources */,
 				F7399BBEAB1D0915E7EF81DF /* IOSCloudKitProbeViewModel.swift in Sources */,
 				2D9FE6114734D60ACD06DA7C /* M0ProbeLaunchHandler.swift in Sources */,
+				1AB2E18EBAD3149A367D6AD3 /* M4PlaybackLaunchHandler.swift in Sources */,
 				90F84CD00B18EEB6B3B87C80 /* SessionLibraryView.swift in Sources */,
 				71C3FA8A11FEA42D432C1BCA /* SessionLibraryViewModel.swift in Sources */,
 				110F222E22059DB633A9751C /* SessionPlaybackView.swift in Sources */,
