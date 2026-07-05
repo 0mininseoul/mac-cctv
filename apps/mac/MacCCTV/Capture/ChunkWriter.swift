@@ -57,6 +57,11 @@ final class ChunkWriter {
         guard let activeChunk else {
             return
         }
+        let duration = max(0, activeChunk.lastSourceTime.seconds - activeChunk.sourceStartTime.seconds)
+        guard duration >= 0.5 else {
+            discard(activeChunk)
+            return
+        }
         finish(activeChunk, sourceEndTime: activeChunk.lastSourceTime)
     }
 
@@ -135,6 +140,13 @@ final class ChunkWriter {
             self.lock.unlock()
             try? store.enforceLimit(in: outputDirectory)
         }
+    }
+
+    private func discard(_ chunk: ActiveChunk) {
+        activeChunk = nil
+        chunk.input.markAsFinished()
+        chunk.writer.cancelWriting()
+        try? FileManager.default.removeItem(at: chunk.url)
     }
 
     private func videoOutputSettings() -> [String: Any] {

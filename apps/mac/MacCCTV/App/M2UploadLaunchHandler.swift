@@ -77,10 +77,12 @@ enum M2UploadLaunchHandler {
         )
         let manifestURL = try writePendingManifest(manifest)
 
-        return try await uploadManifest(
+        let result = try await uploadManifest(
             manifestURL: manifestURL,
             simulateOffline: arguments.contains("--simulate-offline")
         )
+        removeUntrackedMP4s(in: outputDirectory, keeping: chunks, settings: settings)
+        return result
     }
 
     private static func uploadPending(arguments: [String]) async throws -> String {
@@ -268,6 +270,16 @@ enum M2UploadLaunchHandler {
                 .appendingPathComponent("m2-upload-manifest.json")
         }
         throw M2Error.manifestRequired
+    }
+
+    private static func removeUntrackedMP4s(
+        in outputDirectory: URL,
+        keeping chunks: [CaptureChunk],
+        settings: CaptureSettings
+    ) {
+        let trackedURLs = Set(chunks.map { URL(fileURLWithPath: $0.path) })
+        let store = LocalChunkStore(maxBytes: settings.maxLocalBytes)
+        try? store.removeUntrackedMP4s(in: outputDirectory, keeping: trackedURLs)
     }
 
     private static func countValue(named name: String, in line: String) -> Int? {

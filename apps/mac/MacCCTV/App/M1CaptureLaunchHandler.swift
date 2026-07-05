@@ -42,6 +42,7 @@ enum M1CaptureLaunchHandler {
         )
         let manifestData = try JSONEncoder.m1Manifest.encode(manifest)
         try manifestData.write(to: manifestURL, options: .atomic)
+        removeUntrackedMP4s(in: outputDirectory, keeping: chunks, settings: settings)
 
         guard !chunks.isEmpty else {
             throw M1CaptureError.noChunksWritten
@@ -78,6 +79,16 @@ enum M1CaptureLaunchHandler {
             return nil
         }
         return arguments[index + 1]
+    }
+
+    private static func removeUntrackedMP4s(
+        in outputDirectory: URL,
+        keeping chunks: [CaptureChunk],
+        settings: CaptureSettings
+    ) {
+        let trackedURLs = Set(chunks.map { URL(fileURLWithPath: $0.path) })
+        let store = LocalChunkStore(maxBytes: settings.maxLocalBytes)
+        try? store.removeUntrackedMP4s(in: outputDirectory, keeping: trackedURLs)
     }
 
     private static func finish(_ line: String, exitCode: Int32) -> Never {
