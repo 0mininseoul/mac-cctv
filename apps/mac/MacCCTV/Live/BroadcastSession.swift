@@ -143,6 +143,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
                 sdpMid: payload.sdpMid
             )
             try await peerConnection.add(candidate)
+            diagnostics("M6_BROADCAST_REMOTE_ICE_ADDED session=\(sessionID) mid=\(payload.sdpMid ?? "nil") index=\(payload.sdpMLineIndex)")
         case .offer, .sirenCommand:
             return
         }
@@ -184,6 +185,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
                     createdAt: Date()
                 )
             )
+            diagnostics("M6_BROADCAST_LOCAL_ICE_SENT session=\(sessionID) mid=\(candidate.sdpMid ?? "nil") index=\(candidate.sdpMLineIndex)")
         } catch {
             diagnostics("M6_BROADCAST_ICE_SEND_FAILED session=\(sessionID) error=\(error.localizedDescription)")
         }

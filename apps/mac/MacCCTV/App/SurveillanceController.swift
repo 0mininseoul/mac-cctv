@@ -254,7 +254,7 @@ final class SurveillanceController: ObservableObject {
             channel: channel,
             diagnostics: { [weak self] line in
                 Task { @MainActor [weak self] in
-                    self?.writeDiagnostic(line, filename: "m6-result.txt")
+                    self?.appendDiagnostic(line, filename: "m6-result.txt")
                 }
             }
         )
@@ -454,6 +454,22 @@ final class SurveillanceController: ObservableObject {
         }
         let resultURL = appGroupURL.appendingPathComponent(filename)
         try? line.appending("\n").write(to: resultURL, atomically: true, encoding: .utf8)
+    }
+
+    private func appendDiagnostic(_ line: String, filename: String) {
+        guard let appGroupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: CKSchema.appGroupIdentifier) else {
+            return
+        }
+        let resultURL = appGroupURL.appendingPathComponent(filename)
+        let data = Data(line.appending("\n").utf8)
+        if FileManager.default.fileExists(atPath: resultURL.path),
+           let handle = try? FileHandle(forWritingTo: resultURL) {
+            try? handle.seekToEnd()
+            try? handle.write(contentsOf: data)
+            try? handle.close()
+        } else {
+            try? data.write(to: resultURL, options: .atomic)
+        }
     }
 }
 

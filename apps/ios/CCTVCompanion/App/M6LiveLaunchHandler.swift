@@ -39,7 +39,13 @@ enum M6LiveLaunchHandler {
         }
 
         let expectFallback = arguments.contains("--expect-fallback")
-        let receiver = WebRTCReceiver(session: session)
+        let receiver = WebRTCReceiver(
+            session: session,
+            diagnostics: { line in
+                print(line)
+                fflush(stdout)
+            }
+        )
         receiver.start()
         defer {
             receiver.stop()
@@ -67,6 +73,10 @@ enum M6LiveLaunchHandler {
                 }
                 throw M6LiveError.fellBack(reason)
             case .connecting:
+                print(
+                    "M6_WEBRTC_WAIT session=\(session.id) mode=connecting status=\"\(receiver.statusText)\" elapsed=\(String(format: "%.1f", Date().timeIntervalSince(startedAt)))"
+                )
+                fflush(stdout)
                 try await Task.sleep(nanoseconds: 250_000_000)
             }
         }

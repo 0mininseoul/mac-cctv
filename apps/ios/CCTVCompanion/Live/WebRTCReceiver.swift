@@ -13,6 +13,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
 
     private let session: SurveillanceSession
     private let channel: SignalingChannel
+    private let diagnostics: (@Sendable (String) -> Void)?
     private let factory: RTCPeerConnectionFactory
     private let policy = LiveConnectionPolicy(timeout: 10)
     private let encoder = JSONEncoder()
@@ -27,9 +28,14 @@ final class WebRTCReceiver: NSObject, ObservableObject {
     private var remoteVideoTrack: RTCVideoTrack?
     private var frameObserver: RemoteFrameObserver?
 
-    init(session: SurveillanceSession, channel: SignalingChannel? = nil) {
+    init(
+        session: SurveillanceSession,
+        channel: SignalingChannel? = nil,
+        diagnostics: (@Sendable (String) -> Void)? = nil
+    ) {
         self.session = session
         self.channel = channel ?? CloudKitSignalingChannel(sessionID: session.id, localSender: .ios)
+        self.diagnostics = diagnostics
         self.factory = RTCPeerConnectionFactory(
             encoderFactory: RTCDefaultVideoEncoderFactory(),
             decoderFactory: RTCDefaultVideoDecoderFactory()
@@ -179,6 +185,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
                 sdpMid: payload.sdpMid
             )
             try await peerConnection.add(candidate)
+            diagnostics?("M6_RECEIVER_REMOTE_ICE_ADDED session=\(session.id) mid=\(payload.sdpMid ?? "nil") index=\(payload.sdpMLineIndex)")
         case .answer, .sirenCommand:
             return
         }
@@ -199,6 +206,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
         frameObserver = observer
         videoTrack.add(rendererView)
         videoTrack.add(observer)
+        diagnostics?("M6_RECEIVER_TRACK_ATTACHED session=\(session.id)")
         statusText = String(localized: "live_status_waiting_for_frame")
     }
 
@@ -208,6 +216,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
         }
         hasReceivedRemoteVideo = true
         refreshMode(now: Date())
+        diagnostics?("M6_RECEIVER_FRAME_RECEIVED session=\(session.id)")
         statusText = String(localized: "live_status_realtime")
     }
 
@@ -280,8 +289,10 @@ final class WebRTCReceiver: NSObject, ObservableObject {
                     createdAt: Date()
                 )
             )
+            diagnostics?("M6_RECEIVER_LOCAL_ICE_SENT session=\(session.id) mid=\(candidate.sdpMid ?? "nil") index=\(candidate.sdpMLineIndex)")
         } catch {
             statusText = String(format: String(localized: "live_status_signal_failed_format"), error.localizedDescription)
+            diagnostics?("M6_RECEIVER_ICE_SEND_FAILED session=\(session.id) error=\(error.localizedDescription)")
         }
     }
 }
@@ -303,10 +314,14 @@ extension WebRTCReceiver: RTCPeerConnectionDelegate {
     nonisolated func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {}
 
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {
-        if newState == .failed || newState == .disconnected || newState == .closed {
-            Task { @MainActor [weak self] in
-                self?.peerConnectionFailed = true
-                self?.refreshMode(now: Date())
+        Task { @MainActor [weak self] in
+            guard let self else {
+                return
+            }
+            diagnostics?("M6_RECEIVER_ICE_STATE session=\(session.id) state=\(newState.rawValue)")
+            if newState == .failed || newState == .closed || (newState == .disconnected && hasReceivedRemoteVideo) {
+                self.peerConnectionFailed = true
+                self.refreshMode(now: Date())
             }
         }
     }
@@ -324,10 +339,14 @@ extension WebRTCReceiver: RTCPeerConnectionDelegate {
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {}
 
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCPeerConnectionState) {
-        if newState == .failed || newState == .disconnected || newState == .closed {
-            Task { @MainActor [weak self] in
-                self?.peerConnectionFailed = true
-                self?.refreshMode(now: Date())
+        Task { @MainActor [weak self] in
+            guard let self else {
+                return
+            }
+            diagnostics?("M6_RECEIVER_CONNECTION_STATE session=\(session.id) state=\(newState.rawValue)")
+            if newState == .failed || newState == .closed || (newState == .disconnected && hasReceivedRemoteVideo) {
+                self.peerConnectionFailed = true
+                self.refreshMode(now: Date())
             }
         }
     }
