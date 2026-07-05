@@ -34,13 +34,25 @@ public struct VideoChunk: Identifiable, Codable, Equatable, Sendable {
     public var index: Int
     public var startedAt: Date
     public var duration: TimeInterval
+    public var assetFileURL: URL?
+    public var byteCount: Int64
 
-    public init(id: String, sessionID: String, index: Int, startedAt: Date, duration: TimeInterval) {
+    public init(
+        id: String,
+        sessionID: String,
+        index: Int,
+        startedAt: Date,
+        duration: TimeInterval,
+        assetFileURL: URL? = nil,
+        byteCount: Int64 = 0
+    ) {
         self.id = id
         self.sessionID = sessionID
         self.index = index
         self.startedAt = startedAt
         self.duration = duration
+        self.assetFileURL = assetFileURL
+        self.byteCount = byteCount
     }
 }
 

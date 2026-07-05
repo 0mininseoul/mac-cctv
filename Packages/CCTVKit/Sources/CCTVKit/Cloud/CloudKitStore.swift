@@ -143,7 +143,8 @@ public final class CloudKitStore: @unchecked Sendable {
                 CKSchema.Chunk.index,
                 CKSchema.Chunk.startedAt,
                 CKSchema.Chunk.duration,
-                CKSchema.Chunk.byteCount
+                CKSchema.Chunk.byteCount,
+                CKSchema.Chunk.video
             ]
         )
 
@@ -151,6 +152,52 @@ public final class CloudKitStore: @unchecked Sendable {
             try makeVideoChunk(from: result.get())
         }
         .sorted { $0.index < $1.index }
+    }
+
+    public func fetchSessions(limit: Int = 100) async throws -> [SurveillanceSession] {
+        let query = CKQuery(
+            recordType: CKSchema.RecordType.session,
+            predicate: NSPredicate(
+                format: "%K <= %@",
+                CKSchema.Session.startedAt,
+                Self.retentionQueryUpperBound as NSDate
+            )
+        )
+        let response = try await database.records(
+            matching: query,
+            desiredKeys: [
+                CKSchema.Session.startedAt,
+                CKSchema.Session.endedAt,
+                CKSchema.Session.deviceName,
+                CKSchema.Session.status
+            ],
+            resultsLimit: limit
+        )
+
+        return try response.matchResults.compactMap { _, result in
+            try makeSession(from: result.get())
+        }
+        .sorted { first, second in
+            first.startedAt > second.startedAt
+        }
+    }
+
+    public func fetchChunks(sessionID: String, limit: Int = 600) async throws -> [VideoChunk] {
+        do {
+            return try await fetchChunksBySessionReference(sessionID: sessionID, limit: limit)
+        } catch where shouldFallbackFromSessionReferenceQuery(error) {
+            return try await fetchChunksByStartedAt(limit: limit).filter { chunk in
+                chunk.sessionID == sessionID
+            }
+        }
+    }
+
+    public func deleteSession(id: String) async throws {
+        let chunks = try await fetchChunks(sessionID: id, limit: 2_000)
+        for chunk in chunks {
+            _ = try? await database.deleteRecord(withID: CKRecord.ID(recordName: chunk.id))
+        }
+        _ = try await database.deleteRecord(withID: CKRecord.ID(recordName: id))
     }
 
     public func fetchRetentionSnapshot(limit: Int = 200) async throws -> (sessions: [RetentionSession], chunks: [RetentionChunk]) {
@@ -222,6 +269,72 @@ public final class CloudKitStore: @unchecked Sendable {
         }
     }
 
+    private func fetchChunksBySessionReference(sessionID: String, limit: Int) async throws -> [VideoChunk] {
+        let sessionReference = CKRecord.Reference(
+            recordID: CKRecord.ID(recordName: sessionID),
+            action: .none
+        )
+        let query = CKQuery(
+            recordType: CKSchema.RecordType.chunk,
+            predicate: NSPredicate(
+                format: "%K == %@",
+                CKSchema.Chunk.session,
+                sessionReference
+            )
+        )
+        let response = try await database.records(
+            matching: query,
+            desiredKeys: chunkPlaybackDesiredKeys,
+            resultsLimit: limit
+        )
+
+        return try response.matchResults.compactMap { _, result in
+            try makeVideoChunk(from: result.get())
+        }
+        .sorted { $0.index < $1.index }
+    }
+
+    private func fetchChunksByStartedAt(limit: Int) async throws -> [VideoChunk] {
+        let query = CKQuery(
+            recordType: CKSchema.RecordType.chunk,
+            predicate: NSPredicate(
+                format: "%K <= %@",
+                CKSchema.Chunk.startedAt,
+                Self.retentionQueryUpperBound as NSDate
+            )
+        )
+        let response = try await database.records(
+            matching: query,
+            desiredKeys: chunkPlaybackDesiredKeys,
+            resultsLimit: limit
+        )
+
+        return try response.matchResults.compactMap { _, result in
+            try makeVideoChunk(from: result.get())
+        }
+        .sorted { $0.index < $1.index }
+    }
+
+    private var chunkPlaybackDesiredKeys: [String] {
+        [
+            CKSchema.Chunk.session,
+            CKSchema.Chunk.index,
+            CKSchema.Chunk.startedAt,
+            CKSchema.Chunk.duration,
+            CKSchema.Chunk.byteCount,
+            CKSchema.Chunk.video
+        ]
+    }
+
+    private func shouldFallbackFromSessionReferenceQuery(_ error: Error) -> Bool {
+        if let cloudKitError = error as? CKError, cloudKitError.code == .invalidArguments {
+            return true
+        }
+
+        let description = (error as NSError).localizedDescription.lowercased()
+        return description.contains("not marked queryable") || description.contains("queryable")
+    }
+
     private func apply(_ session: SurveillanceSession, to record: CKRecord) {
         record[CKSchema.Session.startedAt] = session.startedAt as CKRecordValue
         record[CKSchema.Session.endedAt] = session.endedAt as CKRecordValue?
@@ -263,7 +376,9 @@ public final class CloudKitStore: @unchecked Sendable {
             sessionID: sessionReference.recordID.recordName,
             index: Int(indexValue),
             startedAt: startedAt,
-            duration: duration
+            duration: duration,
+            assetFileURL: (record[CKSchema.Chunk.video] as? CKAsset)?.fileURL,
+            byteCount: record[CKSchema.Chunk.byteCount] as? Int64 ?? 0
         )
     }
 
