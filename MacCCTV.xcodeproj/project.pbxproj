@@ -48,6 +48,7 @@
 		B0407BA3B9C0707E2145ECCD /* WebRTCReceiver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51286E4EF4D6CBA34A8DF3E8 /* WebRTCReceiver.swift */; };
 		BAF86A2F9766ED7D90FE5841 /* CaptureEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 999F7E6549C53818BB9CA6BE /* CaptureEngine.swift */; };
 		C8971D15E095FB3E90D73E83 /* MacOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7B71D4DAA2536865C4357AC /* MacOnboardingView.swift */; };
+		CFF19CD57D1759CBCB0136DF /* TipJarAppStoreConnectProductTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B7B2B778F6E0C691EA02C91 /* TipJarAppStoreConnectProductTests.swift */; };
 		DAFACFA911D15AA3AFA4DB57 /* TipJarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD850BF5D3652F5125572FEF /* TipJarView.swift */; };
 		DED9DFCE96144A998E57712F /* MacCCTVRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85DD33AC436E7638A9D6C90B /* MacCCTVRootView.swift */; };
 		E083CB53ABF4B7571A53B3D4 /* CCTVKit in Frameworks */ = {isa = PBXBuildFile; productRef = CC4F4F57FC77F80795CA379E /* CCTVKit */; };
@@ -70,6 +71,7 @@
 /* Begin PBXFileReference section */
 		0598E0BDD1D1C294A62A94AB /* M0ProbeLaunchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M0ProbeLaunchHandler.swift; sourceTree = "<group>"; };
 		0ACB4C1D7C5A5AFA2B10C0AC /* MacCCTVTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacCCTVTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1B7B2B778F6E0C691EA02C91 /* TipJarAppStoreConnectProductTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJarAppStoreConnectProductTests.swift; sourceTree = "<group>"; };
 		1E1054ADF924B134952F92A1 /* M2UploadLaunchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M2UploadLaunchHandler.swift; sourceTree = "<group>"; };
 		282FCA4FE21DB7980D7DCB36 /* MacCCTV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacCCTV.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		28B65B440D4B33CCC1962465 /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
@@ -254,6 +256,7 @@
 		95E3D268FCF44C5D6D4BBB44 /* MacCCTVTests */ = {
 			isa = PBXGroup;
 			children = (
+				1B7B2B778F6E0C691EA02C91 /* TipJarAppStoreConnectProductTests.swift */,
 				33D7BCA4E0AA36840EC9E291 /* TipJarStoreKitSessionTests.swift */,
 			);
 			name = MacCCTVTests;
@@ -455,7 +458,7 @@
 					54374CA213092B0F091EBD9E = {
 						DevelopmentTeam = 878FAHTFQJ;
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.Push\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.iCloud\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.Push\": [\"enabled\": 1]]";
 					};
 					D14D4B0E61026724F28C6167 = {
 						DevelopmentTeam = 878FAHTFQJ;
@@ -524,6 +527,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CFF19CD57D1759CBCB0136DF /* TipJarAppStoreConnectProductTests.swift in Sources */,
 				AFAB6BF4CBB621E727B2C559 /* TipJarStoreKitSessionTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
