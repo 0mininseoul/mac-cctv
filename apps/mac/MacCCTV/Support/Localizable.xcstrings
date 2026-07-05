@@ -267,8 +267,8 @@
     },
     "onboarding_icloud_message" : {
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Mac CCTV stores recordings only in your private iCloud database." } },
-        "ko" : { "stringUnit" : { "state" : "translated", "value" : "Mac CCTV는 녹화본을 사용자 private iCloud database에만 저장합니다." } }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Mac CCTV stores recordings only in your personal iCloud." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "Mac CCTV는 녹화본을 사용자의 개인 iCloud에만 저장합니다." } }
       }
     },
     "onboarding_icloud_status_available" : {
@@ -371,6 +371,72 @@
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Support the developer" } },
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "개발자에게 후원하기" } }
+      }
+    },
+    "tip_jar_loading" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Loading tip options..." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "후원 항목 불러오는 중..." } }
+      }
+    },
+    "tip_jar_product_large_subtitle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "A generous thank-you." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "넉넉하게 응원하기" } }
+      }
+    },
+    "tip_jar_product_large_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Large Tip" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "큰 팁" } }
+      }
+    },
+    "tip_jar_product_small_subtitle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "A small thank-you." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "가볍게 응원하기" } }
+      }
+    },
+    "tip_jar_product_small_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Small Tip" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "작은 팁" } }
+      }
+    },
+    "tip_jar_product_supporter_subtitle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Support ongoing development." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "계속 개발할 수 있게 응원하기" } }
+      }
+    },
+    "tip_jar_product_supporter_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Supporter Tip" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "서포터 팁" } }
+      }
+    },
+    "tip_jar_purchase_failed" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Purchase could not be completed." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "구매를 완료하지 못했습니다." } }
+      }
+    },
+    "tip_jar_purchase_pending" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Purchase is pending." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "구매가 대기 중입니다." } }
+      }
+    },
+    "tip_jar_thanks" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Thank you for the support." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "후원해 주셔서 감사합니다." } }
+      }
+    },
+    "tip_jar_unavailable" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Tip options are unavailable right now." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "지금은 후원 항목을 불러올 수 없습니다." } }
       }
     },
     "surveillance_hotkey_failed_format" : {

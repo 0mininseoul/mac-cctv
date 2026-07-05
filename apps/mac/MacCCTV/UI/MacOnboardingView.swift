@@ -12,7 +12,7 @@ struct MacOnboardingView: View {
     @State private var step = MacOnboardingStep.camera
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 14) {
             header
 
             ProgressView(value: Double(step.rawValue + 1), total: Double(MacOnboardingStep.allCases.count))
@@ -56,8 +56,9 @@ struct MacOnboardingView: View {
                 .disabled(isPrimaryButtonDisabled)
             }
         }
-        .padding(18)
+        .padding(16)
         .frame(width: 380)
+        .fixedSize(horizontal: false, vertical: true)
         .task {
             viewModel.refreshCameraAuthorization()
         }
