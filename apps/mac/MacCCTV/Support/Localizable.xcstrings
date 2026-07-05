@@ -192,8 +192,121 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Write probe" } },
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "probe 쓰기" } }
       }
+    },
+    "surveillance_hotkey_failed_format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Shortcut unavailable: %@" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "단축키 사용 불가: %@" } }
+      }
+    },
+    "surveillance_hotkey_label" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Shortcut" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "단축키" } }
+      }
+    },
+    "surveillance_hotkey_ready_format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Shortcut ready: %@" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "단축키 준비됨: %@" } }
+      }
+    },
+    "surveillance_notifications_label" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Notifications" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "알림" } }
+      }
+    },
+    "surveillance_quality_high" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "High" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "고" } }
+      }
+    },
+    "surveillance_quality_label" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Quality" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "화질" } }
+      }
+    },
+    "surveillance_quality_low" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Low" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "저" } }
+      }
+    },
+    "surveillance_quality_medium" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Medium" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "중" } }
+      }
+    },
+    "surveillance_start" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Start Surveillance" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "감시 시작" } }
+      }
+    },
+    "surveillance_status_armed" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Surveillance is running." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "감시 중입니다." } }
+      }
+    },
+    "surveillance_status_failed_format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Failed: %@" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "실패: %@" } }
+      }
+    },
+    "surveillance_status_icloud_quota_low" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "iCloud storage may be full. Low quality selected." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "iCloud 저장 공간이 부족할 수 있습니다. 저화질로 변경했습니다." } }
+      }
+    },
+    "surveillance_status_icloud_unavailable" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "iCloud is unavailable." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "iCloud를 사용할 수 없습니다." } }
+      }
+    },
+    "surveillance_status_idle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Idle." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "대기 중." } }
+      }
+    },
+    "surveillance_status_starting" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Starting surveillance..." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "감시 시작 중..." } }
+      }
+    },
+    "surveillance_status_stopped_format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Stopped. %d chunks saved." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "종료됨. 청크 %d개 저장." } }
+      }
+    },
+    "surveillance_status_stopping" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Stopping and uploading..." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "종료 및 업로드 중..." } }
+      }
+    },
+    "surveillance_stop" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Stop Surveillance" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "감시 종료" } }
+      }
+    },
+    "surveillance_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Mac CCTV" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "Mac CCTV" } }
+      }
     }
   },
   "version" : "1.0"
 }
-

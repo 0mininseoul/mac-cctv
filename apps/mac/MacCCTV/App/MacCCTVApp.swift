@@ -2,7 +2,7 @@ import SwiftUI
 
 @main
 struct MacCCTVApp: App {
-    @StateObject private var viewModel = MacCloudKitProbeViewModel()
+    @StateObject private var controller = SurveillanceController()
 
     init() {
         M0ProbeLaunchHandler.runIfRequested()
@@ -11,8 +11,8 @@ struct MacCCTVApp: App {
     }
 
     var body: some Scene {
-        MenuBarExtra("mac_menu_title", systemImage: viewModel.isWorking ? "icloud.and.arrow.up" : "video.badge.checkmark") {
-            MacCloudKitProbeView(viewModel: viewModel)
+        MenuBarExtra("mac_menu_title", systemImage: controller.menuSystemImage) {
+            SurveillancePopoverView(controller: controller)
         }
         .menuBarExtraStyle(.window)
     }

@@ -1,0 +1,291 @@
+import CCTVKit
+import CloudKit
+import Foundation
+
+enum SurveillanceQuality: String, CaseIterable, Identifiable, Sendable {
+    case low
+    case medium
+    case high
+
+    var id: String { rawValue }
+
+    var captureSettings: CaptureSettings {
+        switch self {
+        case .low:
+            CaptureSettings(width: 854, height: 480, averageBitRate: 450_000, chunkDuration: 6, maxLocalBytes: 2_000_000_000)
+        case .medium:
+            .m1Default
+        case .high:
+            CaptureSettings(width: 1280, height: 720, averageBitRate: 1_300_000, chunkDuration: 6, maxLocalBytes: 2_000_000_000)
+        }
+    }
+}
+
+@MainActor
+final class SurveillanceController: ObservableObject {
+    @Published private(set) var machine = SurveillanceStateMachine()
+    @Published private(set) var statusText = String(localized: "surveillance_status_idle")
+    @Published private(set) var hotkeyStatusText = ""
+    @Published var selectedShortcut = HotkeyShortcut.controlCommandC {
+        didSet {
+            registerHotkey()
+        }
+    }
+    @Published var selectedQuality = SurveillanceQuality.medium
+    @Published var notificationsEnabled = true
+
+    private let hotkeyManager = HotkeyManager()
+    private let sleepBlocker = SleepBlocker()
+    private let store = CloudKitStore()
+    private var captureEngine: CaptureEngine?
+    private var activeSessionID: String?
+    private var activeOutputDirectory: URL?
+    private var activeStartedAt: Date?
+    private var isTransitioning = false
+
+    var state: SurveillanceState {
+        machine.state
+    }
+
+    var isArmed: Bool {
+        if case .armed = machine.state {
+            return true
+        }
+        return false
+    }
+
+    var isSirenActive: Bool {
+        if case .siren = machine.state {
+            return true
+        }
+        return false
+    }
+
+    var menuSystemImage: String {
+        switch machine.state {
+        case .idle:
+            "video"
+        case .armed:
+            "video.fill"
+        case .siren:
+            "exclamationmark.triangle.fill"
+        }
+    }
+
+    init() {
+        hotkeyManager.onPressed = { [weak self] in
+            Task { @MainActor in
+                self?.writeHotkeyDiagnostic("M3_HOTKEY_PRESSED shortcut=\(self?.selectedShortcut.display ?? "unknown")")
+                await self?.toggleFromHotkey()
+            }
+        }
+        registerHotkey()
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 750_000_000)
+            self?.registerHotkey()
+        }
+    }
+
+    func toggleFromButton() {
+        Task {
+            await toggleFromHotkey()
+        }
+    }
+
+    func registerHotkey() {
+        do {
+            try hotkeyManager.register(selectedShortcut)
+            hotkeyStatusText = String(format: String(localized: "surveillance_hotkey_ready_format"), selectedShortcut.display)
+            writeHotkeyDiagnostic("M3_HOTKEY_READY shortcut=\(selectedShortcut.display)")
+        } catch {
+            hotkeyStatusText = String(format: String(localized: "surveillance_hotkey_failed_format"), error.localizedDescription)
+            writeHotkeyDiagnostic("M3_HOTKEY_FAILED shortcut=\(selectedShortcut.display) error=\(error.localizedDescription)")
+        }
+    }
+
+    private func toggleFromHotkey() async {
+        guard !isTransitioning else {
+            return
+        }
+
+        switch machine.state {
+        case .idle:
+            await startSurveillance()
+        case .armed, .siren:
+            await stopSurveillance()
+        }
+    }
+
+    private func startSurveillance() async {
+        isTransitioning = true
+        statusText = String(localized: "surveillance_status_starting")
+        defer { isTransitioning = false }
+
+        do {
+            let accountStatus = try await store.accountStatus()
+            guard accountStatus == .available else {
+                statusText = String(localized: "surveillance_status_icloud_unavailable")
+                return
+            }
+
+            let startedAt = Date()
+            let sessionID = "m3-\(Int(startedAt.timeIntervalSince1970))"
+            let outputDirectory = try Self.outputDirectory(for: sessionID)
+            let settings = selectedQuality.captureSettings
+            let engine = try CaptureEngine(outputDirectory: outputDirectory, settings: settings)
+            let deviceName = Host.current().localizedName ?? "Mac"
+            let recordingSession = SurveillanceSession(
+                id: sessionID,
+                startedAt: startedAt,
+                endedAt: nil,
+                deviceName: deviceName,
+                status: .recording
+            )
+            try sleepBlocker.start()
+            try await engine.start()
+            captureEngine = engine
+            _ = try await store.saveSession(recordingSession)
+
+            try machine.apply(.arm(startedAt: startedAt))
+            activeSessionID = sessionID
+            activeOutputDirectory = outputDirectory
+            activeStartedAt = startedAt
+            statusText = String(localized: "surveillance_status_armed")
+            writeDiagnostic("M3_ARMED session=\(sessionID) output=\(outputDirectory.path)")
+        } catch {
+            _ = captureEngine?.stopAndWaitForChunks(timeout: 5)
+            sleepBlocker.stop()
+            captureEngine = nil
+            if error.isCloudKitQuotaExceeded {
+                selectedQuality = .low
+                statusText = String(localized: "surveillance_status_icloud_quota_low")
+            } else {
+                statusText = String(format: String(localized: "surveillance_status_failed_format"), error.localizedDescription)
+            }
+            writeDiagnostic("M3_FAILED \(error.localizedDescription)")
+        }
+    }
+
+    private func stopSurveillance() async {
+        isTransitioning = true
+        statusText = String(localized: "surveillance_status_stopping")
+        defer { isTransitioning = false }
+
+        guard
+            let engine = captureEngine,
+            let sessionID = activeSessionID,
+            let outputDirectory = activeOutputDirectory,
+            let startedAt = activeStartedAt
+        else {
+            resetToIdle()
+            return
+        }
+
+        let chunks = engine.stopAndWaitForChunks(timeout: 30)
+        sleepBlocker.stop()
+        captureEngine = nil
+        let endedAt = Date()
+
+        do {
+            let session = SurveillanceSession(
+                id: sessionID,
+                startedAt: startedAt,
+                endedAt: endedAt,
+                deviceName: Host.current().localizedName ?? "Mac",
+                status: .ended
+            )
+            let pendingChunks = makePendingChunks(sessionID: sessionID, sessionStartedAt: startedAt, chunks: chunks)
+            let uploadResult = await ChunkUploader(client: CloudKitChunkUploadClient(store: store)).upload(pendingChunks)
+            _ = try await store.saveSession(session)
+            try? LocalChunkStore(maxBytes: selectedQuality.captureSettings.maxLocalBytes).removeUntrackedMP4s(
+                in: outputDirectory,
+                keeping: Set(chunks.map { URL(fileURLWithPath: $0.path) })
+            )
+            try machine.apply(.disarm(endedAt: endedAt))
+            statusText = String(format: String(localized: "surveillance_status_stopped_format"), chunks.count)
+            writeDiagnostic(
+                "M3_IDLE session=\(sessionID) chunks=\(chunks.count) uploaded=\(uploadResult.uploaded.count) pending=\(uploadResult.remaining.count) output=\(outputDirectory.path)"
+            )
+        } catch {
+            resetToIdle()
+            statusText = String(format: String(localized: "surveillance_status_failed_format"), error.localizedDescription)
+            writeDiagnostic("M3_FAILED \(error.localizedDescription)")
+        }
+    }
+
+    private func resetToIdle() {
+        sleepBlocker.stop()
+        captureEngine = nil
+        activeSessionID = nil
+        activeOutputDirectory = nil
+        activeStartedAt = nil
+        machine = SurveillanceStateMachine()
+        statusText = String(localized: "surveillance_status_idle")
+    }
+
+    private static func outputDirectory(for sessionID: String) throws -> URL {
+        guard let appGroupURL = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: CKSchema.appGroupIdentifier
+        ) else {
+            throw SurveillanceControllerError.appGroupUnavailable
+        }
+        return appGroupURL.appendingPathComponent("M3Chunks").appendingPathComponent(sessionID)
+    }
+
+    private func makePendingChunks(
+        sessionID: String,
+        sessionStartedAt: Date,
+        chunks: [CaptureChunk]
+    ) -> [PendingChunkUpload] {
+        let firstSourceStart = chunks.first?.sourceStartSeconds ?? 0
+        return chunks.map { chunk in
+            PendingChunkUpload(
+                id: "\(sessionID)-chunk-\(String(format: "%04d", chunk.index))",
+                sessionID: sessionID,
+                index: chunk.index,
+                fileURL: URL(fileURLWithPath: chunk.path),
+                startedAt: sessionStartedAt.addingTimeInterval(chunk.sourceStartSeconds - firstSourceStart),
+                duration: chunk.duration,
+                byteCount: chunk.byteCount
+            )
+        }
+    }
+
+    private func writeDiagnostic(_ line: String) {
+        writeDiagnostic(line, filename: "m3-result.txt")
+    }
+
+    private func writeHotkeyDiagnostic(_ line: String) {
+        writeDiagnostic(line, filename: "m3-hotkey.txt")
+    }
+
+    private func writeDiagnostic(_ line: String, filename: String) {
+        guard let appGroupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: CKSchema.appGroupIdentifier) else {
+            return
+        }
+        let resultURL = appGroupURL.appendingPathComponent(filename)
+        try? line.appending("\n").write(to: resultURL, atomically: true, encoding: .utf8)
+    }
+}
+
+private enum SurveillanceControllerError: LocalizedError {
+    case appGroupUnavailable
+
+    var errorDescription: String? {
+        switch self {
+        case .appGroupUnavailable:
+            "App Group container is unavailable"
+        }
+    }
+}
+
+private extension Error {
+    var isCloudKitQuotaExceeded: Bool {
+        if let cloudKitError = self as? CKError {
+            return cloudKitError.code == .quotaExceeded
+        }
+
+        let nsError = self as NSError
+        return nsError.domain == CKError.errorDomain && nsError.code == CKError.Code.quotaExceeded.rawValue
+    }
+}
