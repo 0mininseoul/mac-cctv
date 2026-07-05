@@ -200,6 +200,51 @@ public final class CloudKitStore: @unchecked Sendable {
         _ = try await database.deleteRecord(withID: CKRecord.ID(recordName: id))
     }
 
+    @discardableResult
+    public func saveEvent(_ event: SecurityEvent) async throws -> SecurityEvent {
+        let recordID = CKRecord.ID(recordName: event.id)
+        let record: CKRecord
+        do {
+            record = try await database.record(for: recordID)
+        } catch let error as CKError where error.code == .unknownItem {
+            record = CKRecord(recordType: CKSchema.RecordType.event, recordID: recordID)
+        }
+
+        apply(event, to: record)
+        let savedRecord = try await database.save(record)
+        return try makeSecurityEvent(from: savedRecord)
+    }
+
+    public func fetchEvents(sessionID: String, after: Date? = nil, limit: Int = 200) async throws -> [SecurityEvent] {
+        do {
+            return try await fetchEventsBySessionReference(sessionID: sessionID, after: after, limit: limit)
+        } catch where shouldFallbackFromSessionReferenceQuery(error) {
+            return try await fetchEventsBroad(after: after, limit: limit).filter { event in
+                event.sessionID == sessionID
+            }
+        }
+    }
+
+    public func ensureEventSubscription(subscriptionID: String = "event-created-v1") async throws {
+        let subscription = CKQuerySubscription(
+            recordType: CKSchema.RecordType.event,
+            predicate: NSPredicate(value: true),
+            subscriptionID: subscriptionID,
+            options: [.firesOnRecordCreation]
+        )
+        let notificationInfo = CKSubscription.NotificationInfo()
+        notificationInfo.alertBody = "Mac CCTV event detected"
+        notificationInfo.soundName = "default"
+        notificationInfo.shouldBadge = true
+        notificationInfo.desiredKeys = [
+            CKSchema.Event.session,
+            CKSchema.Event.type,
+            CKSchema.Event.occurredAt
+        ]
+        subscription.notificationInfo = notificationInfo
+        _ = try await database.save(subscription)
+    }
+
     public func fetchRetentionSnapshot(limit: Int = 200) async throws -> (sessions: [RetentionSession], chunks: [RetentionChunk]) {
         let sessions = try await fetchRetentionSessions(limit: limit)
         let chunks = try await fetchRetentionChunks(limit: limit)
@@ -315,6 +360,64 @@ public final class CloudKitStore: @unchecked Sendable {
         .sorted { $0.index < $1.index }
     }
 
+    private func fetchEventsBySessionReference(sessionID: String, after: Date?, limit: Int) async throws -> [SecurityEvent] {
+        let sessionReference = CKRecord.Reference(
+            recordID: CKRecord.ID(recordName: sessionID),
+            action: .none
+        )
+        let query = CKQuery(
+            recordType: CKSchema.RecordType.event,
+            predicate: NSPredicate(
+                format: "%K == %@",
+                CKSchema.Event.session,
+                sessionReference
+            )
+        )
+        let response = try await database.records(
+            matching: query,
+            desiredKeys: eventDesiredKeys,
+            resultsLimit: limit
+        )
+
+        return try response.matchResults.compactMap { _, result in
+            try makeSecurityEvent(from: result.get())
+        }
+        .filter { event in
+            guard let after else {
+                return true
+            }
+            return event.occurredAt > after
+        }
+        .sorted { first, second in
+            first.occurredAt < second.occurredAt
+        }
+    }
+
+    private func fetchEventsBroad(after: Date?, limit: Int) async throws -> [SecurityEvent] {
+        let query = CKQuery(
+            recordType: CKSchema.RecordType.event,
+            predicate: NSPredicate(value: true)
+        )
+        let response = try await database.records(
+            matching: query,
+            desiredKeys: eventDesiredKeys,
+            resultsLimit: limit
+        )
+
+        return try response.matchResults.compactMap { _, result in
+            try makeSecurityEvent(from: result.get())
+        }
+        .filter { event in
+            guard let after else {
+                return true
+            }
+            return event.occurredAt > after
+        }
+        .sorted { first, second in
+            first.occurredAt < second.occurredAt
+        }
+    }
+
     private var chunkPlaybackDesiredKeys: [String] {
         [
             CKSchema.Chunk.session,
@@ -323,6 +426,15 @@ public final class CloudKitStore: @unchecked Sendable {
             CKSchema.Chunk.duration,
             CKSchema.Chunk.byteCount,
             CKSchema.Chunk.video
+        ]
+    }
+
+    private var eventDesiredKeys: [String] {
+        [
+            CKSchema.Event.session,
+            CKSchema.Event.type,
+            CKSchema.Event.occurredAt,
+            CKSchema.Event.confidence
         ]
     }
 
@@ -340,6 +452,14 @@ public final class CloudKitStore: @unchecked Sendable {
         record[CKSchema.Session.endedAt] = session.endedAt as CKRecordValue?
         record[CKSchema.Session.deviceName] = session.deviceName as CKRecordValue
         record[CKSchema.Session.status] = session.status.rawValue as CKRecordValue
+    }
+
+    private func apply(_ event: SecurityEvent, to record: CKRecord) {
+        let sessionRecordID = CKRecord.ID(recordName: event.sessionID)
+        record[CKSchema.Event.session] = CKRecord.Reference(recordID: sessionRecordID, action: .deleteSelf)
+        record[CKSchema.Event.type] = event.type.rawValue as CKRecordValue
+        record[CKSchema.Event.occurredAt] = event.occurredAt as CKRecordValue
+        record[CKSchema.Event.confidence] = event.confidence as CKRecordValue
     }
 
     private func makeSession(from record: CKRecord) throws -> SurveillanceSession {
@@ -379,6 +499,26 @@ public final class CloudKitStore: @unchecked Sendable {
             duration: duration,
             assetFileURL: (record[CKSchema.Chunk.video] as? CKAsset)?.fileURL,
             byteCount: record[CKSchema.Chunk.byteCount] as? Int64 ?? 0
+        )
+    }
+
+    private func makeSecurityEvent(from record: CKRecord) throws -> SecurityEvent {
+        guard
+            let sessionReference = record[CKSchema.Event.session] as? CKRecord.Reference,
+            let typeRaw = record[CKSchema.Event.type] as? String,
+            let type = SecurityEventType(rawValue: typeRaw),
+            let occurredAt = record[CKSchema.Event.occurredAt] as? Date,
+            let confidence = record[CKSchema.Event.confidence] as? Double
+        else {
+            throw CloudKitStoreError.malformedRecord(record.recordID.recordName)
+        }
+
+        return SecurityEvent(
+            id: record.recordID.recordName,
+            sessionID: sessionReference.recordID.recordName,
+            type: type,
+            occurredAt: occurredAt,
+            confidence: confidence
         )
     }
 
