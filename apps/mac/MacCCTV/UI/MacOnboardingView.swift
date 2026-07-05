@@ -39,8 +39,18 @@ struct MacOnboardingView: View {
 
                 Spacer()
 
-                Button(step.primaryButtonKey) {
+                Button {
                     handlePrimaryAction()
+                } label: {
+                    if step == .iCloud && viewModel.isCheckingICloud {
+                        HStack(spacing: 6) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("onboarding_icloud_checking")
+                        }
+                    } else {
+                        Text(primaryButtonKey)
+                    }
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(isPrimaryButtonDisabled)
@@ -93,12 +103,15 @@ struct MacOnboardingView: View {
             statusKey: viewModel.iCloudStatusKey,
             statusSymbol: viewModel.iCloudStatusSymbol
         ) {
-            Button("onboarding_icloud_check") {
-                Task {
-                    await viewModel.checkICloudAccount()
+            if viewModel.isCheckingICloud {
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("onboarding_icloud_checking")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
-            .disabled(viewModel.isCheckingICloud)
         }
         .task {
             await viewModel.checkICloudAccount()
@@ -142,15 +155,31 @@ struct MacOnboardingView: View {
         case .camera:
             !viewModel.canContinueFromCamera
         case .iCloud:
-            !viewModel.canContinueFromICloud
+            viewModel.isCheckingICloud
         case .iPhone:
             false
+        }
+    }
+
+    private var primaryButtonKey: LocalizedStringKey {
+        switch step {
+        case .camera, .iPhone:
+            step.primaryButtonKey
+        case .iCloud:
+            viewModel.canContinueFromICloud ? "onboarding_continue" : "onboarding_icloud_check"
         }
     }
 
     private func handlePrimaryAction() {
         if step == .iPhone {
             onComplete()
+            return
+        }
+
+        if step == .iCloud && !viewModel.canContinueFromICloud {
+            Task {
+                await viewModel.checkICloudAccount()
+            }
             return
         }
 
@@ -346,7 +375,7 @@ private final class MacOnboardingViewModel: ObservableObject {
 }
 
 private enum CompanionInstallLink {
-    static let url = URL(string: "https://apps.apple.com/search?term=Mac%20CCTV")!
+    static let url = URL(string: "https://apps.apple.com/app/id6787679673")!
 }
 
 private struct CompanionQRCodeRenderer {

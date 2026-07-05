@@ -3,11 +3,11 @@ import StoreKit
 import SwiftUI
 
 struct TipJarView: View {
+    @State private var isExpanded = false
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        DisclosureGroup(isExpanded: $isExpanded) {
             VStack(alignment: .leading, spacing: 3) {
-                Text("tip_jar_title")
-                    .font(.caption.weight(.semibold))
                 Text("tip_jar_subtitle")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
@@ -24,6 +24,10 @@ struct TipJarView: View {
                 }
             }
             .storeButton(.hidden, for: .restorePurchases)
+            .padding(.top, 8)
+        } label: {
+            Label("tip_jar_support_button", systemImage: "heart")
+                .font(.caption.weight(.semibold))
         }
     }
 

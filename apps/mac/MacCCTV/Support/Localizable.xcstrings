@@ -259,6 +259,12 @@
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "iCloud 확인" } }
       }
     },
+    "onboarding_icloud_checking" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Checking iCloud..." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "iCloud 확인 중..." } }
+      }
+    },
     "onboarding_icloud_message" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Mac CCTV stores recordings only in your private iCloud database." } },
@@ -359,6 +365,12 @@
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Tip jar" } },
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "팁 자" } }
+      }
+    },
+    "tip_jar_support_button" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Support the developer" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "개발자에게 후원하기" } }
       }
     },
     "surveillance_hotkey_failed_format" : {
