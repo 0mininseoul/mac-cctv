@@ -349,6 +349,18 @@
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "Mac CCTV 설정" } }
       }
     },
+    "tip_jar_subtitle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Optional support for keeping the free app running." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "무료 앱을 계속 유지하기 위한 선택적 후원입니다." } }
+      }
+    },
+    "tip_jar_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Tip jar" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "팁 자" } }
+      }
+    },
     "surveillance_hotkey_failed_format" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Shortcut unavailable: %@" } },

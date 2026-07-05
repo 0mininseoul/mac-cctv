@@ -28,6 +28,12 @@ struct SessionLibraryView: View {
                 Text(viewModel.statusText)
                     .textSelection(.enabled)
             }
+
+            Section {
+                TipJarView()
+            }
+
+            HouseBannerSlot()
         }
         .navigationTitle("library_title")
         .toolbar {

@@ -42,6 +42,11 @@ struct SurveillancePopoverView: View {
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .textSelection(.enabled)
+
+            Divider()
+
+            TipJarView()
+            HouseBannerSlot()
         }
         .padding(16)
         .frame(width: 320)
