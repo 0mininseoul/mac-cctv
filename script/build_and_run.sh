@@ -2,8 +2,11 @@
 set -euo pipefail
 
 MODE="${1:-run}"
+if [ "$#" -gt 0 ]; then
+  shift
+fi
 APP_NAME="MacCCTV"
-BUNDLE_ID="com.youngminpark.maccctv.mac"
+BUNDLE_ID="com.youngminpark.maccctv.ios"
 SCHEME="MacCCTV"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -31,6 +34,10 @@ open_app() {
   /usr/bin/open -n "$APP_BUNDLE"
 }
 
+run_m1_capture() {
+  "$APP_BUNDLE/Contents/MacOS/$APP_NAME" --m1-capture "$@"
+}
+
 case "$MODE" in
   run)
     open_app
@@ -51,8 +58,11 @@ case "$MODE" in
     sleep 2
     pgrep -x "$APP_NAME" >/dev/null
     ;;
+  --m1-capture|m1-capture)
+    run_m1_capture "$@"
+    ;;
   *)
-    echo "usage: $0 [run|--debug|--logs|--telemetry|--verify]" >&2
+    echo "usage: $0 [run|--debug|--logs|--telemetry|--verify|--m1-capture]" >&2
     exit 2
     ;;
 esac
