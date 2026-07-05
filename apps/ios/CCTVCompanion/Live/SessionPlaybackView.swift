@@ -36,6 +36,21 @@ struct SessionPlaybackView: View {
             .frame(minHeight: 260)
 
             List {
+                if viewModel.isLive {
+                    Section("siren_section_title") {
+                        SirenCommandButton(isSending: viewModel.isSendingSirenCommand) {
+                            viewModel.sendSirenCommand()
+                        }
+
+                        if !viewModel.sirenCommandStatusText.isEmpty {
+                            Text(viewModel.sirenCommandStatusText)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .textSelection(.enabled)
+                        }
+                    }
+                }
+
                 Section("playback_status_section") {
                     LabeledContent("playback_mode_label") {
                         Text(modeText)
@@ -94,5 +109,52 @@ struct SessionPlaybackView: View {
         case .delayedFallback:
             return "playback_mode_live"
         }
+    }
+}
+
+private struct SirenCommandButton: View {
+    let isSending: Bool
+    let action: () -> Void
+    @State private var isPressing = false
+
+    var body: some View {
+        Label("siren_button_title", systemImage: "speaker.wave.3.fill")
+            .font(.headline)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .padding(.vertical, 4)
+            .foregroundStyle(.red)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(Color.red.opacity(isPressing ? 0.22 : 0.12))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(Color.red.opacity(0.35), lineWidth: 1)
+            )
+            .opacity(isSending ? 0.55 : 1)
+            .contentShape(Rectangle())
+            .onLongPressGesture(
+                minimumDuration: 0.8,
+                pressing: { pressing in
+                    guard !isSending else {
+                        return
+                    }
+                    isPressing = pressing
+                },
+                perform: {
+                    guard !isSending else {
+                        return
+                    }
+                    isPressing = false
+                    action()
+                }
+            )
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction {
+                guard !isSending else {
+                    return
+                }
+                action()
+            }
     }
 }

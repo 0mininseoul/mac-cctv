@@ -38,6 +38,8 @@ final class SurveillanceController: ObservableObject {
     private let sleepBlocker = SleepBlocker()
     private let store = CloudKitStore()
     private let eventDetector = EventDetector()
+    private let sirenController = SirenController()
+    private let autoSirenPolicy = AutoSirenTriggerPolicy()
     private var captureEngine: CaptureEngine?
     private var activeSessionID: String?
     private var activeOutputDirectory: URL?
@@ -46,6 +48,8 @@ final class SurveillanceController: ObservableObject {
     private var broadcastSession: BroadcastSession?
     private var uploadPlanner = ChunkUploadPlanner()
     private var eventRateLimiter = EventRateLimiter(cooldown: 30)
+    private var autoSirenEvidence: [AutoSirenEvidence] = []
+    private var autoSirenTriggered = false
     private var isTransitioning = false
 
     var state: SurveillanceState {
@@ -171,6 +175,8 @@ final class SurveillanceController: ObservableObject {
             activeOutputDirectory = outputDirectory
             activeStartedAt = startedAt
             uploadPlanner = ChunkUploadPlanner()
+            autoSirenEvidence.removeAll()
+            autoSirenTriggered = false
             await startBroadcastSession(sessionID: sessionID, engine: engine)
             startLiveUploadLoop(sessionID: sessionID, sessionStartedAt: startedAt, engine: engine)
             eventDetector.start()
@@ -197,6 +203,7 @@ final class SurveillanceController: ObservableObject {
         isTransitioning = true
         statusText = String(localized: "surveillance_status_stopping")
         defer { isTransitioning = false }
+        stopSirenIfNeeded(reason: "stop")
 
         guard
             let engine = captureEngine,
@@ -256,6 +263,11 @@ final class SurveillanceController: ObservableObject {
                 Task { @MainActor [weak self] in
                     self?.appendDiagnostic(line, filename: "m6-result.txt")
                 }
+            },
+            onSirenCommand: { [weak self] in
+                Task { @MainActor [weak self] in
+                    await self?.triggerSiren(source: .manual)
+                }
             }
         )
         broadcastSession = broadcast
@@ -288,18 +300,27 @@ final class SurveillanceController: ObservableObject {
         case let .personMotion(confidence):
             await recordSecurityEvent(type: .personMotion, confidence: confidence)
         case let .deviceMotion(confidence):
-            await recordSecurityEvent(type: .deviceMotion, confidence: confidence)
+            let occurredAt = Date()
+            rememberAutoSirenEvidence(type: .deviceMotion, confidence: confidence, occurredAt: occurredAt)
+            if await evaluateAutoSiren(now: occurredAt) {
+                return
+            }
+            await recordSecurityEvent(type: .deviceMotion, confidence: confidence, occurredAt: occurredAt)
         }
     }
 
-    private func recordSecurityEvent(type: SecurityEventType, confidence: Double) async {
+    private func recordSecurityEvent(type: SecurityEventType, confidence: Double, occurredAt: Date = Date()) async {
+        if type == .inputTouch || type == .powerDisconnect {
+            rememberAutoSirenEvidence(type: type, confidence: confidence, occurredAt: occurredAt)
+            _ = await evaluateAutoSiren(now: occurredAt)
+        }
+
         guard notificationsEnabled,
-              case .armed = machine.state,
+              isRecordingEventState,
               let sessionID = activeSessionID else {
             return
         }
 
-        let occurredAt = Date()
         guard eventRateLimiter.shouldRecord(type, at: occurredAt) else {
             return
         }
@@ -308,6 +329,90 @@ final class SurveillanceController: ObservableObject {
             await flushCurrentChunkForEvent()
         }
 
+        await saveSecurityEvent(type: type, confidence: confidence, occurredAt: occurredAt, sessionID: sessionID)
+    }
+
+    private var isRecordingEventState: Bool {
+        switch machine.state {
+        case .armed, .siren:
+            return true
+        case .idle:
+            return false
+        }
+    }
+
+    private func rememberAutoSirenEvidence(type: SecurityEventType, confidence: Double, occurredAt: Date) {
+        guard case .armed = machine.state else {
+            return
+        }
+        guard type == .deviceMotion || type == .inputTouch || type == .powerDisconnect else {
+            return
+        }
+
+        autoSirenEvidence.append(
+            AutoSirenEvidence(type: type, occurredAt: occurredAt, confidence: confidence)
+        )
+        let oldestAllowed = occurredAt.addingTimeInterval(-45)
+        autoSirenEvidence.removeAll { $0.occurredAt < oldestAllowed }
+    }
+
+    private func evaluateAutoSiren(now: Date) async -> Bool {
+        guard !autoSirenTriggered,
+              case .armed = machine.state,
+              let activeStartedAt else {
+            return false
+        }
+
+        guard autoSirenPolicy.decision(
+            armedAt: activeStartedAt,
+            now: now,
+            evidence: autoSirenEvidence
+        ) == .trigger else {
+            return false
+        }
+
+        autoSirenTriggered = true
+        await triggerSiren(source: .automatic, triggeredAt: now)
+        return true
+    }
+
+    private func triggerSiren(source: SirenTriggerSource, triggeredAt: Date = Date()) async {
+        guard case let .armed(startedAt) = machine.state,
+              let sessionID = activeSessionID else {
+            return
+        }
+
+        do {
+            try machine.apply(.triggerSiren(triggeredAt: triggeredAt))
+        } catch {
+            writeDiagnostic(
+                "M7_SIREN_FAILED session=\(sessionID) source=\(source.rawValue) error=\(error.localizedDescription)",
+                filename: "m7-result.txt"
+            )
+            return
+        }
+
+        autoSirenTriggered = true
+        sirenController.start()
+        statusText = String(localized: "surveillance_status_siren")
+        writeDiagnostic(
+            "M7_SIREN_STARTED session=\(sessionID) source=\(source.rawValue) elapsed=\(String(format: "%.2f", triggeredAt.timeIntervalSince(startedAt)))",
+            filename: "m7-result.txt"
+        )
+        await saveSecurityEvent(
+            type: source.eventType,
+            confidence: 1,
+            occurredAt: triggeredAt,
+            sessionID: sessionID
+        )
+    }
+
+    private func saveSecurityEvent(
+        type: SecurityEventType,
+        confidence: Double,
+        occurredAt: Date,
+        sessionID: String
+    ) async {
         let event = SecurityEvent(
             id: "\(sessionID)-event-\(type.rawValue)-\(Int(occurredAt.timeIntervalSince1970 * 1000))",
             sessionID: sessionID,
@@ -387,6 +492,7 @@ final class SurveillanceController: ObservableObject {
     }
 
     private func resetToIdle() {
+        stopSirenIfNeeded(reason: "reset")
         eventDetector.stop()
         captureEngine?.onVideoSampleBuffer = nil
         let broadcast = broadcastSession
@@ -401,6 +507,8 @@ final class SurveillanceController: ObservableObject {
         clearActiveSession()
         uploadPlanner = ChunkUploadPlanner()
         eventRateLimiter.reset()
+        autoSirenEvidence.removeAll()
+        autoSirenTriggered = false
         machine = SurveillanceStateMachine()
         statusText = String(localized: "surveillance_status_idle")
     }
@@ -410,6 +518,17 @@ final class SurveillanceController: ObservableObject {
         activeOutputDirectory = nil
         activeStartedAt = nil
         eventRateLimiter.reset()
+        autoSirenEvidence.removeAll()
+        autoSirenTriggered = false
+    }
+
+    private func stopSirenIfNeeded(reason: String) {
+        guard sirenController.isActive else {
+            return
+        }
+        let sessionID = activeSessionID ?? "unknown"
+        sirenController.stop()
+        writeDiagnostic("M7_SIREN_STOPPED session=\(sessionID) reason=\(reason)", filename: "m7-result.txt")
     }
 
     private static func outputDirectory(for sessionID: String) throws -> URL {
@@ -469,6 +588,20 @@ final class SurveillanceController: ObservableObject {
             try? handle.close()
         } else {
             try? data.write(to: resultURL, options: .atomic)
+        }
+    }
+}
+
+private enum SirenTriggerSource: String {
+    case automatic = "auto"
+    case manual
+
+    var eventType: SecurityEventType {
+        switch self {
+        case .automatic:
+            .sirenAuto
+        case .manual:
+            .sirenManual
         }
     }
 }

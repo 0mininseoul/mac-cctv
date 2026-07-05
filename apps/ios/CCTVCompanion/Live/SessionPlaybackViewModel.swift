@@ -7,11 +7,14 @@ final class SessionPlaybackViewModel: ObservableObject {
     @Published private(set) var statusText = String(localized: "playback_status_loading")
     @Published private(set) var playlist = FallbackPlaylist()
     @Published private(set) var playableChunkCount = 0
+    @Published private(set) var isSendingSirenCommand = false
+    @Published private(set) var sirenCommandStatusText = ""
 
     let player = AVQueuePlayer()
 
     private let session: SurveillanceSession
     private let store = CloudKitStore()
+    private let encoder = JSONEncoder()
     private var pollingTask: Task<Void, Never>?
     private var loadedChunkIDs: [String] = []
     private var playbackActive = true
@@ -51,6 +54,19 @@ final class SessionPlaybackViewModel: ObservableObject {
         }
     }
 
+    func sendSirenCommand() {
+        guard isLive, !isSendingSirenCommand else {
+            return
+        }
+
+        isSendingSirenCommand = true
+        sirenCommandStatusText = String(localized: "siren_command_sending")
+
+        Task { [weak self] in
+            await self?.sendSirenCommandNow()
+        }
+    }
+
     private func loadLoop() async {
         await refresh()
 
@@ -78,6 +94,34 @@ final class SessionPlaybackViewModel: ObservableObject {
             updateStatus(chunks: chunks, playableChunks: playableChunks, playlist: nextPlaylist)
         } catch {
             statusText = String(format: String(localized: "playback_status_failed_format"), error.localizedDescription)
+        }
+    }
+
+    private func sendSirenCommandNow() async {
+        defer {
+            isSendingSirenCommand = false
+        }
+
+        do {
+            let channel = CloudKitSignalingChannel(sessionID: session.id, localSender: .ios, store: store)
+            let payload = SirenCommandSignalPayload(requestedAt: Date())
+            let data = try encoder.encode(payload)
+            try await channel.send(
+                SignalMessage(
+                    id: "\(session.id)-ios-siren-\(UUID().uuidString)",
+                    sessionID: session.id,
+                    kind: .sirenCommand,
+                    payload: String(decoding: data, as: UTF8.self),
+                    sender: .ios,
+                    createdAt: Date()
+                )
+            )
+            sirenCommandStatusText = String(localized: "siren_command_sent")
+        } catch {
+            sirenCommandStatusText = String(
+                format: String(localized: "siren_command_failed_format"),
+                error.localizedDescription
+            )
         }
     }
 

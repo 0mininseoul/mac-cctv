@@ -21,3 +21,11 @@ public struct IceCandidateSignalPayload: Codable, Equatable, Sendable {
         self.sdpMid = sdpMid
     }
 }
+
+public struct SirenCommandSignalPayload: Codable, Equatable, Sendable {
+    public var requestedAt: Date
+
+    public init(requestedAt: Date) {
+        self.requestedAt = requestedAt
+    }
+}

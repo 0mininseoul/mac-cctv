@@ -271,6 +271,36 @@
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "보관함" } }
       }
     },
+    "siren_button_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Siren" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "사이렌" } }
+      }
+    },
+    "siren_command_failed_format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Failed: %@" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "실패: %@" } }
+      }
+    },
+    "siren_command_sending" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sending..." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "전송 중..." } }
+      }
+    },
+    "siren_command_sent" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sent." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "전송됨." } }
+      }
+    },
+    "siren_section_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Siren" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "사이렌" } }
+      }
+    },
     "playback_chunks_label" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Chunks" } },

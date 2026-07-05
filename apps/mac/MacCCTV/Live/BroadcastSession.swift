@@ -7,6 +7,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
     private let sessionID: String
     private let channel: SignalingChannel
     private let diagnostics: @Sendable (String) -> Void
+    private let onSirenCommand: @Sendable () -> Void
     private let factory: RTCPeerConnectionFactory
     private let videoSource: RTCVideoSource
     private let videoCapturer: RTCVideoCapturer
@@ -20,11 +21,13 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
     init(
         sessionID: String,
         channel: SignalingChannel,
-        diagnostics: @escaping @Sendable (String) -> Void
+        diagnostics: @escaping @Sendable (String) -> Void,
+        onSirenCommand: @escaping @Sendable () -> Void
     ) {
         self.sessionID = sessionID
         self.channel = channel
         self.diagnostics = diagnostics
+        self.onSirenCommand = onSirenCommand
         let factory = RTCPeerConnectionFactory(
             encoderFactory: RTCDefaultVideoEncoderFactory(),
             decoderFactory: RTCDefaultVideoDecoderFactory()
@@ -106,7 +109,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
             while !Task.isCancelled {
                 await self?.receiveOnce()
                 do {
-                    try await Task.sleep(nanoseconds: 2_000_000_000)
+                    try await Task.sleep(nanoseconds: 500_000_000)
                 } catch {
                     break
                 }
@@ -127,6 +130,12 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
     }
 
     private func handle(_ message: SignalMessage) async throws {
+        if message.kind == .sirenCommand {
+            diagnostics("M7_SIREN_COMMAND_RECEIVED session=\(sessionID) sender=\(message.sender.rawValue)")
+            onSirenCommand()
+            return
+        }
+
         guard let peerConnection else {
             return
         }

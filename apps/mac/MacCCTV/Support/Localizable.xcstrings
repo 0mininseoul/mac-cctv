@@ -253,6 +253,12 @@
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "감시 중입니다." } }
       }
     },
+    "surveillance_status_siren" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Siren is active." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "사이렌 발동 중입니다." } }
+      }
+    },
     "surveillance_status_failed_format" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Failed: %@" } },

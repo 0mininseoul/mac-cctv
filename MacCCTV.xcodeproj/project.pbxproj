@@ -36,6 +36,7 @@
 		81BAF4E07BF9D010B62437FE /* MacCloudKitProbeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 986F9BF51E2C7CF3035542ED /* MacCloudKitProbeViewModel.swift */; };
 		8D690B860CF39D4456809C7A /* M2UploadLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E1054ADF924B134952F92A1 /* M2UploadLaunchHandler.swift */; };
 		90F84CD00B18EEB6B3B87C80 /* SessionLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E94F7C32CF3A354413CADE4C /* SessionLibraryView.swift */; };
+		9568C549AAD6C857449112D6 /* SirenController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD1484183FAD861774FAD9D /* SirenController.swift */; };
 		A3171676E215A4D82088EC99 /* LocalChunkStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D78207AB6F5951B117E39E8 /* LocalChunkStore.swift */; };
 		AA6E199B798F2FF1571CFF5F /* EventDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3672181E21D2A1495C2960D8 /* EventDetector.swift */; };
 		B0407BA3B9C0707E2145ECCD /* WebRTCReceiver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51286E4EF4D6CBA34A8DF3E8 /* WebRTCReceiver.swift */; };
@@ -60,6 +61,7 @@
 		4B6EC5F4857C375A251B8AAE /* SessionPlaybackViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPlaybackViewModel.swift; sourceTree = "<group>"; };
 		4F036433EE186BB61B57073B /* SurveillancePopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveillancePopoverView.swift; sourceTree = "<group>"; };
 		51286E4EF4D6CBA34A8DF3E8 /* WebRTCReceiver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebRTCReceiver.swift; sourceTree = "<group>"; };
+		5AD1484183FAD861774FAD9D /* SirenController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SirenController.swift; sourceTree = "<group>"; };
 		5CACEC2A30F0B0D28EA4EB50 /* CCTVCompanionApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CCTVCompanionApp.swift; sourceTree = "<group>"; };
 		66765A1D067DA4C98A98EAFA /* IOSCloudKitProbeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSCloudKitProbeView.swift; sourceTree = "<group>"; };
 		6ED163759E0D7AD735CD8321 /* M6LiveLaunchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M6LiveLaunchHandler.swift; sourceTree = "<group>"; };
@@ -176,6 +178,14 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		7718D9AD09165BF2B7B19DFF /* Siren */ = {
+			isa = PBXGroup;
+			children = (
+				5AD1484183FAD861774FAD9D /* SirenController.swift */,
+			);
+			path = Siren;
+			sourceTree = "<group>";
+		};
 		7FB8639A6D67E84B7DA9808D = {
 			isa = PBXGroup;
 			children = (
@@ -250,6 +260,7 @@
 				BAB1A5F0D41202DFFE3F2B6C /* Hotkey */,
 				B371A20957663F6A8ADFE57C /* Live */,
 				6233649331AEA17D0B45C41A /* Power */,
+				7718D9AD09165BF2B7B19DFF /* Siren */,
 				CAFA55BAD10AA79BD1475AE2 /* Support */,
 				2466A4D45D6578AEF9ED3A08 /* UI */,
 			);
@@ -344,7 +355,7 @@
 					54374CA213092B0F091EBD9E = {
 						DevelopmentTeam = 878FAHTFQJ;
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.Push\": [\"enabled\": 1], \"com.apple.iCloud\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.Push\": [\"enabled\": 1]]";
 					};
 					D14D4B0E61026724F28C6167 = {
 						DevelopmentTeam = 878FAHTFQJ;
@@ -415,6 +426,7 @@
 				E96ABB53B915A1B8395F4D71 /* MacCCTVApp.swift in Sources */,
 				7E0CEE6E8E123BF8ABB3BF81 /* MacCloudKitProbeView.swift in Sources */,
 				81BAF4E07BF9D010B62437FE /* MacCloudKitProbeViewModel.swift in Sources */,
+				9568C549AAD6C857449112D6 /* SirenController.swift in Sources */,
 				80EC96F963190C140EB587BE /* SleepBlocker.swift in Sources */,
 				0DDB2489A41A68278C836EFE /* SurveillanceController.swift in Sources */,
 				F5E525D7BF6307E71B8543F7 /* SurveillancePopoverView.swift in Sources */,
