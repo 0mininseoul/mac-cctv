@@ -1,0 +1,24 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CCTV for Mac" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "CCTV for Mac" } }
+      }
+    },
+    "CFBundleName" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CCTV for Mac" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "CCTV for Mac" } }
+      }
+    },
+    "NSCameraUsageDescription" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CCTV for Mac uses the camera to monitor your Mac and save video evidence to your private iCloud while surveillance is active." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "CCTV for Mac은 감시 중 카메라로 Mac을 확인하고 영상 증거를 사용자의 private iCloud에 저장합니다." } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

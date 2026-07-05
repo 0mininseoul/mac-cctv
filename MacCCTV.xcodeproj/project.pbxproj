@@ -14,6 +14,7 @@
 		18BA45D094281A9E2FC6F104 /* CCTVCompanionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CACEC2A30F0B0D28EA4EB50 /* CCTVCompanionApp.swift */; };
 		1AB2E18EBAD3149A367D6AD3 /* M4PlaybackLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D2565259B1F3723D408EBCD /* M4PlaybackLaunchHandler.swift */; };
 		1E4DDB35A9D729B8626CE86B /* CaptureSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A398E53B0362902D775BF7 /* CaptureSettings.swift */; };
+		288AB77738C39F08466EE84A /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = F8D51694791FFE6571A667A8 /* InfoPlist.xcstrings */; };
 		2AE9EDC79DC87791030AAFE0 /* WebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = 23F2B3C5E4BC0EFB8F215515 /* WebRTC */; };
 		2CB2F7D91BF32EA91CF90B23 /* SessionPlaybackViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B6EC5F4857C375A251B8AAE /* SessionPlaybackViewModel.swift */; };
 		2D9FE6114734D60ACD06DA7C /* M0ProbeLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F4F93FC1015721C90A7951F /* M0ProbeLaunchHandler.swift */; };
@@ -47,6 +48,7 @@
 		DED9DFCE96144A998E57712F /* MacCCTVRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85DD33AC436E7638A9D6C90B /* MacCCTVRootView.swift */; };
 		E083CB53ABF4B7571A53B3D4 /* CCTVKit in Frameworks */ = {isa = PBXBuildFile; productRef = CC4F4F57FC77F80795CA379E /* CCTVKit */; };
 		E96ABB53B915A1B8395F4D71 /* MacCCTVApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7C453536705C4C6664DE1A /* MacCCTVApp.swift */; };
+		F24F5A42ADE24DCE942CFE52 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = BEC1EEBF7AABEA1E0B92245E /* InfoPlist.xcstrings */; };
 		F5E525D7BF6307E71B8543F7 /* SurveillancePopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F036433EE186BB61B57073B /* SurveillancePopoverView.swift */; };
 		F7399BBEAB1D0915E7EF81DF /* IOSCloudKitProbeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37522887D38BD77AAEA88C31 /* IOSCloudKitProbeViewModel.swift */; };
 /* End PBXBuildFile section */
@@ -87,6 +89,7 @@
 		B04A9EFC2FAC915F59F62D14 /* M1CaptureLaunchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M1CaptureLaunchHandler.swift; sourceTree = "<group>"; };
 		B292152A782C01300F44D3B9 /* EventNavigationRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventNavigationRouter.swift; sourceTree = "<group>"; };
 		B6FC6D9931743074BDB09BB5 /* SessionRouteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRouteView.swift; sourceTree = "<group>"; };
+		BEC1EEBF7AABEA1E0B92245E /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		C7B71D4DAA2536865C4357AC /* MacOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacOnboardingView.swift; sourceTree = "<group>"; };
 		D5E4ED2EEA66A4191D22F7EB /* CCTVCompanion.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CCTVCompanion.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD850BF5D3652F5125572FEF /* TipJarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJarView.swift; sourceTree = "<group>"; };
@@ -94,6 +97,7 @@
 		EB54624CDB1A553B4C6712A6 /* SessionPlaybackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPlaybackView.swift; sourceTree = "<group>"; };
 		F49EACFCA3D177BB27CABED5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F8A398E53B0362902D775BF7 /* CaptureSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureSettings.swift; sourceTree = "<group>"; };
+		F8D51694791FFE6571A667A8 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		FA7C453536705C4C6664DE1A /* MacCCTVApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacCCTVApp.swift; sourceTree = "<group>"; };
 		FD1FA1F7166E423A71214344 /* TipJarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJarView.swift; sourceTree = "<group>"; };
 		FFD661A51CF049749A8C8324 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
@@ -257,6 +261,7 @@
 			isa = PBXGroup;
 			children = (
 				F49EACFCA3D177BB27CABED5 /* Info.plist */,
+				F8D51694791FFE6571A667A8 /* InfoPlist.xcstrings */,
 				41D23F8132B953408C8898E3 /* Localizable.xcstrings */,
 				75369F92F71E501939D44CAC /* MacCCTV.entitlements */,
 			);
@@ -293,6 +298,7 @@
 			children = (
 				724AE9EC4072B23097D6D434 /* CCTVCompanion.entitlements */,
 				A938A391B4B6EC6DBFAF54A5 /* Info.plist */,
+				BEC1EEBF7AABEA1E0B92245E /* InfoPlist.xcstrings */,
 				FFD661A51CF049749A8C8324 /* Localizable.xcstrings */,
 			);
 			path = Support;
@@ -367,12 +373,12 @@
 					54374CA213092B0F091EBD9E = {
 						DevelopmentTeam = 878FAHTFQJ;
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.Push\": [\"enabled\": 1], \"com.apple.iCloud\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.Push\": [\"enabled\": 1], \"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1]]";
 					};
 					D14D4B0E61026724F28C6167 = {
 						DevelopmentTeam = 878FAHTFQJ;
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.ApplicationGroups.Mac\": [\"enabled\": 1], \"com.apple.iCloud\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.ApplicationGroups.Mac\": [\"enabled\": 1]]";
 					};
 				};
 			};
@@ -406,6 +412,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F24F5A42ADE24DCE942CFE52 /* InfoPlist.xcstrings in Resources */,
 				301F46300732B79417FB9267 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -414,6 +421,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				288AB77738C39F08466EE84A /* InfoPlist.xcstrings in Resources */,
 				434C172014244A3C3DA21989 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

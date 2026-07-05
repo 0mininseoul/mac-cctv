@@ -27,7 +27,7 @@ final class EventDetector {
         stop()
         lastExternalPowerConnected = Self.isExternalPowerConnected()
         lastClamshellClosed = Self.isClamshellClosed()
-        startInputMonitoring()
+        startInputIdlePolling()
         startPowerMonitoring()
         startLidMonitoring()
     }
@@ -49,7 +49,7 @@ final class EventDetector {
         lastEmittedAt.removeAll()
     }
 
-    private func startInputMonitoring() {
+    private func startInputIdlePolling() {
         inputActivityTracker = InputActivityTracker()
         let timer = DispatchSource.makeTimerSource(queue: .main)
         timer.schedule(deadline: .now(), repeating: 1)

@@ -1,0 +1,24 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CCTV Companion" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "CCTV Companion" } }
+      }
+    },
+    "CFBundleName" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CCTV Companion" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "CCTV Companion" } }
+      }
+    },
+    "NSLocalNetworkUsageDescription" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Connect to your Mac on the local network for realtime CCTV video." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "로컬 네트워크에서 Mac에 연결해 실시간 CCTV 영상을 표시합니다." } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

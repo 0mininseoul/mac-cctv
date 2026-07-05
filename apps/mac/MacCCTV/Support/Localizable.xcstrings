@@ -480,6 +480,12 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Mac CCTV" } },
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "Mac CCTV" } }
       }
+    },
+    "siren_warning_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This device is recording and tracked" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "이 기기는 녹화·추적 중" } }
+      }
     }
   },
   "version" : "1.0"

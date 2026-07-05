@@ -28,7 +28,5 @@
 	<string>Copyright © 2026 Youngmin Park. All rights reserved.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>CCTV for Mac uses the camera to monitor your Mac and save video evidence to your private iCloud while surveillance is active.</string>
-	<key>NSInputMonitoringUsageDescription</key>
-	<string>CCTV for Mac monitors keyboard and pointer activity only while surveillance is active so it can notify your iPhone when someone touches the Mac.</string>
 </dict>
 </plist>

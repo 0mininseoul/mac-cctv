@@ -98,7 +98,7 @@ private struct SirenWarningView: View {
                     .font(.system(size: 84, weight: .bold))
                     .foregroundStyle(.red)
 
-                Text("이 기기는 녹화·추적 중")
+                Text("siren_warning_title")
                     .font(.system(size: 64, weight: .black))
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
