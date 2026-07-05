@@ -355,6 +355,12 @@
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "사이렌" } }
       }
     },
+    "siren_button_accessibility_hint" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Hold to sound the siren." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "길게 눌러 사이렌을 울립니다." } }
+      }
+    },
     "siren_command_failed_format" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Failed: %@" } },

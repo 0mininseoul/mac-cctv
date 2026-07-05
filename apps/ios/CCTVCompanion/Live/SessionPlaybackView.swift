@@ -35,22 +35,25 @@ struct SessionPlaybackView: View {
             }
             .frame(minHeight: 260)
 
-            List {
-                if viewModel.isLive {
-                    Section("siren_section_title") {
-                        SirenCommandButton(isSending: viewModel.isSendingSirenCommand) {
-                            viewModel.sendSirenCommand()
-                        }
+            if viewModel.isLive {
+                VStack(alignment: .leading, spacing: 8) {
+                    SirenCommandButton(isSending: viewModel.isSendingSirenCommand) {
+                        viewModel.sendSirenCommand()
+                    }
 
-                        if !viewModel.sirenCommandStatusText.isEmpty {
-                            Text(viewModel.sirenCommandStatusText)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .textSelection(.enabled)
-                        }
+                    if !viewModel.sirenCommandStatusText.isEmpty {
+                        Text(viewModel.sirenCommandStatusText)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
                     }
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(.regularMaterial)
+            }
 
+            List {
                 Section("playback_status_section") {
                     LabeledContent("playback_mode_label") {
                         Text(modeText)
@@ -150,6 +153,7 @@ private struct SirenCommandButton: View {
                 }
             )
             .accessibilityAddTraits(.isButton)
+            .accessibilityHint("siren_button_accessibility_hint")
             .accessibilityAction {
                 guard !isSending else {
                     return
