@@ -12,9 +12,7 @@ struct SessionLibraryView: View {
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(viewModel.sessions) { item in
-                        NavigationLink {
-                            SessionPlaybackView(session: item.session)
-                        } label: {
+                        NavigationLink(value: item.session.id) {
                             sessionRow(item)
                         }
                     }

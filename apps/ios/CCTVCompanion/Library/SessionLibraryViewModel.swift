@@ -41,9 +41,12 @@ final class SessionLibraryViewModel: ObservableObject {
         do {
             _ = try? await store.sweepExpired()
             let fetchedSessions = try await store.fetchSessions()
-            sessions = fetchedSessions.map { session in
-                SessionListItem(session: session, eventCount: 0)
+            var items: [SessionListItem] = []
+            for session in fetchedSessions {
+                let events = (try? await store.fetchEvents(sessionID: session.id, limit: 200)) ?? []
+                items.append(SessionListItem(session: session, eventCount: events.count))
             }
+            sessions = items
             statusText = sessions.isEmpty
                 ? String(localized: "library_status_empty")
                 : String(format: String(localized: "library_status_loaded_format"), sessions.count)

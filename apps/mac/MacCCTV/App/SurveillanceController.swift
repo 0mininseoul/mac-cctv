@@ -37,12 +37,14 @@ final class SurveillanceController: ObservableObject {
     private let hotkeyManager = HotkeyManager()
     private let sleepBlocker = SleepBlocker()
     private let store = CloudKitStore()
+    private let eventDetector = EventDetector()
     private var captureEngine: CaptureEngine?
     private var activeSessionID: String?
     private var activeOutputDirectory: URL?
     private var activeStartedAt: Date?
     private var liveUploadTask: Task<Void, Never>?
     private var uploadPlanner = ChunkUploadPlanner()
+    private var eventRateLimiter = EventRateLimiter(cooldown: 30)
     private var isTransitioning = false
 
     var state: SurveillanceState {
@@ -79,6 +81,11 @@ final class SurveillanceController: ObservableObject {
             Task { @MainActor in
                 self?.writeHotkeyDiagnostic("M3_HOTKEY_PRESSED shortcut=\(self?.selectedShortcut.display ?? "unknown")")
                 await self?.toggleFromHotkey()
+            }
+        }
+        eventDetector.onEvent = { [weak self] event in
+            Task { @MainActor [weak self] in
+                await self?.recordSecurityEvent(type: event.type, confidence: event.confidence)
             }
         }
         registerHotkey()
@@ -135,6 +142,11 @@ final class SurveillanceController: ObservableObject {
             let outputDirectory = try Self.outputDirectory(for: sessionID)
             let settings = selectedQuality.captureSettings
             let engine = try CaptureEngine(outputDirectory: outputDirectory, settings: settings)
+            engine.onMotionClassification = { [weak self] classification in
+                Task { @MainActor [weak self] in
+                    await self?.recordMotionClassification(classification)
+                }
+            }
             let deviceName = Host.current().localizedName ?? "Mac"
             let recordingSession = SurveillanceSession(
                 id: sessionID,
@@ -154,6 +166,7 @@ final class SurveillanceController: ObservableObject {
             activeStartedAt = startedAt
             uploadPlanner = ChunkUploadPlanner()
             startLiveUploadLoop(sessionID: sessionID, sessionStartedAt: startedAt, engine: engine)
+            eventDetector.start()
             statusText = String(localized: "surveillance_status_armed")
             writeDiagnostic("M3_ARMED session=\(sessionID) output=\(outputDirectory.path)")
         } catch {
@@ -185,6 +198,7 @@ final class SurveillanceController: ObservableObject {
             return
         }
 
+        eventDetector.stop()
         await stopLiveUploadLoop()
         let chunks = engine.stopAndWaitForChunks(timeout: 30)
         sleepBlocker.stop()
@@ -220,6 +234,65 @@ final class SurveillanceController: ObservableObject {
             statusText = String(format: String(localized: "surveillance_status_failed_format"), error.localizedDescription)
             writeDiagnostic("M3_FAILED \(error.localizedDescription)")
         }
+    }
+
+    private func recordMotionClassification(_ classification: MotionClassification) async {
+        switch classification {
+        case .noMotion:
+            return
+        case let .personMotion(confidence):
+            await recordSecurityEvent(type: .personMotion, confidence: confidence)
+        case let .deviceMotion(confidence):
+            await recordSecurityEvent(type: .deviceMotion, confidence: confidence)
+        }
+    }
+
+    private func recordSecurityEvent(type: SecurityEventType, confidence: Double) async {
+        guard notificationsEnabled,
+              case .armed = machine.state,
+              let sessionID = activeSessionID else {
+            return
+        }
+
+        let occurredAt = Date()
+        guard eventRateLimiter.shouldRecord(type, at: occurredAt) else {
+            return
+        }
+
+        if type == .lidClose || type == .powerDisconnect {
+            await flushCurrentChunkForEvent()
+        }
+
+        let event = SecurityEvent(
+            id: "\(sessionID)-event-\(type.rawValue)-\(Int(occurredAt.timeIntervalSince1970 * 1000))",
+            sessionID: sessionID,
+            type: type,
+            occurredAt: occurredAt,
+            confidence: confidence
+        )
+
+        do {
+            _ = try await store.saveEvent(event)
+            writeDiagnostic(
+                "M5_EVENT session=\(sessionID) type=\(type.rawValue) confidence=\(String(format: "%.2f", confidence)) occurredAt=\(Int(occurredAt.timeIntervalSince1970))",
+                filename: "m5-event-result.txt"
+            )
+        } catch {
+            writeDiagnostic(
+                "M5_EVENT_FAILED session=\(sessionID) type=\(type.rawValue) error=\(error.localizedDescription)",
+                filename: "m5-event-result.txt"
+            )
+        }
+    }
+
+    private func flushCurrentChunkForEvent() async {
+        guard let engine = captureEngine,
+              let sessionID = activeSessionID,
+              let startedAt = activeStartedAt else {
+            return
+        }
+        _ = engine.flushCurrentChunk(timeout: 5)
+        await uploadFinishedChunks(sessionID: sessionID, sessionStartedAt: startedAt, engine: engine)
     }
 
     private func startLiveUploadLoop(sessionID: String, sessionStartedAt: Date, engine: CaptureEngine) {
@@ -269,12 +342,14 @@ final class SurveillanceController: ObservableObject {
     }
 
     private func resetToIdle() {
+        eventDetector.stop()
         liveUploadTask?.cancel()
         liveUploadTask = nil
         sleepBlocker.stop()
         captureEngine = nil
         clearActiveSession()
         uploadPlanner = ChunkUploadPlanner()
+        eventRateLimiter.reset()
         machine = SurveillanceStateMachine()
         statusText = String(localized: "surveillance_status_idle")
     }
@@ -283,6 +358,7 @@ final class SurveillanceController: ObservableObject {
         activeSessionID = nil
         activeOutputDirectory = nil
         activeStartedAt = nil
+        eventRateLimiter.reset()
     }
 
     private static func outputDirectory(for sessionID: String) throws -> URL {

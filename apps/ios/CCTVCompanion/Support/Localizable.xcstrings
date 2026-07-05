@@ -348,6 +348,12 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Waiting for video assets." } },
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "영상 asset을 기다리는 중입니다." } }
       }
+    },
+    "event_notification_body_format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Event detected: %@" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "이벤트 감지: %@" } }
+      }
     }
   },
   "version" : "1.0"

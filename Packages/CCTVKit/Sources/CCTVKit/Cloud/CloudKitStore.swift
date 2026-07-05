@@ -225,6 +225,11 @@ public final class CloudKitStore: @unchecked Sendable {
         }
     }
 
+    public func fetchEvent(id: String) async throws -> SecurityEvent {
+        let record = try await database.record(for: CKRecord.ID(recordName: id))
+        return try makeSecurityEvent(from: record)
+    }
+
     public func ensureEventSubscription(subscriptionID: String = "event-created-v1") async throws {
         let subscription = CKQuerySubscription(
             recordType: CKSchema.RecordType.event,
@@ -233,7 +238,9 @@ public final class CloudKitStore: @unchecked Sendable {
             options: [.firesOnRecordCreation]
         )
         let notificationInfo = CKSubscription.NotificationInfo()
-        notificationInfo.alertBody = "Mac CCTV event detected"
+        notificationInfo.title = "Mac CCTV"
+        notificationInfo.alertLocalizationKey = "event_notification_body_format"
+        notificationInfo.alertLocalizationArgs = [CKSchema.Event.type]
         notificationInfo.soundName = "default"
         notificationInfo.shouldBadge = true
         notificationInfo.desiredKeys = [

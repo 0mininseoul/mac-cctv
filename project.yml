@@ -57,6 +57,8 @@ targets:
           enabled: 1
         com.apple.ApplicationGroups.iOS:
           enabled: 1
+        com.apple.Push:
+          enabled: 1
     settings:
       base:
         PRODUCT_NAME: CCTVCompanion

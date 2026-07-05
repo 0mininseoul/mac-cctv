@@ -1,4 +1,5 @@
 import AVFoundation
+import CCTVKit
 import Foundation
 
 enum CaptureEngineError: LocalizedError {
@@ -28,7 +29,12 @@ final class CaptureEngine: NSObject, @unchecked Sendable {
     private let captureQueue = DispatchQueue(label: "com.youngminpark.maccctv.capture")
     private let videoOutput = AVCaptureVideoDataOutput()
     private let writer: ChunkWriter
+    private let motionClassifier = MotionClassifier()
     private var isConfigured = false
+    private var previousMotionFrame: MotionFrame?
+    private var lastMotionSampleSeconds = -Double.greatestFiniteMagnitude
+
+    var onMotionClassification: (@Sendable (MotionClassification) -> Void)?
 
     init(outputDirectory: URL, settings: CaptureSettings = .m1Default) throws {
         self.outputDirectory = outputDirectory
@@ -60,6 +66,13 @@ final class CaptureEngine: NSObject, @unchecked Sendable {
 
     func finishedChunksSnapshot() -> [CaptureChunk] {
         writer.finishedChunksSnapshot()
+    }
+
+    func flushCurrentChunk(timeout: TimeInterval = 5) -> [CaptureChunk] {
+        captureQueue.sync {
+            writer.finishCurrentChunk()
+        }
+        return writer.waitForFinishedChunks(timeout: timeout)
     }
 
     private func requestCameraAccess() async throws {
@@ -123,5 +136,72 @@ extension CaptureEngine: AVCaptureVideoDataOutputSampleBufferDelegate {
         from connection: AVCaptureConnection
     ) {
         writer.append(sampleBuffer)
+        classifyMotionIfNeeded(sampleBuffer)
+    }
+
+    private func classifyMotionIfNeeded(_ sampleBuffer: CMSampleBuffer) {
+        let presentationSeconds = CMSampleBufferGetPresentationTimeStamp(sampleBuffer).seconds
+        guard presentationSeconds - lastMotionSampleSeconds >= 1 else {
+            return
+        }
+        lastMotionSampleSeconds = presentationSeconds
+
+        guard let currentFrame = Self.makeMotionFrame(from: sampleBuffer) else {
+            return
+        }
+        defer { previousMotionFrame = currentFrame }
+
+        guard let previousMotionFrame else {
+            return
+        }
+
+        guard let classification = try? motionClassifier.classify(previous: previousMotionFrame, current: currentFrame),
+              classification != .noMotion else {
+            return
+        }
+        onMotionClassification?(classification)
+    }
+
+    private static func makeMotionFrame(from sampleBuffer: CMSampleBuffer, sampleSize: Int = 64) -> MotionFrame? {
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
+            return nil
+        }
+
+        CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
+        defer { CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly) }
+
+        let planeIndex = CVPixelBufferGetPlaneCount(pixelBuffer) > 0 ? 0 : nil
+        let sourceWidth: Int
+        let sourceHeight: Int
+        let rowBytes: Int
+        let baseAddress: UnsafeMutableRawPointer?
+
+        if let planeIndex {
+            sourceWidth = CVPixelBufferGetWidthOfPlane(pixelBuffer, planeIndex)
+            sourceHeight = CVPixelBufferGetHeightOfPlane(pixelBuffer, planeIndex)
+            rowBytes = CVPixelBufferGetBytesPerRowOfPlane(pixelBuffer, planeIndex)
+            baseAddress = CVPixelBufferGetBaseAddressOfPlane(pixelBuffer, planeIndex)
+        } else {
+            sourceWidth = CVPixelBufferGetWidth(pixelBuffer)
+            sourceHeight = CVPixelBufferGetHeight(pixelBuffer)
+            rowBytes = CVPixelBufferGetBytesPerRow(pixelBuffer)
+            baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer)
+        }
+
+        guard sourceWidth > 0, sourceHeight > 0, let baseAddress else {
+            return nil
+        }
+
+        let source = baseAddress.assumingMemoryBound(to: UInt8.self)
+        var luma = Array(repeating: UInt8(0), count: sampleSize * sampleSize)
+        for y in 0..<sampleSize {
+            let sourceY = y * sourceHeight / sampleSize
+            for x in 0..<sampleSize {
+                let sourceX = x * sourceWidth / sampleSize
+                luma[(y * sampleSize) + x] = source[(sourceY * rowBytes) + sourceX]
+            }
+        }
+
+        return MotionFrame(width: sampleSize, height: sampleSize, luma: luma)
     }
 }
