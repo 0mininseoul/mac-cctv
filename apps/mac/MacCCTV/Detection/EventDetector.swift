@@ -13,16 +13,14 @@ final class EventDetector {
     var onEvent: (@Sendable (DetectedSecurityEvent) -> Void)?
     var onDiagnostic: (@Sendable (String) -> Void)?
 
-    private var globalMonitor: Any?
-    private var localMonitor: Any?
-    private var eventTap: CFMachPort?
-    private var eventTapRunLoopSource: CFRunLoopSource?
+    private var inputPollTimer: DispatchSourceTimer?
     private var powerRunLoopSource: CFRunLoopSource?
     private var willSleepObserver: NSObjectProtocol?
     private var clamshellTimer: DispatchSourceTimer?
     private var lastExternalPowerConnected: Bool?
     private var lastClamshellClosed: Bool?
     private var lastEmittedAt: [SecurityEventType: Date] = [:]
+    private var inputActivityTracker = InputActivityTracker()
     private let debounceInterval: TimeInterval = 3
 
     func start() {
@@ -35,18 +33,7 @@ final class EventDetector {
     }
 
     func stop() {
-        if let globalMonitor {
-            NSEvent.removeMonitor(globalMonitor)
-        }
-        if let localMonitor {
-            NSEvent.removeMonitor(localMonitor)
-        }
-        if let eventTapRunLoopSource {
-            CFRunLoopRemoveSource(CFRunLoopGetMain(), eventTapRunLoopSource, .commonModes)
-        }
-        if let eventTap {
-            CFMachPortInvalidate(eventTap)
-        }
+        inputPollTimer?.cancel()
         if let powerRunLoopSource {
             CFRunLoopRemoveSource(CFRunLoopGetMain(), powerRunLoopSource, .defaultMode)
         }
@@ -55,10 +42,7 @@ final class EventDetector {
         }
         clamshellTimer?.cancel()
 
-        globalMonitor = nil
-        localMonitor = nil
-        self.eventTap = nil
-        self.eventTapRunLoopSource = nil
+        inputPollTimer = nil
         self.powerRunLoopSource = nil
         self.willSleepObserver = nil
         self.clamshellTimer = nil
@@ -66,37 +50,15 @@ final class EventDetector {
     }
 
     private func startInputMonitoring() {
-        let hadListenAccess = CGPreflightListenEventAccess()
-        let hasListenAccess = hadListenAccess || CGRequestListenEventAccess()
-        onDiagnostic?("M5_INPUT_MONITORING_ACCESS granted=\(hasListenAccess) preflight=\(hadListenAccess)")
-
-        let mask = Self.inputEventMask
-        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: mask) { [weak self] _ in
-            self?.emit(.inputTouch, confidence: 1)
+        inputActivityTracker = InputActivityTracker()
+        let timer = DispatchSource.makeTimerSource(queue: .main)
+        timer.schedule(deadline: .now(), repeating: 1)
+        timer.setEventHandler { [weak self] in
+            self?.pollInputActivity()
         }
-        localMonitor = NSEvent.addLocalMonitorForEvents(matching: mask) { [weak self] event in
-            self?.emit(.inputTouch, confidence: 1)
-            return event
-        }
-
-        guard let eventTap = CGEvent.tapCreate(
-            tap: .cgSessionEventTap,
-            place: .headInsertEventTap,
-            options: .listenOnly,
-            eventsOfInterest: Self.inputCGEventMask,
-            callback: Self.eventTapCallback,
-            userInfo: Unmanaged.passUnretained(self).toOpaque()
-        ) else {
-            onDiagnostic?("M5_INPUT_EVENT_TAP unavailable")
-            return
-        }
-
-        let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0)
-        CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
-        CGEvent.tapEnable(tap: eventTap, enable: true)
-        onDiagnostic?("M5_INPUT_EVENT_TAP ready")
-        self.eventTap = eventTap
-        self.eventTapRunLoopSource = runLoopSource
+        timer.resume()
+        inputPollTimer = timer
+        onDiagnostic?("M5_INPUT_IDLE_POLL ready")
     }
 
     private func startPowerMonitoring() {
@@ -146,6 +108,14 @@ final class EventDetector {
         }
     }
 
+    private func pollInputActivity() {
+        let idleSeconds = Self.currentInputIdleSeconds()
+        guard inputActivityTracker.observe(now: Date(), idleSeconds: idleSeconds) else {
+            return
+        }
+        emit(.inputTouch, confidence: 1)
+    }
+
     private func emit(_ type: SecurityEventType, confidence: Double) {
         let now = Date()
         if let last = lastEmittedAt[type], now.timeIntervalSince(last) < debounceInterval {
@@ -155,12 +125,8 @@ final class EventDetector {
         onEvent?(DetectedSecurityEvent(type: type, confidence: confidence))
     }
 
-    private static let eventTapCallback: CGEventTapCallBack = { _, _, event, userInfo in
-        if let userInfo {
-            let detector = Unmanaged<EventDetector>.fromOpaque(userInfo).takeUnretainedValue()
-            detector.emit(.inputTouch, confidence: 1)
-        }
-        return Unmanaged.passUnretained(event)
+    private static func isExternalPowerConnected() -> Bool {
+        IOPSCopyExternalPowerAdapterDetails()?.takeRetainedValue() != nil
     }
 
     private static let powerSourceChanged: IOPowerSourceCallbackType = { context in
@@ -171,39 +137,24 @@ final class EventDetector {
         detector.checkPowerState()
     }
 
-    private static var inputEventMask: NSEvent.EventTypeMask {
-        [
-            .keyDown,
-            .leftMouseDown,
-            .rightMouseDown,
-            .otherMouseDown,
-            .mouseMoved,
-            .leftMouseDragged,
-            .rightMouseDragged,
-            .otherMouseDragged,
-            .scrollWheel
-        ]
+    private static func currentInputIdleSeconds() -> TimeInterval {
+        let idleTimes = inputEventTypes
+            .map { CGEventSource.secondsSinceLastEventType(.hidSystemState, eventType: $0) }
+            .filter { $0.isFinite && $0 >= 0 }
+        return idleTimes.min() ?? .greatestFiniteMagnitude
     }
 
-    private static var inputCGEventMask: CGEventMask {
-        [
-            CGEventType.keyDown,
-            .leftMouseDown,
-            .rightMouseDown,
-            .otherMouseDown,
-            .mouseMoved,
-            .leftMouseDragged,
-            .rightMouseDragged,
-            .otherMouseDragged,
-            .scrollWheel
-        ].reduce(CGEventMask(0)) { mask, type in
-            mask | (CGEventMask(1) << CGEventMask(type.rawValue))
-        }
-    }
-
-    private static func isExternalPowerConnected() -> Bool {
-        IOPSCopyExternalPowerAdapterDetails()?.takeRetainedValue() != nil
-    }
+    private static let inputEventTypes: [CGEventType] = [
+        .keyDown,
+        .leftMouseDown,
+        .rightMouseDown,
+        .otherMouseDown,
+        .mouseMoved,
+        .leftMouseDragged,
+        .rightMouseDragged,
+        .otherMouseDragged,
+        .scrollWheel
+    ]
 
     private static func isClamshellClosed() -> Bool {
         let service = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("IOPMrootDomain"))
