@@ -23,6 +23,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
     private var modeTask: Task<Void, Never>?
     private var cursor = Date.distantPast
     private var startedAt: Date?
+    private var peerConnectionConnectedAt: Date?
     private var hasReceivedRemoteVideo = false
     private var peerConnectionFailed = false
     private var remoteVideoTrack: RTCVideoTrack?
@@ -69,6 +70,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
 
         do {
             startedAt = Date()
+            peerConnectionConnectedAt = nil
             hasReceivedRemoteVideo = false
             peerConnectionFailed = false
             viewingMode = .connecting(elapsed: 0)
@@ -185,7 +187,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
                 sdpMid: payload.sdpMid
             )
             try await peerConnection.add(candidate)
-            diagnostics?("M6_RECEIVER_REMOTE_ICE_ADDED session=\(session.id) mid=\(payload.sdpMid ?? "nil") index=\(payload.sdpMLineIndex)")
+            diagnostics?("M6_RECEIVER_REMOTE_ICE_ADDED session=\(session.id) \(candidateSummary(payload.sdp)) mid=\(payload.sdpMid ?? "nil") index=\(payload.sdpMLineIndex)")
         case .answer, .sirenCommand:
             return
         }
@@ -229,6 +231,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
             startedAt: startedAt,
             now: now,
             hasReceivedRemoteVideo: hasReceivedRemoteVideo,
+            peerConnectionConnectedAt: peerConnectionConnectedAt,
             peerConnectionFailed: peerConnectionFailed
         )
         viewingMode = nextMode
@@ -289,7 +292,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
                     createdAt: Date()
                 )
             )
-            diagnostics?("M6_RECEIVER_LOCAL_ICE_SENT session=\(session.id) mid=\(candidate.sdpMid ?? "nil") index=\(candidate.sdpMLineIndex)")
+            diagnostics?("M6_RECEIVER_LOCAL_ICE_SENT session=\(session.id) \(candidateSummary(candidate.sdp)) mid=\(candidate.sdpMid ?? "nil") index=\(candidate.sdpMLineIndex)")
         } catch {
             statusText = String(format: String(localized: "live_status_signal_failed_format"), error.localizedDescription)
             diagnostics?("M6_RECEIVER_ICE_SEND_FAILED session=\(session.id) error=\(error.localizedDescription)")
@@ -326,7 +329,14 @@ extension WebRTCReceiver: RTCPeerConnectionDelegate {
         }
     }
 
-    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) {}
+    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) {
+        Task { @MainActor [weak self] in
+            guard let self else {
+                return
+            }
+            diagnostics?("M6_RECEIVER_ICE_GATHERING_STATE session=\(session.id) state=\(newState.rawValue)")
+        }
+    }
 
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
         Task { @MainActor [weak self] in
@@ -344,6 +354,9 @@ extension WebRTCReceiver: RTCPeerConnectionDelegate {
                 return
             }
             diagnostics?("M6_RECEIVER_CONNECTION_STATE session=\(session.id) state=\(newState.rawValue)")
+            if newState == .connected, peerConnectionConnectedAt == nil {
+                peerConnectionConnectedAt = Date()
+            }
             if newState == .failed || newState == .closed || (newState == .disconnected && hasReceivedRemoteVideo) {
                 self.peerConnectionFailed = true
                 self.refreshMode(now: Date())
@@ -363,6 +376,25 @@ extension WebRTCReceiver: RTCPeerConnectionDelegate {
             self?.attach(videoTrack: videoTrack)
         }
     }
+}
+
+private func candidateSummary(_ sdp: String) -> String {
+    let parts = sdp.split(separator: " ").map(String.init)
+    let type = value(after: "typ", in: parts) ?? "unknown"
+    let protocolName = parts.count > 2 ? parts[2].lowercased() : "unknown"
+    let tcpType = value(after: "tcptype", in: parts)
+    let networkID = value(after: "network-id", in: parts)
+    let tcpSuffix = tcpType.map { " tcpType=\($0)" } ?? ""
+    let networkSuffix = networkID.map { " network=\($0)" } ?? ""
+    return "candidateType=\(type) protocol=\(protocolName)\(tcpSuffix)\(networkSuffix)"
+}
+
+private func value(after marker: String, in parts: [String]) -> String? {
+    guard let index = parts.firstIndex(of: marker),
+          parts.indices.contains(index + 1) else {
+        return nil
+    }
+    return parts[index + 1]
 }
 
 struct WebRTCVideoView: UIViewRepresentable {

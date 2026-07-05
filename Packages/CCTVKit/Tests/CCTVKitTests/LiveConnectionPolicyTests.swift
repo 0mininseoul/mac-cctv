@@ -47,6 +47,39 @@ final class LiveConnectionPolicyTests: XCTestCase {
         XCTAssertEqual(mode, .delayedFallback(reason: .timeout))
     }
 
+    func testKeepsConnectingWhenPeerConnectionEstablishedNearTimeoutAndFrameGraceRemains() {
+        let policy = LiveConnectionPolicy(timeout: 10, connectedFrameGrace: 5)
+        let startedAt = Date(timeIntervalSince1970: 1_000)
+
+        let mode = policy.mode(
+            startedAt: startedAt,
+            now: startedAt.addingTimeInterval(10.2),
+            hasReceivedRemoteVideo: false,
+            peerConnectionConnectedAt: startedAt.addingTimeInterval(9.4),
+            peerConnectionFailed: false
+        )
+
+        guard case let .connecting(elapsed) = mode else {
+            return XCTFail("Expected connecting mode, got \(mode)")
+        }
+        XCTAssertEqual(elapsed, 10.2, accuracy: 0.001)
+    }
+
+    func testFallsBackWhenPeerConnectionEstablishedButNoFrameArrivesAfterGrace() {
+        let policy = LiveConnectionPolicy(timeout: 10, connectedFrameGrace: 5)
+        let startedAt = Date(timeIntervalSince1970: 1_000)
+
+        let mode = policy.mode(
+            startedAt: startedAt,
+            now: startedAt.addingTimeInterval(14.5),
+            hasReceivedRemoteVideo: false,
+            peerConnectionConnectedAt: startedAt.addingTimeInterval(9.4),
+            peerConnectionFailed: false
+        )
+
+        XCTAssertEqual(mode, .delayedFallback(reason: .timeout))
+    }
+
     func testFallsBackImmediatelyWhenPeerConnectionFails() {
         let policy = LiveConnectionPolicy(timeout: 10)
         let startedAt = Date(timeIntervalSince1970: 1_000)

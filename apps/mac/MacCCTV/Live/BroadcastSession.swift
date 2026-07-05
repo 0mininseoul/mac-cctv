@@ -15,6 +15,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
     private var peerConnection: RTCPeerConnection?
     private var receiveTask: Task<Void, Never>?
     private var cursor = Date.distantPast
+    private var ingestedFrameCount = 0
 
     init(
         sessionID: String,
@@ -71,6 +72,10 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
         let rtcBuffer = RTCCVPixelBuffer(pixelBuffer: pixelBuffer)
         let frame = RTCVideoFrame(buffer: rtcBuffer, rotation: ._0, timeStampNs: timestampNs)
         videoCapturer.delegate?.capturer(videoCapturer, didCapture: frame)
+        ingestedFrameCount += 1
+        if ingestedFrameCount == 1 || ingestedFrameCount.isMultiple(of: 60) {
+            diagnostics("M6_BROADCAST_FRAME_INGESTED session=\(sessionID) count=\(ingestedFrameCount)")
+        }
     }
 
     private func makePeerConnection() throws -> RTCPeerConnection {
@@ -143,7 +148,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
                 sdpMid: payload.sdpMid
             )
             try await peerConnection.add(candidate)
-            diagnostics("M6_BROADCAST_REMOTE_ICE_ADDED session=\(sessionID) mid=\(payload.sdpMid ?? "nil") index=\(payload.sdpMLineIndex)")
+            diagnostics("M6_BROADCAST_REMOTE_ICE_ADDED session=\(sessionID) \(candidateSummary(payload.sdp)) mid=\(payload.sdpMid ?? "nil") index=\(payload.sdpMLineIndex)")
         case .offer, .sirenCommand:
             return
         }
@@ -185,7 +190,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
                     createdAt: Date()
                 )
             )
-            diagnostics("M6_BROADCAST_LOCAL_ICE_SENT session=\(sessionID) mid=\(candidate.sdpMid ?? "nil") index=\(candidate.sdpMLineIndex)")
+            diagnostics("M6_BROADCAST_LOCAL_ICE_SENT session=\(sessionID) \(candidateSummary(candidate.sdp)) mid=\(candidate.sdpMid ?? "nil") index=\(candidate.sdpMLineIndex)")
         } catch {
             diagnostics("M6_BROADCAST_ICE_SEND_FAILED session=\(sessionID) error=\(error.localizedDescription)")
         }
@@ -205,7 +210,9 @@ extension BroadcastSession: RTCPeerConnectionDelegate {
         diagnostics("M6_BROADCAST_ICE_STATE session=\(sessionID) state=\(newState.rawValue)")
     }
 
-    func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) {}
+    func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) {
+        diagnostics("M6_BROADCAST_ICE_GATHERING_STATE session=\(sessionID) state=\(newState.rawValue)")
+    }
 
     func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
         Task { [weak self] in
@@ -220,6 +227,25 @@ extension BroadcastSession: RTCPeerConnectionDelegate {
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCPeerConnectionState) {
         diagnostics("M6_BROADCAST_CONNECTION_STATE session=\(sessionID) state=\(newState.rawValue)")
     }
+}
+
+private func candidateSummary(_ sdp: String) -> String {
+    let parts = sdp.split(separator: " ").map(String.init)
+    let type = value(after: "typ", in: parts) ?? "unknown"
+    let protocolName = parts.count > 2 ? parts[2].lowercased() : "unknown"
+    let tcpType = value(after: "tcptype", in: parts)
+    let networkID = value(after: "network-id", in: parts)
+    let tcpSuffix = tcpType.map { " tcpType=\($0)" } ?? ""
+    let networkSuffix = networkID.map { " network=\($0)" } ?? ""
+    return "candidateType=\(type) protocol=\(protocolName)\(tcpSuffix)\(networkSuffix)"
+}
+
+private func value(after marker: String, in parts: [String]) -> String? {
+    guard let index = parts.firstIndex(of: marker),
+          parts.indices.contains(index + 1) else {
+        return nil
+    }
+    return parts[index + 1]
 }
 
 private enum BroadcastSessionError: LocalizedError {

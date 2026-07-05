@@ -464,7 +464,7 @@ final class SurveillanceController: ObservableObject {
         let data = Data(line.appending("\n").utf8)
         if FileManager.default.fileExists(atPath: resultURL.path),
            let handle = try? FileHandle(forWritingTo: resultURL) {
-            try? handle.seekToEnd()
+            _ = try? handle.seekToEnd()
             try? handle.write(contentsOf: data)
             try? handle.close()
         } else {
