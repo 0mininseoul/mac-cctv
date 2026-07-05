@@ -46,6 +46,7 @@ targets:
         INFOPLIST_FILE: apps/mac/MacCCTV/Support/Info.plist
         CODE_SIGN_ENTITLEMENTS: apps/mac/MacCCTV/Support/MacCCTV.entitlements
         ENABLE_HARDENED_RUNTIME: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     scheme:
       management:
         shared: true
@@ -99,6 +100,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.youngminpark.maccctv.ios
         INFOPLIST_FILE: apps/ios/CCTVCompanion/Support/Info.plist
         CODE_SIGN_ENTITLEMENTS: apps/ios/CCTVCompanion/Support/CCTVCompanion.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     scheme:
       management:
         shared: true

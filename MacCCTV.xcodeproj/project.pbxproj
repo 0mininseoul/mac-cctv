@@ -10,7 +10,9 @@
 		0DDB2489A41A68278C836EFE /* SurveillanceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AACA2D3BFFEAFBB1894AC674 /* SurveillanceController.swift */; };
 		108268D93371ACF10565F6E5 /* M6LiveLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ED163759E0D7AD735CD8321 /* M6LiveLaunchHandler.swift */; };
 		110F222E22059DB633A9751C /* SessionPlaybackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB54624CDB1A553B4C6712A6 /* SessionPlaybackView.swift */; };
+		11D545157894B4A082F9ED43 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3CAFAD983C8ED22D0656A39D /* Assets.xcassets */; };
 		166778B9A12723A0EC59BEF6 /* WebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = E14849FBC7E7D2DF3F2C10A0 /* WebRTC */; };
+		17BD07F5BD205F17D3BEB490 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5567BC085E7500C495411CED /* Assets.xcassets */; };
 		18BA45D094281A9E2FC6F104 /* CCTVCompanionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CACEC2A30F0B0D28EA4EB50 /* CCTVCompanionApp.swift */; };
 		1AB2E18EBAD3149A367D6AD3 /* M4PlaybackLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D2565259B1F3723D408EBCD /* M4PlaybackLaunchHandler.swift */; };
 		1E4DDB35A9D729B8626CE86B /* CaptureSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A398E53B0362902D775BF7 /* CaptureSettings.swift */; };
@@ -81,11 +83,13 @@
 		33D7BCA4E0AA36840EC9E291 /* TipJarStoreKitSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJarStoreKitSessionTests.swift; sourceTree = "<group>"; };
 		3672181E21D2A1495C2960D8 /* EventDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventDetector.swift; sourceTree = "<group>"; };
 		37522887D38BD77AAEA88C31 /* IOSCloudKitProbeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSCloudKitProbeViewModel.swift; sourceTree = "<group>"; };
+		3CAFAD983C8ED22D0656A39D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		41D23F8132B953408C8898E3 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		4B6EC5F4857C375A251B8AAE /* SessionPlaybackViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPlaybackViewModel.swift; sourceTree = "<group>"; };
 		4F036433EE186BB61B57073B /* SurveillancePopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveillancePopoverView.swift; sourceTree = "<group>"; };
 		51286E4EF4D6CBA34A8DF3E8 /* WebRTCReceiver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebRTCReceiver.swift; sourceTree = "<group>"; };
 		521FA01085945CE8A129120E /* MacCCTVTips.storekit */ = {isa = PBXFileReference; path = MacCCTVTips.storekit; sourceTree = "<group>"; };
+		5567BC085E7500C495411CED /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5AD1484183FAD861774FAD9D /* SirenController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SirenController.swift; sourceTree = "<group>"; };
 		5CACEC2A30F0B0D28EA4EB50 /* CCTVCompanionApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CCTVCompanionApp.swift; sourceTree = "<group>"; };
 		66765A1D067DA4C98A98EAFA /* IOSCloudKitProbeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSCloudKitProbeView.swift; sourceTree = "<group>"; };
@@ -308,6 +312,7 @@
 		BFE46FF26C8F9A64766C1ADB /* CCTVCompanion */ = {
 			isa = PBXGroup;
 			children = (
+				5567BC085E7500C495411CED /* Assets.xcassets */,
 				63445A31D417EB800567EB96 /* App */,
 				048EF1AF1A92FAAF4574A975 /* Library */,
 				FDA8F313003C44B3DA819C31 /* Live */,
@@ -331,6 +336,7 @@
 		CCC5293A5352136F4CD955B9 /* MacCCTV */ = {
 			isa = PBXGroup;
 			children = (
+				3CAFAD983C8ED22D0656A39D /* Assets.xcassets */,
 				1427F1D57BF14490A7AE16DB /* App */,
 				3F1212949FAB1CC23F49D508 /* Capture */,
 				E608356A9A6A7018D5E8C7A2 /* Detection */,
@@ -458,7 +464,7 @@
 					54374CA213092B0F091EBD9E = {
 						DevelopmentTeam = 878FAHTFQJ;
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.Push\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.Push\": [\"enabled\": 1], \"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1]]";
 					};
 					D14D4B0E61026724F28C6167 = {
 						DevelopmentTeam = 878FAHTFQJ;
@@ -498,6 +504,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				17BD07F5BD205F17D3BEB490 /* Assets.xcassets in Resources */,
 				F24F5A42ADE24DCE942CFE52 /* InfoPlist.xcstrings in Resources */,
 				301F46300732B79417FB9267 /* Localizable.xcstrings in Resources */,
 			);
@@ -515,6 +522,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				11D545157894B4A082F9ED43 /* Assets.xcassets in Resources */,
 				288AB77738C39F08466EE84A /* InfoPlist.xcstrings in Resources */,
 				434C172014244A3C3DA21989 /* Localizable.xcstrings in Resources */,
 			);
