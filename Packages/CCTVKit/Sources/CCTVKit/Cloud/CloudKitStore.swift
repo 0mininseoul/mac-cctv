@@ -252,6 +252,50 @@ public final class CloudKitStore: @unchecked Sendable {
         _ = try await database.save(subscription)
     }
 
+    @discardableResult
+    public func saveSignal(_ message: SignalMessage) async throws -> SignalMessage {
+        let recordID = CKRecord.ID(recordName: message.id)
+        let record: CKRecord
+        do {
+            record = try await database.record(for: recordID)
+        } catch let error as CKError where error.code == .unknownItem {
+            record = CKRecord(recordType: CKSchema.RecordType.signal, recordID: recordID)
+        }
+
+        apply(message, to: record)
+        let savedRecord = try await database.save(record)
+        return try makeSignalMessage(from: savedRecord)
+    }
+
+    public func fetchSignals(sessionID: String, after: Date? = nil, limit: Int = 200) async throws -> [SignalMessage] {
+        do {
+            return try await fetchSignalsBySessionReference(sessionID: sessionID, after: after, limit: limit)
+        } catch where shouldFallbackFromSessionReferenceQuery(error) {
+            return try await fetchSignalsBroad(after: after, limit: limit).filter { message in
+                message.sessionID == sessionID
+            }
+        }
+    }
+
+    public func ensureSignalSubscription(subscriptionID: String = "signal-created-v1") async throws {
+        let subscription = CKQuerySubscription(
+            recordType: CKSchema.RecordType.signal,
+            predicate: NSPredicate(value: true),
+            subscriptionID: subscriptionID,
+            options: [.firesOnRecordCreation]
+        )
+        let notificationInfo = CKSubscription.NotificationInfo()
+        notificationInfo.shouldSendContentAvailable = true
+        notificationInfo.desiredKeys = [
+            CKSchema.Signal.session,
+            CKSchema.Signal.kind,
+            CKSchema.Signal.sender,
+            CKSchema.Signal.createdAt
+        ]
+        subscription.notificationInfo = notificationInfo
+        _ = try await database.save(subscription)
+    }
+
     public func fetchRetentionSnapshot(limit: Int = 200) async throws -> (sessions: [RetentionSession], chunks: [RetentionChunk]) {
         let sessions = try await fetchRetentionSessions(limit: limit)
         let chunks = try await fetchRetentionChunks(limit: limit)
@@ -425,6 +469,64 @@ public final class CloudKitStore: @unchecked Sendable {
         }
     }
 
+    private func fetchSignalsBySessionReference(sessionID: String, after: Date?, limit: Int) async throws -> [SignalMessage] {
+        let sessionReference = CKRecord.Reference(
+            recordID: CKRecord.ID(recordName: sessionID),
+            action: .none
+        )
+        let query = CKQuery(
+            recordType: CKSchema.RecordType.signal,
+            predicate: NSPredicate(
+                format: "%K == %@",
+                CKSchema.Signal.session,
+                sessionReference
+            )
+        )
+        let response = try await database.records(
+            matching: query,
+            desiredKeys: signalDesiredKeys,
+            resultsLimit: limit
+        )
+
+        return try response.matchResults.compactMap { _, result in
+            try makeSignalMessage(from: result.get())
+        }
+        .filter { message in
+            guard let after else {
+                return true
+            }
+            return message.createdAt > after
+        }
+        .sorted { first, second in
+            first.createdAt < second.createdAt
+        }
+    }
+
+    private func fetchSignalsBroad(after: Date?, limit: Int) async throws -> [SignalMessage] {
+        let query = CKQuery(
+            recordType: CKSchema.RecordType.signal,
+            predicate: NSPredicate(value: true)
+        )
+        let response = try await database.records(
+            matching: query,
+            desiredKeys: signalDesiredKeys,
+            resultsLimit: limit
+        )
+
+        return try response.matchResults.compactMap { _, result in
+            try makeSignalMessage(from: result.get())
+        }
+        .filter { message in
+            guard let after else {
+                return true
+            }
+            return message.createdAt > after
+        }
+        .sorted { first, second in
+            first.createdAt < second.createdAt
+        }
+    }
+
     private var chunkPlaybackDesiredKeys: [String] {
         [
             CKSchema.Chunk.session,
@@ -442,6 +544,16 @@ public final class CloudKitStore: @unchecked Sendable {
             CKSchema.Event.type,
             CKSchema.Event.occurredAt,
             CKSchema.Event.confidence
+        ]
+    }
+
+    private var signalDesiredKeys: [String] {
+        [
+            CKSchema.Signal.session,
+            CKSchema.Signal.kind,
+            CKSchema.Signal.payload,
+            CKSchema.Signal.sender,
+            CKSchema.Signal.createdAt
         ]
     }
 
@@ -467,6 +579,15 @@ public final class CloudKitStore: @unchecked Sendable {
         record[CKSchema.Event.type] = event.type.rawValue as CKRecordValue
         record[CKSchema.Event.occurredAt] = event.occurredAt as CKRecordValue
         record[CKSchema.Event.confidence] = event.confidence as CKRecordValue
+    }
+
+    private func apply(_ message: SignalMessage, to record: CKRecord) {
+        let sessionRecordID = CKRecord.ID(recordName: message.sessionID)
+        record[CKSchema.Signal.session] = CKRecord.Reference(recordID: sessionRecordID, action: .deleteSelf)
+        record[CKSchema.Signal.kind] = message.kind.rawValue as CKRecordValue
+        record[CKSchema.Signal.payload] = message.payload as CKRecordValue
+        record[CKSchema.Signal.sender] = message.sender.rawValue as CKRecordValue
+        record[CKSchema.Signal.createdAt] = message.createdAt as CKRecordValue
     }
 
     private func makeSession(from record: CKRecord) throws -> SurveillanceSession {
@@ -526,6 +647,29 @@ public final class CloudKitStore: @unchecked Sendable {
             type: type,
             occurredAt: occurredAt,
             confidence: confidence
+        )
+    }
+
+    private func makeSignalMessage(from record: CKRecord) throws -> SignalMessage {
+        guard
+            let sessionReference = record[CKSchema.Signal.session] as? CKRecord.Reference,
+            let kindRaw = record[CKSchema.Signal.kind] as? String,
+            let kind = SignalKind(rawValue: kindRaw),
+            let payload = record[CKSchema.Signal.payload] as? String,
+            let senderRaw = record[CKSchema.Signal.sender] as? String,
+            let sender = SignalSender(rawValue: senderRaw),
+            let createdAt = record[CKSchema.Signal.createdAt] as? Date
+        else {
+            throw CloudKitStoreError.malformedRecord(record.recordID.recordName)
+        }
+
+        return SignalMessage(
+            id: record.recordID.recordName,
+            sessionID: sessionReference.recordID.recordName,
+            kind: kind,
+            payload: payload,
+            sender: sender,
+            createdAt: createdAt
         )
     }
 
