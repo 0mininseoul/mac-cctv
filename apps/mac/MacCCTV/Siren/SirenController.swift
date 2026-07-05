@@ -58,7 +58,8 @@ final class SirenController {
 
     private func showWarningWindows() {
         warningWindows = NSScreen.screens.map { screen in
-            let window = NSWindow(
+            let screenFrame = screen.frame
+            let window = SirenWarningWindow(
                 contentRect: screen.frame,
                 styleMask: [.borderless],
                 backing: .buffered,
@@ -67,16 +68,27 @@ final class SirenController {
             )
             window.backgroundColor = .black
             window.isOpaque = true
+            window.hasShadow = false
+            window.hidesOnDeactivate = false
             window.level = .screenSaver
             window.collectionBehavior = [
                 .canJoinAllSpaces,
                 .fullScreenAuxiliary,
                 .ignoresCycle,
-                .stationary
+                .stationary,
+                .transient
             ]
             window.isReleasedWhenClosed = false
-            window.contentViewController = NSHostingController(rootView: SirenWarningView())
-            window.makeKeyAndOrderFront(nil)
+            window.setFrame(screenFrame, display: false)
+
+            let hostingView = NSHostingView(
+                rootView: SirenWarningView()
+                    .frame(width: screenFrame.width, height: screenFrame.height)
+            )
+            hostingView.frame = NSRect(origin: .zero, size: screenFrame.size)
+            hostingView.autoresizingMask = [.width, .height]
+            window.contentView = hostingView
+            window.orderFrontRegardless()
             return window
         }
         NSApp.activate(ignoringOtherApps: true)
@@ -85,6 +97,16 @@ final class SirenController {
     private func closeWarningWindows() {
         warningWindows.forEach { $0.close() }
         warningWindows.removeAll()
+    }
+}
+
+private final class SirenWarningWindow: NSWindow {
+    override var canBecomeKey: Bool {
+        true
+    }
+
+    override var canBecomeMain: Bool {
+        true
     }
 }
 
@@ -106,6 +128,7 @@ private struct SirenWarningView: View {
                     .minimumScaleFactor(0.55)
                     .padding(.horizontal, 40)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 }
