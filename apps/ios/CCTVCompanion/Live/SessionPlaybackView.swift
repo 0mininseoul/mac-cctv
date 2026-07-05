@@ -38,7 +38,11 @@ struct SessionPlaybackView: View {
             if viewModel.isLive {
                 VStack(alignment: .leading, spacing: 8) {
                     SirenCommandButton(isSending: viewModel.isSendingSirenCommand) {
-                        viewModel.sendSirenCommand()
+                        if webRTCReceiver.sendSirenCommandOverRealtimeChannel() {
+                            viewModel.markRealtimeSirenCommandSent()
+                        } else {
+                            viewModel.sendSirenCommand()
+                        }
                     }
 
                     if !viewModel.sirenCommandStatusText.isEmpty {

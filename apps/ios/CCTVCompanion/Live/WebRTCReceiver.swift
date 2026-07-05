@@ -26,6 +26,10 @@ final class WebRTCReceiver: NSObject, ObservableObject {
     private var peerConnectionConnectedAt: Date?
     private var hasReceivedRemoteVideo = false
     private var peerConnectionFailed = false
+    private var controlDataChannel: RTCDataChannel?
+    private var processedSignalIDs = Set<String>()
+    private var pendingRemoteIceCandidates: [RTCIceCandidate] = []
+    private var hasRemoteDescription = false
     private var remoteVideoTrack: RTCVideoTrack?
     private var frameObserver: RemoteFrameObserver?
 
@@ -73,6 +77,9 @@ final class WebRTCReceiver: NSObject, ObservableObject {
             peerConnectionConnectedAt = nil
             hasReceivedRemoteVideo = false
             peerConnectionFailed = false
+            processedSignalIDs.removeAll()
+            pendingRemoteIceCandidates.removeAll()
+            hasRemoteDescription = false
             viewingMode = .connecting(elapsed: 0)
             statusText = String(localized: "live_status_connecting")
             peerConnection = try makePeerConnection()
@@ -96,8 +103,29 @@ final class WebRTCReceiver: NSObject, ObservableObject {
         }
         remoteVideoTrack = nil
         frameObserver = nil
+        controlDataChannel?.delegate = nil
+        controlDataChannel = nil
+        processedSignalIDs.removeAll()
+        pendingRemoteIceCandidates.removeAll()
+        hasRemoteDescription = false
         peerConnection?.close()
         peerConnection = nil
+    }
+
+    func sendSirenCommandOverRealtimeChannel() -> Bool {
+        guard session.status == .recording,
+              let controlDataChannel,
+              controlDataChannel.readyState == .open else {
+            diagnostics?("M7_SIREN_DATA_CHANNEL_UNAVAILABLE session=\(session.id) state=\(controlDataChannel?.readyState.rawValue ?? -1)")
+            return false
+        }
+
+        let sentAt = Date().timeIntervalSince1970
+        let message = "sirenCommand|\(sentAt)"
+        let buffer = RTCDataBuffer(data: Data(message.utf8), isBinary: false)
+        let didSend = controlDataChannel.sendData(buffer)
+        diagnostics?("M7_SIREN_DATA_CHANNEL_SENT session=\(session.id) success=\(didSend)")
+        return didSend
     }
 
     private func makePeerConnection() throws -> RTCPeerConnection {
@@ -153,12 +181,48 @@ final class WebRTCReceiver: NSObject, ObservableObject {
     private func receiveOnce() async {
         do {
             let messages = try await channel.receive(after: cursor)
-            cursor = messages.map(\.createdAt).max() ?? cursor
-            for message in messages {
-                try await handle(message)
+            let newMessages = messages.filter { !processedSignalIDs.contains($0.id) }
+            if !newMessages.isEmpty {
+                diagnostics?("M6_RECEIVER_SIGNAL_BATCH session=\(session.id) count=\(newMessages.count) hasRemoteDescription=\(hasRemoteDescription)")
+            }
+
+            for message in prioritize(newMessages) {
+                do {
+                    try await handle(message)
+                    processedSignalIDs.insert(message.id)
+                } catch {
+                    diagnostics?("M6_RECEIVER_SIGNAL_HANDLE_FAILED session=\(session.id) kind=\(message.kind.rawValue) error=\(error.localizedDescription)")
+                }
+            }
+
+            if hasRemoteDescription {
+                cursor = messages.map(\.createdAt).max() ?? cursor
             }
         } catch {
             statusText = String(format: String(localized: "live_status_signal_failed_format"), error.localizedDescription)
+            diagnostics?("M6_RECEIVER_SIGNAL_RECEIVE_FAILED session=\(session.id) error=\(error.localizedDescription)")
+        }
+    }
+
+    private func prioritize(_ messages: [SignalMessage]) -> [SignalMessage] {
+        messages.sorted { first, second in
+            let firstPriority = signalPriority(first.kind)
+            let secondPriority = signalPriority(second.kind)
+            if firstPriority == secondPriority {
+                return first.createdAt < second.createdAt
+            }
+            return firstPriority < secondPriority
+        }
+    }
+
+    private func signalPriority(_ kind: SignalKind) -> Int {
+        switch kind {
+        case .offer:
+            0
+        case .ice:
+            1
+        case .answer, .sirenCommand:
+            2
         }
     }
 
@@ -174,10 +238,14 @@ final class WebRTCReceiver: NSObject, ObservableObject {
                 type: RTCSessionDescription.type(for: payload.type),
                 sdp: payload.sdp
             )
+            diagnostics?("M6_RECEIVER_OFFER_RECEIVED session=\(session.id)")
             try await peerConnection.setRemote(description)
+            hasRemoteDescription = true
+            try await flushPendingRemoteIceCandidates(on: peerConnection)
             let answer = try await peerConnection.makeAnswer()
             try await peerConnection.setLocal(answer)
             try await send(description: answer, kind: .answer)
+            diagnostics?("M6_RECEIVER_ANSWER_SENT session=\(session.id)")
             statusText = String(localized: "live_status_answer_sent")
         case .ice:
             let payload = try decoder.decode(IceCandidateSignalPayload.self, from: Data(message.payload.utf8))
@@ -186,11 +254,29 @@ final class WebRTCReceiver: NSObject, ObservableObject {
                 sdpMLineIndex: payload.sdpMLineIndex,
                 sdpMid: payload.sdpMid
             )
+            guard hasRemoteDescription else {
+                pendingRemoteIceCandidates.append(candidate)
+                diagnostics?("M6_RECEIVER_REMOTE_ICE_QUEUED session=\(session.id) \(candidateSummary(payload.sdp)) mid=\(payload.sdpMid ?? "nil") index=\(payload.sdpMLineIndex)")
+                return
+            }
             try await peerConnection.add(candidate)
             diagnostics?("M6_RECEIVER_REMOTE_ICE_ADDED session=\(session.id) \(candidateSummary(payload.sdp)) mid=\(payload.sdpMid ?? "nil") index=\(payload.sdpMLineIndex)")
         case .answer, .sirenCommand:
             return
         }
+    }
+
+    private func flushPendingRemoteIceCandidates(on peerConnection: RTCPeerConnection) async throws {
+        guard !pendingRemoteIceCandidates.isEmpty else {
+            return
+        }
+
+        let queuedCandidates = pendingRemoteIceCandidates
+        pendingRemoteIceCandidates.removeAll()
+        for candidate in queuedCandidates {
+            try await peerConnection.add(candidate)
+        }
+        diagnostics?("M6_RECEIVER_REMOTE_ICE_FLUSHED session=\(session.id) count=\(queuedCandidates.count)")
     }
 
     private func attach(videoTrack: RTCVideoTrack) {
@@ -346,7 +432,16 @@ extension WebRTCReceiver: RTCPeerConnectionDelegate {
 
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {}
 
-    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {}
+    nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {
+        Task { @MainActor [weak self] in
+            guard let self else {
+                return
+            }
+            controlDataChannel = dataChannel
+            dataChannel.delegate = self
+            diagnostics?("M7_SIREN_DATA_CHANNEL_OPENED session=\(session.id) label=\(dataChannel.label)")
+        }
+    }
 
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCPeerConnectionState) {
         Task { @MainActor [weak self] in
@@ -376,6 +471,19 @@ extension WebRTCReceiver: RTCPeerConnectionDelegate {
             self?.attach(videoTrack: videoTrack)
         }
     }
+}
+
+extension WebRTCReceiver: RTCDataChannelDelegate {
+    nonisolated func dataChannelDidChangeState(_ dataChannel: RTCDataChannel) {
+        Task { @MainActor [weak self] in
+            guard let self else {
+                return
+            }
+            diagnostics?("M7_SIREN_DATA_CHANNEL_STATE session=\(session.id) state=\(dataChannel.readyState.rawValue)")
+        }
+    }
+
+    nonisolated func dataChannel(_ dataChannel: RTCDataChannel, didReceiveMessageWith buffer: RTCDataBuffer) {}
 }
 
 private func candidateSummary(_ sdp: String) -> String {

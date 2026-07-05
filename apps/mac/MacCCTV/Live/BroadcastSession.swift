@@ -13,9 +13,14 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
     private let videoCapturer: RTCVideoCapturer
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
+    private let receiveIntervalNanoseconds: UInt64 = 200_000_000
     private var peerConnection: RTCPeerConnection?
+    private var controlDataChannel: RTCDataChannel?
     private var receiveTask: Task<Void, Never>?
     private var cursor = Date.distantPast
+    private var processedSignalIDs = Set<String>()
+    private var pendingRemoteIceCandidates: [RTCIceCandidate] = []
+    private var hasRemoteDescription = false
     private var ingestedFrameCount = 0
 
     init(
@@ -42,6 +47,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
     func start() async throws {
         let connection = try makePeerConnection()
         peerConnection = connection
+        controlDataChannel = makeControlDataChannel(on: connection)
 
         videoSource.adaptOutputFormat(toWidth: 1280, height: 720, fps: 24)
         let videoTrack = factory.videoTrack(with: videoSource, trackId: "mac-video-\(sessionID)")
@@ -59,6 +65,11 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
     func stop() async {
         receiveTask?.cancel()
         receiveTask = nil
+        controlDataChannel?.delegate = nil
+        controlDataChannel = nil
+        processedSignalIDs.removeAll()
+        pendingRemoteIceCandidates.removeAll()
+        hasRemoteDescription = false
         peerConnection?.close()
         peerConnection = nil
         diagnostics("M6_BROADCAST_STOPPED session=\(sessionID)")
@@ -103,13 +114,22 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
         return connection
     }
 
+    private func makeControlDataChannel(on connection: RTCPeerConnection) -> RTCDataChannel? {
+        let configuration = RTCDataChannelConfiguration()
+        configuration.isOrdered = true
+        let dataChannel = connection.dataChannel(forLabel: "mac-cctv-control", configuration: configuration)
+        dataChannel?.delegate = self
+        diagnostics("M7_SIREN_DATA_CHANNEL_CREATED session=\(sessionID) available=\(dataChannel != nil)")
+        return dataChannel
+    }
+
     private func startReceiveLoop() {
         receiveTask?.cancel()
         receiveTask = Task { [weak self] in
             while !Task.isCancelled {
                 await self?.receiveOnce()
                 do {
-                    try await Task.sleep(nanoseconds: 500_000_000)
+                    try await Task.sleep(nanoseconds: self?.receiveIntervalNanoseconds ?? 200_000_000)
                 } catch {
                     break
                 }
@@ -120,18 +140,56 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
     private func receiveOnce() async {
         do {
             let messages = try await channel.receive(after: cursor)
-            cursor = messages.map(\.createdAt).max() ?? cursor
-            for message in messages {
-                try await handle(message)
+            let newMessages = messages.filter { !processedSignalIDs.contains($0.id) }
+            if !newMessages.isEmpty {
+                diagnostics("M6_BROADCAST_SIGNAL_BATCH session=\(sessionID) count=\(newMessages.count) hasRemoteDescription=\(hasRemoteDescription)")
+            }
+
+            for message in prioritize(newMessages) {
+                do {
+                    try await handle(message)
+                    processedSignalIDs.insert(message.id)
+                } catch {
+                    diagnostics("M6_BROADCAST_SIGNAL_HANDLE_FAILED session=\(sessionID) kind=\(message.kind.rawValue) error=\(error.localizedDescription)")
+                }
+            }
+
+            if hasRemoteDescription {
+                cursor = messages.map(\.createdAt).max() ?? cursor
             }
         } catch {
             diagnostics("M6_BROADCAST_SIGNAL_RECEIVE_FAILED session=\(sessionID) error=\(error.localizedDescription)")
         }
     }
 
+    private func prioritize(_ messages: [SignalMessage]) -> [SignalMessage] {
+        messages.sorted { first, second in
+            let firstPriority = signalPriority(first.kind)
+            let secondPriority = signalPriority(second.kind)
+            if firstPriority == secondPriority {
+                return first.createdAt < second.createdAt
+            }
+            return firstPriority < secondPriority
+        }
+    }
+
+    private func signalPriority(_ kind: SignalKind) -> Int {
+        switch kind {
+        case .sirenCommand:
+            0
+        case .answer:
+            1
+        case .ice:
+            2
+        case .offer:
+            3
+        }
+    }
+
     private func handle(_ message: SignalMessage) async throws {
         if message.kind == .sirenCommand {
-            diagnostics("M7_SIREN_COMMAND_RECEIVED session=\(sessionID) sender=\(message.sender.rawValue)")
+            let age = Date().timeIntervalSince(message.createdAt)
+            diagnostics("M7_SIREN_COMMAND_RECEIVED session=\(sessionID) sender=\(message.sender.rawValue) age=\(String(format: "%.2f", age))")
             onSirenCommand()
             return
         }
@@ -154,6 +212,8 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
                 sdp: payload.sdp
             )
             try await peerConnection.setRemote(description)
+            hasRemoteDescription = true
+            try await flushPendingRemoteIceCandidates(on: peerConnection)
             diagnostics("M6_BROADCAST_ANSWER_RECEIVED session=\(sessionID)")
         case .ice:
             let payload = try decoder.decode(IceCandidateSignalPayload.self, from: Data(message.payload.utf8))
@@ -162,11 +222,29 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
                 sdpMLineIndex: payload.sdpMLineIndex,
                 sdpMid: payload.sdpMid
             )
+            guard hasRemoteDescription else {
+                pendingRemoteIceCandidates.append(candidate)
+                diagnostics("M6_BROADCAST_REMOTE_ICE_QUEUED session=\(sessionID) \(candidateSummary(payload.sdp)) mid=\(payload.sdpMid ?? "nil") index=\(payload.sdpMLineIndex)")
+                return
+            }
             try await peerConnection.add(candidate)
             diagnostics("M6_BROADCAST_REMOTE_ICE_ADDED session=\(sessionID) \(candidateSummary(payload.sdp)) mid=\(payload.sdpMid ?? "nil") index=\(payload.sdpMLineIndex)")
         case .offer, .sirenCommand:
             return
         }
+    }
+
+    private func flushPendingRemoteIceCandidates(on peerConnection: RTCPeerConnection) async throws {
+        guard !pendingRemoteIceCandidates.isEmpty else {
+            return
+        }
+
+        let queuedCandidates = pendingRemoteIceCandidates
+        pendingRemoteIceCandidates.removeAll()
+        for candidate in queuedCandidates {
+            try await peerConnection.add(candidate)
+        }
+        diagnostics("M6_BROADCAST_REMOTE_ICE_FLUSHED session=\(sessionID) count=\(queuedCandidates.count)")
     }
 
     private func send(description: RTCSessionDescription, kind: SignalKind) async throws {
@@ -237,10 +315,41 @@ extension BroadcastSession: RTCPeerConnectionDelegate {
 
     func peerConnection(_ peerConnection: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {}
 
-    func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {}
+    func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {
+        controlDataChannel = dataChannel
+        dataChannel.delegate = self
+        diagnostics("M7_SIREN_DATA_CHANNEL_OPENED session=\(sessionID) label=\(dataChannel.label)")
+    }
 
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCPeerConnectionState) {
         diagnostics("M6_BROADCAST_CONNECTION_STATE session=\(sessionID) state=\(newState.rawValue)")
+    }
+}
+
+extension BroadcastSession: RTCDataChannelDelegate {
+    func dataChannelDidChangeState(_ dataChannel: RTCDataChannel) {
+        diagnostics("M7_SIREN_DATA_CHANNEL_STATE session=\(sessionID) state=\(dataChannel.readyState.rawValue)")
+    }
+
+    func dataChannel(_ dataChannel: RTCDataChannel, didReceiveMessageWith buffer: RTCDataBuffer) {
+        guard !buffer.isBinary,
+              let message = String(data: buffer.data, encoding: .utf8),
+              message.hasPrefix("sirenCommand") else {
+            return
+        }
+
+        let age = dataChannelCommandAge(message)
+        diagnostics("M7_SIREN_DATA_CHANNEL_RECEIVED session=\(sessionID) age=\(String(format: "%.2f", age))")
+        onSirenCommand()
+    }
+
+    private func dataChannelCommandAge(_ message: String) -> TimeInterval {
+        let parts = message.split(separator: "|", maxSplits: 1).map(String.init)
+        guard parts.count == 2,
+              let sentAt = TimeInterval(parts[1]) else {
+            return -1
+        }
+        return Date().timeIntervalSince1970 - sentAt
     }
 }
 

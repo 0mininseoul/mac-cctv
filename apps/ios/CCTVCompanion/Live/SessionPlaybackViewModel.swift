@@ -67,6 +67,10 @@ final class SessionPlaybackViewModel: ObservableObject {
         }
     }
 
+    func markRealtimeSirenCommandSent() {
+        sirenCommandStatusText = String(localized: "siren_command_sent")
+    }
+
     private func loadLoop() async {
         await refresh()
 

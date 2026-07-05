@@ -39,6 +39,7 @@ enum M6LiveLaunchHandler {
         }
 
         let expectFallback = arguments.contains("--expect-fallback")
+        let shouldSendSirenCommand = arguments.contains("--send-siren-command")
         let receiver = WebRTCReceiver(
             session: session,
             diagnostics: { line in
@@ -56,6 +57,16 @@ enum M6LiveLaunchHandler {
         while Date() < deadline {
             switch receiver.viewingMode {
             case .realtime:
+                if shouldSendSirenCommand {
+                    let sent = await sendRealtimeSirenCommand(receiver: receiver)
+                    return [
+                        "M7_SIREN_REALTIME_COMMAND_SENT",
+                        "session=\(session.id)",
+                        "sent=\(sent)",
+                        "elapsed=\(String(format: "%.1f", Date().timeIntervalSince(startedAt)))"
+                    ].joined(separator: " ")
+                }
+
                 return [
                     "M6_WEBRTC_OK",
                     "session=\(session.id)",
@@ -82,6 +93,19 @@ enum M6LiveLaunchHandler {
         }
 
         throw M6LiveError.timeout
+    }
+
+    @MainActor
+    private static func sendRealtimeSirenCommand(receiver: WebRTCReceiver) async -> Bool {
+        let deadline = Date().addingTimeInterval(3)
+        while Date() < deadline {
+            if receiver.sendSirenCommandOverRealtimeChannel() {
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                return true
+            }
+            try? await Task.sleep(nanoseconds: 100_000_000)
+        }
+        return false
     }
 
     private static func value(after flag: String, in arguments: [String]) -> String? {
