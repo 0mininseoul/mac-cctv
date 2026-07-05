@@ -8,3 +8,11 @@ Packages/**/.build/
 .xcodebuildmcp/
 *.xcuserstate
 xcuserdata/
+
+# Local secrets
+*.p8
+ApiKey_*.p8
+AuthKey_*.p8
+.env
+.env.*
+.secrets/
