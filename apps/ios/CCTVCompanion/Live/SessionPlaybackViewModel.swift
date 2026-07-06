@@ -4,9 +4,8 @@ import Foundation
 
 @MainActor
 final class SessionPlaybackViewModel: ObservableObject {
-    @Published private(set) var statusText = String(localized: "playback_status_loading")
+    @Published private(set) var statusText = ""
     @Published private(set) var playlist = FallbackPlaylist()
-    @Published private(set) var playableChunkCount = 0
     @Published private(set) var isSendingSirenCommand = false
     @Published private(set) var sirenCommandStatusText = ""
 
@@ -93,9 +92,8 @@ final class SessionPlaybackViewModel: ObservableObject {
             let playableChunks = nextPlaylist.items.filter { $0.assetFileURL != nil }
 
             playlist = nextPlaylist
-            playableChunkCount = playableChunks.count
             applyQueue(chunks: playableChunks)
-            updateStatus(chunks: chunks, playableChunks: playableChunks, playlist: nextPlaylist)
+            updateStatus(chunks: chunks, playableChunks: playableChunks)
         } catch {
             statusText = String(format: String(localized: "playback_status_failed_format"), error.localizedDescription)
         }
@@ -160,21 +158,13 @@ final class SessionPlaybackViewModel: ObservableObject {
         }
     }
 
-    private func updateStatus(chunks: [VideoChunk], playableChunks: [VideoChunk], playlist: FallbackPlaylist) {
-        guard !chunks.isEmpty else {
+    private func updateStatus(chunks: [VideoChunk], playableChunks: [VideoChunk]) {
+        if chunks.isEmpty {
             statusText = String(localized: "playback_status_empty")
-            return
-        }
-
-        guard !playableChunks.isEmpty else {
+        } else if playableChunks.isEmpty {
             statusText = String(localized: "playback_status_waiting_for_assets")
-            return
-        }
-
-        if isLive, let latency = playlist.initialLatency {
-            statusText = String(format: String(localized: "playback_status_live_format"), latency, playableChunks.count)
         } else {
-            statusText = String(format: String(localized: "playback_status_replay_format"), playableChunks.count)
+            statusText = ""
         }
     }
 }

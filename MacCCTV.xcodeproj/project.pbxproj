@@ -24,6 +24,7 @@
 		2E31E0E8B1C5662D7C0269D4 /* M0ProbeLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0598E0BDD1D1C294A62A94AB /* M0ProbeLaunchHandler.swift */; };
 		301F46300732B79417FB9267 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FFD661A51CF049749A8C8324 /* Localizable.xcstrings */; };
 		341E8B3B38C68988ADDCB631 /* ChunkWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30DF144D2C9E6F0DAE977038 /* ChunkWriter.swift */; };
+		3D2E8DDE7C6AF8EDE270624E /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B1D32FC93E70F76FE80203 /* SettingsView.swift */; };
 		434C172014244A3C3DA21989 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 41D23F8132B953408C8898E3 /* Localizable.xcstrings */; };
 		437399AF3869AC00D5426F75 /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28B65B440D4B33CCC1962465 /* HotkeyManager.swift */; };
 		47C0CC79E30E86495698DE08 /* BroadcastSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F9E9F68FED9F5530D4C6F5A /* BroadcastSession.swift */; };
@@ -102,6 +103,7 @@
 		7D78207AB6F5951B117E39E8 /* LocalChunkStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalChunkStore.swift; sourceTree = "<group>"; };
 		7F9E9F68FED9F5530D4C6F5A /* BroadcastSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BroadcastSession.swift; sourceTree = "<group>"; };
 		85DD33AC436E7638A9D6C90B /* MacCCTVRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacCCTVRootView.swift; sourceTree = "<group>"; };
+		86B1D32FC93E70F76FE80203 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		8F4F93FC1015721C90A7951F /* M0ProbeLaunchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M0ProbeLaunchHandler.swift; sourceTree = "<group>"; };
 		986F9BF51E2C7CF3035542ED /* MacCloudKitProbeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacCloudKitProbeViewModel.swift; sourceTree = "<group>"; };
 		999F7E6549C53818BB9CA6BE /* CaptureEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureEngine.swift; sourceTree = "<group>"; };
@@ -309,6 +311,14 @@
 			path = Hotkey;
 			sourceTree = "<group>";
 		};
+		BD5B12C6DB32009BACF1F0D0 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				86B1D32FC93E70F76FE80203 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
 		BFE46FF26C8F9A64766C1ADB /* CCTVCompanion */ = {
 			isa = PBXGroup;
 			children = (
@@ -316,6 +326,7 @@
 				63445A31D417EB800567EB96 /* App */,
 				048EF1AF1A92FAAF4574A975 /* Library */,
 				FDA8F313003C44B3DA819C31 /* Live */,
+				BD5B12C6DB32009BACF1F0D0 /* Settings */,
 				EBD288FFED42D8F19FAEB82E /* Support */,
 			);
 			name = CCTVCompanion;
@@ -464,12 +475,12 @@
 					54374CA213092B0F091EBD9E = {
 						DevelopmentTeam = 878FAHTFQJ;
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.Push\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.Push\": [\"enabled\": 1], \"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1]]";
 					};
 					D14D4B0E61026724F28C6167 = {
 						DevelopmentTeam = 878FAHTFQJ;
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.ApplicationGroups.Mac\": [\"enabled\": 1], \"com.apple.iCloud\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.ApplicationGroups.Mac\": [\"enabled\": 1]]";
 					};
 				};
 			};
@@ -585,6 +596,7 @@
 				110F222E22059DB633A9751C /* SessionPlaybackView.swift in Sources */,
 				2CB2F7D91BF32EA91CF90B23 /* SessionPlaybackViewModel.swift in Sources */,
 				7F127430D9512FF354779283 /* SessionRouteView.swift in Sources */,
+				3D2E8DDE7C6AF8EDE270624E /* SettingsView.swift in Sources */,
 				DAFACFA911D15AA3AFA4DB57 /* TipJarView.swift in Sources */,
 				B0407BA3B9C0707E2145ECCD /* WebRTCReceiver.swift in Sources */,
 			);

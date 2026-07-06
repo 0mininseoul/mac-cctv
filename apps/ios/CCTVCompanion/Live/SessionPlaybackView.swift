@@ -57,17 +57,17 @@ struct SessionPlaybackView: View {
                 .background(.regularMaterial)
             }
 
-            List {
-                Section("playback_status_section") {
-                    LabeledContent("playback_mode_label") {
-                        Text(modeText)
-                    }
-                    LabeledContent("playback_chunks_label", value: "\(viewModel.playableChunkCount)")
-                    Text(viewModel.statusText)
-                        .textSelection(.enabled)
-                }
+            if !viewModel.statusText.isEmpty {
+                Text(viewModel.statusText)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+            }
 
-                if !viewModel.playlist.missingRanges.isEmpty {
+            if !viewModel.playlist.missingRanges.isEmpty {
+                List {
                     Section("playback_missing_section") {
                         ForEach(viewModel.playlist.missingRanges, id: \.startIndex) { range in
                             Text(
@@ -79,11 +79,6 @@ struct SessionPlaybackView: View {
                             )
                         }
                     }
-                }
-
-                Section {
-                    Text("library_auto_delete_note")
-                        .foregroundStyle(.secondary)
                 }
             }
         }
@@ -100,21 +95,6 @@ struct SessionPlaybackView: View {
         }
         .onChange(of: webRTCReceiver.usesDelayedPlayback) { _, usesDelayedPlayback in
             viewModel.setPlaybackActive(usesDelayedPlayback)
-        }
-    }
-
-    private var modeText: LocalizedStringKey {
-        guard viewModel.isLive else {
-            return "playback_mode_replay"
-        }
-
-        switch webRTCReceiver.viewingMode {
-        case .connecting:
-            return "playback_mode_connecting"
-        case .realtime:
-            return "playback_mode_realtime"
-        case .delayedFallback:
-            return "playback_mode_live"
         }
     }
 }

@@ -3,6 +3,7 @@ import SwiftUI
 
 struct SessionLibraryView: View {
     @StateObject private var viewModel = SessionLibraryViewModel()
+    @State private var isShowingSettings = false
 
     var body: some View {
         List {
@@ -20,8 +21,6 @@ struct SessionLibraryView: View {
                         viewModel.delete(at: offsets)
                     }
                 }
-            } footer: {
-                Text("library_auto_delete_note")
             }
 
             Section("library_status_section") {
@@ -47,6 +46,17 @@ struct SessionLibraryView: View {
                 }
                 .disabled(viewModel.isLoading)
             }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    isShowingSettings = true
+                } label: {
+                    Image(systemName: "gearshape")
+                }
+                .accessibilityLabel("settings_title")
+            }
+        }
+        .sheet(isPresented: $isShowingSettings) {
+            SettingsView()
         }
         .refreshable {
             await viewModel.load()
