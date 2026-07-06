@@ -52,6 +52,26 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 - [x] 두 빌드 App Store Connect에 업로드 완료, 둘 다 `processingState: VALID`
 - [x] **사람 작업 완료**: TestFlight에서 두 빌드 각각 "내부 테스트" 그룹에 배정하고 테스터 추가함
 
+### Build 2 (2026-07-06) — 실기기 테스트에서 발견된 버그 수정
+
+Build 1을 실기기(Mac+iPhone TestFlight)로 검증하며 발견된 문제 2건 수정 후 재업로드:
+
+- **재생 검은 화면**: `CKAsset.fileURL`이 CloudKit이 관리하는 임시 파일이라 원본 레코드가 해제되면 사라짐 — 지난 세션 다시보기가 항상 검은 화면이었던 원인. `ChunkAssetCache`로 최초 1회 로컬에 복사해 안정적인 경로를 반환하도록 수정 (TDD, `CCTVKitTests` 전체 통과)
+- **UI 정리**: 재생 화면에서 "지연 라이브: N초 지연, 청크 N개" 같은 내부 구현 노출 텍스트 제거, "7일 자동 삭제" 안내를 보관함 우측 상단 설정(gear) 화면으로 이동
+
+```
+xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
+  --apiKey TMC3PCHDCF --apiIssuer 0d693e18-2317-4107-8b26-26afd98e64ae
+# Delivery UUID: f78a6a5f-d3bf-4683-8782-beed06cecc8c — build 2, COMPLETE
+
+xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
+  --apiKey TMC3PCHDCF --apiIssuer 0d693e18-2317-4107-8b26-26afd98e64ae
+# Delivery UUID: 652dee32-5ae9-4638-b481-62abfc6e2c02 — build 2, COMPLETE
+```
+
+- [x] Build 2 두 타겟 모두 업로드·처리 완료 (`project.yml`의 `CURRENT_PROJECT_VERSION` 1→2)
+- [ ] **사람 작업**: TestFlight에서 build 2를 내부 테스트 그룹에 배정하고 재검증 (특히 지난 세션 재생, 새 설정 화면)
+
 **외부 테스터는 결정에 따라 불필요 (2026-07-06):** 계획 문서의 M9 검증 기준은 "TestFlight 외부 테스터 설치"라고 되어 있지만, 실기기(본인 Mac + iPhone) 검증이 목적이면 그 계정이 이미 내부 테스터로 등록되어 있으니 내부 테스팅만으로 충분하다. 외부 테스터(Beta App Review 필요)는 **팀 멤버가 아닌 다른 사람**에게 정식 출시 전 미리 배포하고 싶을 때만 필요 — PRD §11 출시 전략도 베타 단계 없이 바로 무료 출시라 필수 아님. 필요해지면 아래 항목 진행:
 
 - [ ] **(선택) 외부 테스터가 필요해지면**: 베타 검토(Beta App Review) 제출 전 App Review Information Notes 작성 필요 — Export Compliance 질문(암호화 사용 여부)엔 표준 HTTPS/TLS 외 자체 암호화가 없으므로 "표준 암호화만 사용"으로 응답
