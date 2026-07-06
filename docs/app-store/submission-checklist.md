@@ -92,7 +92,27 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 ```
 
 - [x] Build 3 두 타겟 모두 업로드·처리 완료 (`project.yml`의 `CURRENT_PROJECT_VERSION` 2→3), 둘 다 `processingState: COMPLETE`
-- [ ] **사람 작업**: TestFlight에서 build 3를 내부 테스트 그룹에 배정하고 재검증 (재생바 길이, save-video, 설정 화면, 보관함 나갔다 재접속 시 WebRTC)
+- [x] **사람 작업 완료**: TestFlight에서 build 3를 내부 테스트 그룹에 배정하고 재검증함 — 재생바 길이·save-video 버튼·설정 화면은 정상 확인. WebRTC는 첫 연결·재접속 모두 여전히 지연 폴백, save-video 공유 시트에 "비디오 저장" 옵션 없음 — 아래 build 4에서 수정
+
+### Build 4 (2026-07-06) — WebRTC 연결 타임아웃 회귀 + Save Video 권한 누락 수정
+
+Build 3 검증에서 새로 드러난 문제 2건:
+
+- **WebRTC 연결이 첫 접속도 실패** (build 3에서 만든 회귀): build 3의 viewerReady 기반 재협상 수정이 재접속은 고쳤지만, 이제 모든 연결(최초 포함)이 "iOS→Mac viewerReady 왕복 + Mac→iOS offer 왕복"을 먼저 거쳐야 해서 기존 10초 타임아웃 예산을 갉아먹게 됨. iOS 신호 폴링 주기를 2초→0.5초로 줄이고, `LiveConnectionPolicy` 타임아웃을 10초→20초로 늘려 이 왕복에 여유를 줌
+- **save-video 공유 시트에 "비디오 저장" 옵션 없음**: 파일 형식 문제가 아니라 `NSPhotoLibraryAddUsageDescription`이 Info.plist에 없어서였음 — 이 문구가 없으면 iOS가 사진 보관함에 쓰는 공유 액션 자체를 조용히 숨김 (예전 카메라 권한 문구 누락과 같은 종류의 문제). `apps/ios/CCTVCompanion/Support/Info.plist`·`InfoPlist.xcstrings`에 추가함
+
+```
+xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 63209d2e-9128-4239-a607-e22882ecbb7c — build 4
+
+xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: a0947e90-3365-4537-a6d0-cc300da49b89 — build 4
+```
+
+- [x] Build 4 두 타겟 모두 업로드 완료 (`project.yml`의 `CURRENT_PROJECT_VERSION` 3→4)
+- [ ] **사람 작업**: TestFlight에서 build 4를 내부 테스트 그룹에 배정하고 재검증 (WebRTC 첫 연결·재접속, save-video 공유 시트의 "비디오 저장")
 
 **외부 테스터는 결정에 따라 불필요 (2026-07-06):** 계획 문서의 M9 검증 기준은 "TestFlight 외부 테스터 설치"라고 되어 있지만, 실기기(본인 Mac + iPhone) 검증이 목적이면 그 계정이 이미 내부 테스터로 등록되어 있으니 내부 테스팅만으로 충분하다. 외부 테스터(Beta App Review 필요)는 **팀 멤버가 아닌 다른 사람**에게 정식 출시 전 미리 배포하고 싶을 때만 필요 — PRD §11 출시 전략도 베타 단계 없이 바로 무료 출시라 필수 아님. 필요해지면 아래 항목 진행:
 
