@@ -70,7 +70,29 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 ```
 
 - [x] Build 2 두 타겟 모두 업로드·처리 완료 (`project.yml`의 `CURRENT_PROJECT_VERSION` 1→2)
-- [ ] **사람 작업**: TestFlight에서 build 2를 내부 테스트 그룹에 배정하고 재검증 (특히 지난 세션 재생, 새 설정 화면)
+- [x] **사람 작업 완료**: TestFlight에서 build 2를 내부 테스트 그룹에 배정하고 재검증함
+
+### Build 3 (2026-07-06) — 실기기 테스트에서 발견된 버그 3건 추가 수정
+
+Build 2를 실기기로 검증하며 발견된 문제 4건 중 3건은 build 2 이후 로컬 커밋으로 이미 해결되어 있었고(재생바 길이·save-video 부재는 build 2에 해당 기능 자체가 없었을 뿐), 나머지 1건(WebRTC 재접속)은 이번에 새로 수정:
+
+- **재생바가 6초 단위로 보임**: 원인 아님으로 확인 — `AVMutableComposition` 합성 로직 자체는 정상(합성 mp4로 직접 재현 테스트, 3×2초 청크 → 정확히 6.0초). Build 2가 아직 `AVQueuePlayer` 방식이라 청크마다 재생바가 리셋되는 옛 동작이었을 뿐, build 3부터는 정상 표시될 것으로 예상
+- **save-video 공유 시트 없음**: build 2에는 해당 기능 자체가 없었음 (build 2 업로드 이후 로컬 커밋으로 구현됨) — build 3부터 종료된 세션에 노출
+- **설정 화면 부실**: 섹션 구조로 재구성 — 저장 위치/자동 삭제 안내, iCloud 저장 공간 확인 방법(iPhone 설정 > Apple ID > iCloud > 저장 공간 관리), 보관함에서 스와이프해 즉시 삭제하는 방법, 앱 버전 정보
+- **WebRTC 재접속 실패** (진짜 버그, 신규 수정): Mac의 `BroadcastSession`이 녹화 시작 시 offer를 한 번만 보내고 재협상 수단이 없어, 보관함으로 나갔다 재접속하면 항상 10초 타임아웃 후 지연 폴백으로 빠졌음. `SignalKind.viewerReady`를 추가해 iOS가 세션 진입(최초/재접속 모두)마다 신호를 보내면 Mac이 기존 연결을 정리하고 새 peer connection + 새 offer로 재협상하도록 수정. iOS도 재접속 시 신호 수신 커서를 현재 시각으로 리셋해 과거 offer/ice를 재처리하지 않게 함
+
+```
+xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 09bfdf54-58cc-4850-85a5-5868c45662fa — build 3
+
+xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 761eb110-6fd5-42c7-95b9-46af3d417875 — build 3
+```
+
+- [x] Build 3 두 타겟 모두 업로드 완료 (`project.yml`의 `CURRENT_PROJECT_VERSION` 2→3), 처리 상태 확인 중
+- [ ] **사람 작업**: TestFlight에서 build 3를 내부 테스트 그룹에 배정하고 재검증 (재생바 길이, save-video, 설정 화면, 보관함 나갔다 재접속 시 WebRTC)
 
 **외부 테스터는 결정에 따라 불필요 (2026-07-06):** 계획 문서의 M9 검증 기준은 "TestFlight 외부 테스터 설치"라고 되어 있지만, 실기기(본인 Mac + iPhone) 검증이 목적이면 그 계정이 이미 내부 테스터로 등록되어 있으니 내부 테스팅만으로 충분하다. 외부 테스터(Beta App Review 필요)는 **팀 멤버가 아닌 다른 사람**에게 정식 출시 전 미리 배포하고 싶을 때만 필요 — PRD §11 출시 전략도 베타 단계 없이 바로 무료 출시라 필수 아님. 필요해지면 아래 항목 진행:
 

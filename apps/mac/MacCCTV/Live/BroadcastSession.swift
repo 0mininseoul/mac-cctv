@@ -45,11 +45,25 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
     }
 
     func start() async throws {
+        videoSource.adaptOutputFormat(toWidth: 1280, height: 720, fps: 24)
+        startReceiveLoop()
+    }
+
+    /// Creates a fresh peer connection and sends a new offer. Called for the first
+    /// viewer of a session and again for every reconnect (`.viewerReady`) — a
+    /// once-and-only-once offer at recording start has no way to recover once a
+    /// viewer's peer connection is torn down (e.g. backgrounding the app), so every
+    /// viewer arrival renegotiates from scratch instead.
+    private func negotiate() async throws {
+        peerConnection?.close()
+        controlDataChannel?.delegate = nil
+        hasRemoteDescription = false
+        pendingRemoteIceCandidates.removeAll()
+
         let connection = try makePeerConnection()
         peerConnection = connection
         controlDataChannel = makeControlDataChannel(on: connection)
 
-        videoSource.adaptOutputFormat(toWidth: 1280, height: 720, fps: 24)
         let videoTrack = factory.videoTrack(with: videoSource, trackId: "mac-video-\(sessionID)")
         guard connection.add(videoTrack, streamIds: ["mac-cctv-\(sessionID)"]) != nil else {
             throw BroadcastSessionError.couldNotAddVideoTrack
@@ -59,7 +73,6 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
         try await connection.setLocal(offer)
         try await send(description: offer, kind: .offer)
         diagnostics("M6_BROADCAST_OFFER_SENT session=\(sessionID)")
-        startReceiveLoop()
     }
 
     func stop() async {
@@ -177,12 +190,14 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
         switch kind {
         case .sirenCommand:
             0
-        case .answer:
+        case .viewerReady:
             1
-        case .ice:
+        case .answer:
             2
-        case .offer:
+        case .ice:
             3
+        case .offer:
+            4
         }
     }
 
@@ -191,6 +206,16 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
             let age = Date().timeIntervalSince(message.createdAt)
             diagnostics("M7_SIREN_COMMAND_RECEIVED session=\(sessionID) sender=\(message.sender.rawValue) age=\(String(format: "%.2f", age))")
             onSirenCommand()
+            return
+        }
+
+        if message.kind == .viewerReady {
+            diagnostics("M6_BROADCAST_VIEWER_READY session=\(sessionID)")
+            do {
+                try await negotiate()
+            } catch {
+                diagnostics("M6_BROADCAST_NEGOTIATE_FAILED session=\(sessionID) error=\(error.localizedDescription)")
+            }
             return
         }
 
@@ -229,7 +254,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
             }
             try await peerConnection.add(candidate)
             diagnostics("M6_BROADCAST_REMOTE_ICE_ADDED session=\(sessionID) \(candidateSummary(payload.sdp)) mid=\(payload.sdpMid ?? "nil") index=\(payload.sdpMLineIndex)")
-        case .offer, .sirenCommand:
+        case .offer, .sirenCommand, .viewerReady:
             return
         }
     }

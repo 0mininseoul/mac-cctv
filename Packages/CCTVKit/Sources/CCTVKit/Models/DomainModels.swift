@@ -87,6 +87,7 @@ public enum SignalKind: String, CaseIterable, Sendable {
     case answer
     case ice
     case sirenCommand
+    case viewerReady
 }
 
 public enum SignalSender: String, CaseIterable, Sendable {

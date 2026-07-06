@@ -283,6 +283,60 @@
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "완료" } }
       }
     },
+    "settings_storage_section" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Storage & Privacy" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "저장 및 개인정보" } }
+      }
+    },
+    "settings_storage_location_note" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Recordings are stored only in this Apple ID's private iCloud storage — never uploaded to any other server." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "촬영된 영상은 이 Apple ID의 iCloud 개인 저장소에만 저장됩니다. 별도의 서버로 전송되지 않습니다." } }
+      }
+    },
+    "settings_check_usage_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Check storage usage" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "저장 공간 확인" } }
+      }
+    },
+    "settings_check_usage_body" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Open iPhone Settings > [Your Name] > iCloud > Manage Storage, then find this app to see how much space it's using." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "iPhone 설정 > Apple ID > iCloud > 저장 공간 관리에서 이 앱 이름을 찾으면 사용량을 확인할 수 있습니다." } }
+      }
+    },
+    "settings_manual_delete_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete manually" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "직접 삭제하기" } }
+      }
+    },
+    "settings_manual_delete_body" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Swipe left on a session in the Library to delete it right away, without waiting for the 7-day auto-delete." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "보관함에서 세션을 왼쪽으로 스와이프하면 7일을 기다리지 않고 바로 삭제할 수 있습니다." } }
+      }
+    },
+    "settings_about_section" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "About" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "정보" } }
+      }
+    },
+    "settings_version_label" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Version" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "버전" } }
+      }
+    },
+    "settings_version_format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%@ (%@)" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "%@ (%@)" } }
+      }
+    },
     "tip_jar_subtitle" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Optional support for keeping the free app running." } },

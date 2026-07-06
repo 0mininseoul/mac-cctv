@@ -80,11 +80,18 @@ final class WebRTCReceiver: NSObject, ObservableObject {
             processedSignalIDs.removeAll()
             pendingRemoteIceCandidates.removeAll()
             hasRemoteDescription = false
+            // Ignore this session's entire prior signal history (e.g. a stale offer/ice
+            // from a previous connection attempt before backgrounding) — only react to
+            // whatever the broadcaster sends fresh in response to viewerReady below.
+            cursor = Date()
             viewingMode = .connecting(elapsed: 0)
             statusText = String(localized: "live_status_connecting")
             peerConnection = try makePeerConnection()
             startSignalLoop()
             startModeLoop()
+            Task { [weak self] in
+                await self?.sendViewerReady()
+            }
         } catch {
             peerConnectionFailed = true
             refreshMode(now: Date())
@@ -221,7 +228,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
             0
         case .ice:
             1
-        case .answer, .sirenCommand:
+        case .answer, .sirenCommand, .viewerReady:
             2
         }
     }
@@ -261,8 +268,28 @@ final class WebRTCReceiver: NSObject, ObservableObject {
             }
             try await peerConnection.add(candidate)
             diagnostics?("M6_RECEIVER_REMOTE_ICE_ADDED session=\(session.id) \(candidateSummary(payload.sdp)) mid=\(payload.sdpMid ?? "nil") index=\(payload.sdpMLineIndex)")
-        case .answer, .sirenCommand:
+        case .answer, .sirenCommand, .viewerReady:
             return
+        }
+    }
+
+    private func sendViewerReady() async {
+        do {
+            let payload = ViewerReadySignalPayload(requestedAt: Date())
+            let data = try encoder.encode(payload)
+            try await channel.send(
+                SignalMessage(
+                    id: "\(session.id)-ios-viewerReady-\(UUID().uuidString)",
+                    sessionID: session.id,
+                    kind: .viewerReady,
+                    payload: String(decoding: data, as: UTF8.self),
+                    sender: .ios,
+                    createdAt: Date()
+                )
+            )
+            diagnostics?("M6_RECEIVER_VIEWER_READY_SENT session=\(session.id)")
+        } catch {
+            diagnostics?("M6_RECEIVER_VIEWER_READY_SEND_FAILED session=\(session.id) error=\(error.localizedDescription)")
         }
     }
 

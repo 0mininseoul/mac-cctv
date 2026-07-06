@@ -29,3 +29,14 @@ public struct SirenCommandSignalPayload: Codable, Equatable, Sendable {
         self.requestedAt = requestedAt
     }
 }
+
+/// Sent by a viewer (iOS) whenever it opens or re-opens a live session, so the
+/// broadcaster (Mac) knows to (re)negotiate a fresh WebRTC offer — covers both
+/// the very first connection and reconnects after the viewer backgrounds/returns.
+public struct ViewerReadySignalPayload: Codable, Equatable, Sendable {
+    public var requestedAt: Date
+
+    public init(requestedAt: Date) {
+        self.requestedAt = requestedAt
+    }
+}
