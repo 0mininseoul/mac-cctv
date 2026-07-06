@@ -96,7 +96,9 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 
 **외부 테스터는 결정에 따라 불필요 (2026-07-06):** 계획 문서의 M9 검증 기준은 "TestFlight 외부 테스터 설치"라고 되어 있지만, 실기기(본인 Mac + iPhone) 검증이 목적이면 그 계정이 이미 내부 테스터로 등록되어 있으니 내부 테스팅만으로 충분하다. 외부 테스터(Beta App Review 필요)는 **팀 멤버가 아닌 다른 사람**에게 정식 출시 전 미리 배포하고 싶을 때만 필요 — PRD §11 출시 전략도 베타 단계 없이 바로 무료 출시라 필수 아님. 필요해지면 아래 항목 진행:
 
-- [ ] **(선택) 외부 테스터가 필요해지면**: 베타 검토(Beta App Review) 제출 전 App Review Information Notes 작성 필요 — Export Compliance 질문(암호화 사용 여부)엔 표준 HTTPS/TLS 외 자체 암호화가 없으므로 "표준 암호화만 사용"으로 응답
+- [ ] **(선택) 외부 테스터가 필요해지면**: 베타 검토(Beta App Review) 제출 전 App Review Information Notes 작성 필요
+
+**Export Compliance 자동화 (2026-07-06):** build 3까지는 매 업로드마다 App Store Connect에서 "Missing Compliance"로 뜨며 웹 UI에서 수동으로 답변해야 했음 — 두 앱 Info.plist에 `ITSAppUsesNonExemptEncryption` 키 자체가 없어서 매번 물어보는 구조였음. 표준 TLS(CloudKit)·표준 DTLS-SRTP(WebRTC)만 쓰고 자체 암호화가 없으므로 두 Info.plist에 `ITSAppUsesNonExemptEncryption = false`를 추가함 (`apps/mac/MacCCTV/Support/Info.plist`, `apps/ios/CCTVCompanion/Support/Info.plist`) — **build 4부터** 매 업로드마다 자동으로 규정 준수 처리됨. build 3는 이 수정 이전에 업로드되어 여전히 TestFlight에서 수동으로 한 번 답변해야 함(암호화 사용 여부 질문에 "표준 암호화만 사용"으로 응답).
 - [x] **사람 작업 완료**: iOS·Mac 둘 다 TestFlight로 설치 완료 (iOS는 기존 개발용 설치를 대체하며 로컬 데이터 유실 — 의도된 정리였음)
 - [ ] **사람 작업**: 실기기 종단 검증 — 번들 ID 분리·CloudKit Production 전환·Release 서명 빌드 조합으로는 처음 도는 경로라 아래 시나리오를 실제로 확인 필요:
   1. Mac 온보딩: 카메라 권한 허용 → iCloud 확인 통과 → 온보딩 완료
