@@ -2,6 +2,7 @@ import Foundation
 
 public enum AutoSirenDecision: Equatable, Sendable {
     case trigger
+    case escalate
     case notifyOnly
 }
 
@@ -24,6 +25,7 @@ public struct AutoSirenTriggerPolicy: Equatable, Sendable {
     public var powerDisconnectWindow: TimeInterval
     public var armGracePeriod: TimeInterval
     public var minimumDeviceMotionConfidence: Double
+    public var escalationTimeout: TimeInterval
 
     public init(
         requiredDeviceMotionDuration: TimeInterval = 3,
@@ -31,7 +33,8 @@ public struct AutoSirenTriggerPolicy: Equatable, Sendable {
         inputTouchWindow: TimeInterval = 10,
         powerDisconnectWindow: TimeInterval = 30,
         armGracePeriod: TimeInterval = 30,
-        minimumDeviceMotionConfidence: Double = 0.72
+        minimumDeviceMotionConfidence: Double = 0.72,
+        escalationTimeout: TimeInterval = 15
     ) {
         self.requiredDeviceMotionDuration = requiredDeviceMotionDuration
         self.maxDeviceMotionSampleGap = maxDeviceMotionSampleGap
@@ -39,6 +42,7 @@ public struct AutoSirenTriggerPolicy: Equatable, Sendable {
         self.powerDisconnectWindow = powerDisconnectWindow
         self.armGracePeriod = armGracePeriod
         self.minimumDeviceMotionConfidence = minimumDeviceMotionConfidence
+        self.escalationTimeout = escalationTimeout
     }
 
     public func decision(
@@ -52,10 +56,13 @@ public struct AutoSirenTriggerPolicy: Equatable, Sendable {
         guard hasRecentReinforcingSignal(now: now, evidence: evidence) else {
             return .notifyOnly
         }
-        guard continuousDeviceMotionDuration(now: now, evidence: evidence) >= requiredDeviceMotionDuration else {
-            return .notifyOnly
+        if continuousDeviceMotionDuration(now: now, evidence: evidence) >= requiredDeviceMotionDuration {
+            return .trigger
         }
-        return .trigger
+        if hasQualifyingDeviceMotion(now: now, evidence: evidence) {
+            return .escalate
+        }
+        return .notifyOnly
     }
 
     private func hasRecentReinforcingSignal(now: Date, evidence: [AutoSirenEvidence]) -> Bool {
@@ -66,9 +73,18 @@ public struct AutoSirenTriggerPolicy: Equatable, Sendable {
                 return age >= 0 && age <= inputTouchWindow
             case .powerDisconnect:
                 return age >= 0 && age <= powerDisconnectWindow
-            case .lidClose, .personMotion, .deviceMotion, .sirenAuto, .sirenManual:
+            case .lidClose, .personMotion, .deviceMotion, .sirenAuto, .sirenManual, .sirenEscalation, .escalationDismissed:
                 return false
             }
+        }
+    }
+
+    private func hasQualifyingDeviceMotion(now: Date, evidence: [AutoSirenEvidence]) -> Bool {
+        evidence.contains { item in
+            item.type == .deviceMotion &&
+                item.confidence >= minimumDeviceMotionConfidence &&
+                item.occurredAt <= now &&
+                now.timeIntervalSince(item.occurredAt) <= maxDeviceMotionSampleGap
         }
     }
 

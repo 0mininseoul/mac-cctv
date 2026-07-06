@@ -38,6 +38,8 @@ final class SurveillanceController: ObservableObject {
             UserDefaults.standard.set(sirenWarningText, forKey: Self.sirenWarningTextKey)
         }
     }
+    @Published private(set) var isEscalationPending = false
+    @Published private(set) var escalationSecondsRemaining = 0
 
     private let hotkeyManager = HotkeyManager()
     private let sleepBlocker = SleepBlocker()
@@ -56,6 +58,8 @@ final class SurveillanceController: ObservableObject {
     private var autoSirenEvidence: [AutoSirenEvidence] = []
     private var autoSirenTriggered = false
     private var isTransitioning = false
+    private var escalationTask: Task<Void, Never>?
+    private var escalationActive = false
 
     private static let sirenWarningTextKey = "siren.warningText"
     private static var defaultSirenWarningText: String {
@@ -109,6 +113,11 @@ final class SurveillanceController: ObservableObject {
                 self?.writeDiagnostic(line, filename: "m5-detector.txt")
             }
         }
+        eventDetector.onSystemWake = { [weak self] in
+            Task { @MainActor [weak self] in
+                await self?.handleSystemWake()
+            }
+        }
         registerHotkey()
         Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: 750_000_000)
@@ -146,7 +155,29 @@ final class SurveillanceController: ObservableObject {
         case .idle:
             await startSurveillance()
         case .armed, .siren:
-            await stopSurveillance()
+            await stopSurveillance(finalStatus: .ended)
+        }
+    }
+
+    private func handleSystemWake() async {
+        guard !isTransitioning, machine.state != .idle else {
+            return
+        }
+        writeDiagnostic("M9_WAKE_AUTO_STOP session=\(activeSessionID ?? "unknown")")
+        await stopSurveillance(finalStatus: .interrupted)
+    }
+
+    private func reconcileOrphanedSessions() async {
+        do {
+            let sessions = try await store.fetchSessions(limit: 20)
+            for var session in sessions where session.status == .recording {
+                session.status = .interrupted
+                session.endedAt = session.endedAt ?? Date()
+                _ = try? await store.saveSession(session)
+                writeDiagnostic("M9_ORPHAN_SESSION_CLOSED session=\(session.id)")
+            }
+        } catch {
+            writeDiagnostic("M9_ORPHAN_SESSION_CHECK_FAILED error=\(error.localizedDescription)")
         }
     }
 
@@ -161,6 +192,8 @@ final class SurveillanceController: ObservableObject {
                 statusText = String(localized: "surveillance_status_icloud_unavailable")
                 return
             }
+
+            await reconcileOrphanedSessions()
 
             let startedAt = Date()
             let sessionID = "m3-\(Int(startedAt.timeIntervalSince1970))"
@@ -214,10 +247,11 @@ final class SurveillanceController: ObservableObject {
         }
     }
 
-    private func stopSurveillance() async {
+    private func stopSurveillance(finalStatus: SessionStatus) async {
         isTransitioning = true
         statusText = String(localized: "surveillance_status_stopping")
         defer { isTransitioning = false }
+        resetEscalationState()
         stopSirenIfNeeded(reason: "stop")
 
         guard
@@ -244,7 +278,7 @@ final class SurveillanceController: ObservableObject {
                 startedAt: startedAt,
                 endedAt: endedAt,
                 deviceName: Host.current().localizedName ?? "Mac",
-                status: .ended
+                status: finalStatus
             )
             let allPendingChunks = makePendingChunks(sessionID: sessionID, sessionStartedAt: startedAt, chunks: chunks)
             let pendingChunks = uploadPlanner.pendingUploads(from: allPendingChunks)
@@ -282,6 +316,11 @@ final class SurveillanceController: ObservableObject {
             onSirenCommand: { [weak self] in
                 Task { @MainActor [weak self] in
                     await self?.triggerSiren(source: .manual)
+                }
+            },
+            onDismissEscalation: { [weak self] in
+                Task { @MainActor [weak self] in
+                    await self?.cancelEscalation(reason: "remote")
                 }
             }
         )
@@ -378,16 +417,100 @@ final class SurveillanceController: ObservableObject {
             return false
         }
 
-        guard autoSirenPolicy.decision(
-            armedAt: activeStartedAt,
-            now: now,
-            evidence: autoSirenEvidence
-        ) == .trigger else {
+        switch autoSirenPolicy.decision(armedAt: activeStartedAt, now: now, evidence: autoSirenEvidence) {
+        case .trigger:
+            resetEscalationState()
+            autoSirenTriggered = true
+            await triggerSiren(source: .automatic, triggeredAt: now)
+            return true
+        case .escalate:
+            await beginEscalation(at: now)
+            return false
+        case .notifyOnly:
             return false
         }
+    }
 
-        autoSirenTriggered = true
-        await triggerSiren(source: .automatic, triggeredAt: now)
+    private func beginEscalation(at occurredAt: Date) async {
+        guard !escalationActive, let sessionID = activeSessionID else {
+            return
+        }
+
+        escalationActive = true
+        isEscalationPending = true
+        escalationSecondsRemaining = Int(autoSirenPolicy.escalationTimeout)
+        statusText = String(localized: "surveillance_status_escalation_pending")
+        writeDiagnostic("M10_ESCALATION_STARTED session=\(sessionID)", filename: "m10-escalation-result.txt")
+        await saveSecurityEvent(type: .sirenEscalation, confidence: 1, occurredAt: occurredAt, sessionID: sessionID)
+        startEscalationCountdown()
+    }
+
+    private func startEscalationCountdown() {
+        escalationTask?.cancel()
+        escalationTask = Task { [weak self] in
+            while true {
+                do {
+                    try await Task.sleep(nanoseconds: 1_000_000_000)
+                } catch {
+                    return
+                }
+                guard !Task.isCancelled else {
+                    return
+                }
+                let finished = await self?.tickEscalation() ?? true
+                if finished {
+                    return
+                }
+            }
+        }
+    }
+
+    private func tickEscalation() async -> Bool {
+        guard escalationActive else {
+            return true
+        }
+        escalationSecondsRemaining -= 1
+        guard escalationSecondsRemaining > 0 else {
+            await escalationTimedOut()
+            return true
+        }
+        return false
+    }
+
+    private func escalationTimedOut() async {
+        guard escalationActive else {
+            return
+        }
+        let sessionID = activeSessionID ?? "unknown"
+        resetEscalationState()
+        writeDiagnostic("M10_ESCALATION_TIMEOUT session=\(sessionID)", filename: "m10-escalation-result.txt")
+        await triggerSiren(source: .automatic)
+    }
+
+    private func cancelEscalation(reason: String) async {
+        guard resetEscalationState() else {
+            return
+        }
+        let sessionID = activeSessionID
+        writeDiagnostic("M10_ESCALATION_DISMISSED session=\(sessionID ?? "unknown") reason=\(reason)", filename: "m10-escalation-result.txt")
+        if case .armed = machine.state {
+            statusText = String(localized: "surveillance_status_armed")
+        }
+        if let sessionID {
+            await saveSecurityEvent(type: .escalationDismissed, confidence: 1, occurredAt: Date(), sessionID: sessionID)
+        }
+    }
+
+    @discardableResult
+    private func resetEscalationState() -> Bool {
+        guard escalationActive else {
+            return false
+        }
+        escalationTask?.cancel()
+        escalationTask = nil
+        escalationActive = false
+        isEscalationPending = false
+        escalationSecondsRemaining = 0
         return true
     }
 
@@ -507,6 +630,7 @@ final class SurveillanceController: ObservableObject {
     }
 
     private func resetToIdle() {
+        resetEscalationState()
         stopSirenIfNeeded(reason: "reset")
         eventDetector.stop()
         captureEngine?.onVideoSampleBuffer = nil

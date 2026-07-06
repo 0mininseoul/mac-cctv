@@ -12,6 +12,17 @@ struct SurveillancePopoverView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
+
+                if controller.isEscalationPending {
+                    Text(
+                        String(
+                            format: String(localized: "surveillance_escalation_countdown_format"),
+                            controller.escalationSecondsRemaining
+                        )
+                    )
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.orange)
+                }
             }
 
             Button(action: controller.toggleFromButton) {

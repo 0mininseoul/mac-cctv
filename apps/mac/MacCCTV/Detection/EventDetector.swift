@@ -12,10 +12,12 @@ struct DetectedSecurityEvent: Sendable {
 final class EventDetector {
     var onEvent: (@Sendable (DetectedSecurityEvent) -> Void)?
     var onDiagnostic: (@Sendable (String) -> Void)?
+    var onSystemWake: (@Sendable () -> Void)?
 
     private var inputPollTimer: DispatchSourceTimer?
     private var powerRunLoopSource: CFRunLoopSource?
     private var willSleepObserver: NSObjectProtocol?
+    private var didWakeObserver: NSObjectProtocol?
     private var clamshellTimer: DispatchSourceTimer?
     private var lastExternalPowerConnected: Bool?
     private var lastClamshellClosed: Bool?
@@ -30,6 +32,7 @@ final class EventDetector {
         startInputIdlePolling()
         startPowerMonitoring()
         startLidMonitoring()
+        startWakeMonitoring()
     }
 
     func stop() {
@@ -40,11 +43,15 @@ final class EventDetector {
         if let willSleepObserver {
             NSWorkspace.shared.notificationCenter.removeObserver(willSleepObserver)
         }
+        if let didWakeObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(didWakeObserver)
+        }
         clamshellTimer?.cancel()
 
         inputPollTimer = nil
         self.powerRunLoopSource = nil
         self.willSleepObserver = nil
+        self.didWakeObserver = nil
         self.clamshellTimer = nil
         lastEmittedAt.removeAll()
     }
@@ -88,6 +95,16 @@ final class EventDetector {
         }
         timer.resume()
         clamshellTimer = timer
+    }
+
+    private func startWakeMonitoring() {
+        didWakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.onSystemWake?()
+        }
     }
 
     private func checkPowerState() {

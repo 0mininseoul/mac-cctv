@@ -469,6 +469,36 @@
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "전송됨." } }
       }
     },
+    "escalation_dismiss_action_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dismiss" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "취소" } }
+      }
+    },
+    "escalation_dismiss_button_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel Escalation" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "에스컬레이션 취소" } }
+      }
+    },
+    "escalation_dismiss_sending" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sending..." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "전송 중..." } }
+      }
+    },
+    "escalation_dismiss_sent" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sent." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "전송됨." } }
+      }
+    },
+    "escalation_dismiss_failed_format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Failed: %@" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "실패: %@" } }
+      }
+    },
     "siren_section_title" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Siren" } },
@@ -575,6 +605,12 @@
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Event detected: %@" } },
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "이벤트 감지: %@" } }
+      }
+    },
+    "escalation_notification_body" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "A Mac may have been picked up. Tap to view, or Dismiss to cancel the alarm." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "Mac이 들렸을 수 있습니다. 확인하거나 취소를 눌러 경보를 중지하세요." } }
       }
     }
   },

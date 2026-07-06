@@ -233,7 +233,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
             0
         case .ice:
             1
-        case .answer, .sirenCommand, .viewerReady:
+        case .answer, .sirenCommand, .viewerReady, .dismissEscalation:
             2
         }
     }
@@ -273,7 +273,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
             }
             try await peerConnection.add(candidate)
             diagnostics?("M6_RECEIVER_REMOTE_ICE_ADDED session=\(session.id) \(candidateSummary(payload.sdp)) mid=\(payload.sdpMid ?? "nil") index=\(payload.sdpMLineIndex)")
-        case .answer, .sirenCommand, .viewerReady:
+        case .answer, .sirenCommand, .viewerReady, .dismissEscalation:
             return
         }
     }

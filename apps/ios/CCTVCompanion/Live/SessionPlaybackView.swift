@@ -52,6 +52,23 @@ struct SessionPlaybackView: View {
                             .foregroundStyle(.secondary)
                             .textSelection(.enabled)
                     }
+
+                    Button {
+                        viewModel.sendEscalationDismiss()
+                    } label: {
+                        Label("escalation_dismiss_button_title", systemImage: "xmark.shield")
+                            .font(.subheadline.weight(.medium))
+                            .frame(maxWidth: .infinity, minHeight: 36)
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(viewModel.isSendingEscalationDismiss)
+
+                    if !viewModel.escalationDismissStatusText.isEmpty {
+                        Text(viewModel.escalationDismissStatusText)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)

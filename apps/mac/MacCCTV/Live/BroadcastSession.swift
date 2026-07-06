@@ -8,6 +8,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
     private let channel: SignalingChannel
     private let diagnostics: @Sendable (String) -> Void
     private let onSirenCommand: @Sendable () -> Void
+    private let onDismissEscalation: @Sendable () -> Void
     private let factory: RTCPeerConnectionFactory
     private let videoSource: RTCVideoSource
     private let videoCapturer: RTCVideoCapturer
@@ -27,12 +28,14 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
         sessionID: String,
         channel: SignalingChannel,
         diagnostics: @escaping @Sendable (String) -> Void,
-        onSirenCommand: @escaping @Sendable () -> Void
+        onSirenCommand: @escaping @Sendable () -> Void,
+        onDismissEscalation: @escaping @Sendable () -> Void
     ) {
         self.sessionID = sessionID
         self.channel = channel
         self.diagnostics = diagnostics
         self.onSirenCommand = onSirenCommand
+        self.onDismissEscalation = onDismissEscalation
         let factory = RTCPeerConnectionFactory(
             encoderFactory: RTCDefaultVideoEncoderFactory(),
             decoderFactory: RTCDefaultVideoDecoderFactory()
@@ -188,7 +191,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
 
     private func signalPriority(_ kind: SignalKind) -> Int {
         switch kind {
-        case .sirenCommand:
+        case .sirenCommand, .dismissEscalation:
             0
         case .viewerReady:
             1
@@ -206,6 +209,13 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
             let age = Date().timeIntervalSince(message.createdAt)
             diagnostics("M7_SIREN_COMMAND_RECEIVED session=\(sessionID) sender=\(message.sender.rawValue) age=\(String(format: "%.2f", age))")
             onSirenCommand()
+            return
+        }
+
+        if message.kind == .dismissEscalation {
+            let age = Date().timeIntervalSince(message.createdAt)
+            diagnostics("M10_DISMISS_ESCALATION_RECEIVED session=\(sessionID) sender=\(message.sender.rawValue) age=\(String(format: "%.2f", age))")
+            onDismissEscalation()
             return
         }
 
@@ -254,7 +264,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
             }
             try await peerConnection.add(candidate)
             diagnostics("M6_BROADCAST_REMOTE_ICE_ADDED session=\(sessionID) \(candidateSummary(payload.sdp)) mid=\(payload.sdpMid ?? "nil") index=\(payload.sdpMLineIndex)")
-        case .offer, .sirenCommand, .viewerReady:
+        case .offer, .sirenCommand, .viewerReady, .dismissEscalation:
             return
         }
     }

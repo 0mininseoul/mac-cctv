@@ -8,6 +8,8 @@ final class SessionPlaybackViewModel: ObservableObject {
     @Published private(set) var playlist = FallbackPlaylist()
     @Published private(set) var isSendingSirenCommand = false
     @Published private(set) var sirenCommandStatusText = ""
+    @Published private(set) var isSendingEscalationDismiss = false
+    @Published private(set) var escalationDismissStatusText = ""
     @Published private(set) var isExportingVideo = false
     @Published private(set) var exportStatusText = ""
     @Published private(set) var exportedVideoURL: IdentifiableURL?
@@ -82,6 +84,19 @@ final class SessionPlaybackViewModel: ObservableObject {
 
     func markRealtimeSirenCommandSent() {
         sirenCommandStatusText = String(localized: "siren_command_sent")
+    }
+
+    func sendEscalationDismiss() {
+        guard isLive, !isSendingEscalationDismiss else {
+            return
+        }
+
+        isSendingEscalationDismiss = true
+        escalationDismissStatusText = String(localized: "escalation_dismiss_sending")
+
+        Task { [weak self] in
+            await self?.sendEscalationDismissNow()
+        }
     }
 
     func exportVideoForSharing() {
@@ -159,6 +174,22 @@ final class SessionPlaybackViewModel: ObservableObject {
         } catch {
             sirenCommandStatusText = String(
                 format: String(localized: "siren_command_failed_format"),
+                error.localizedDescription
+            )
+        }
+    }
+
+    private func sendEscalationDismissNow() async {
+        defer {
+            isSendingEscalationDismiss = false
+        }
+
+        do {
+            try await EscalationDismissSender.send(sessionID: session.id)
+            escalationDismissStatusText = String(localized: "escalation_dismiss_sent")
+        } catch {
+            escalationDismissStatusText = String(
+                format: String(localized: "escalation_dismiss_failed_format"),
                 error.localizedDescription
             )
         }

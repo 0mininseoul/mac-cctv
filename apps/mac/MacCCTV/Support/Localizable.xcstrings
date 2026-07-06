@@ -517,6 +517,18 @@
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "감시 중입니다." } }
       }
     },
+    "surveillance_status_escalation_pending" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Possible pickup detected — confirm on your phone or the siren will sound." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "이동이 감지되었습니다 — 휴대폰에서 확인하지 않으면 사이렌이 울립니다." } }
+      }
+    },
+    "surveillance_escalation_countdown_format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Siren in %d s unless dismissed" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "%d초 후 사이렌이 울립니다" } }
+      }
+    },
     "surveillance_status_siren" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Siren is active." } },

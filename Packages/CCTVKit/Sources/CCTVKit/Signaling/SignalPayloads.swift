@@ -40,3 +40,11 @@ public struct ViewerReadySignalPayload: Codable, Equatable, Sendable {
         self.requestedAt = requestedAt
     }
 }
+
+public struct DismissEscalationSignalPayload: Codable, Equatable, Sendable {
+    public var requestedAt: Date
+
+    public init(requestedAt: Date) {
+        self.requestedAt = requestedAt
+    }
+}

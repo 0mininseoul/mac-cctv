@@ -64,6 +64,8 @@ public enum SecurityEventType: String, CaseIterable, Sendable {
     case deviceMotion
     case sirenAuto
     case sirenManual
+    case sirenEscalation
+    case escalationDismissed
 }
 
 public struct SecurityEvent: Identifiable, Equatable, Sendable {
@@ -88,6 +90,7 @@ public enum SignalKind: String, CaseIterable, Sendable {
     case ice
     case sirenCommand
     case viewerReady
+    case dismissEscalation
 }
 
 public enum SignalSender: String, CaseIterable, Sendable {

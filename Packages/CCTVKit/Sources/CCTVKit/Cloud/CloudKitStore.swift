@@ -252,6 +252,28 @@ public final class CloudKitStore: @unchecked Sendable {
         _ = try await database.save(subscription)
     }
 
+    public func ensureEscalationSubscription(subscriptionID: String = "escalation-created-v1") async throws {
+        let subscription = CKQuerySubscription(
+            recordType: CKSchema.RecordType.event,
+            predicate: NSPredicate(format: "%K == %@", CKSchema.Event.type, SecurityEventType.sirenEscalation.rawValue),
+            subscriptionID: subscriptionID,
+            options: [.firesOnRecordCreation]
+        )
+        let notificationInfo = CKSubscription.NotificationInfo()
+        notificationInfo.title = "Mac CCTV"
+        notificationInfo.alertLocalizationKey = "escalation_notification_body"
+        notificationInfo.soundName = "default"
+        notificationInfo.shouldBadge = true
+        notificationInfo.category = "SIREN_ESCALATION"
+        notificationInfo.desiredKeys = [
+            CKSchema.Event.session,
+            CKSchema.Event.type,
+            CKSchema.Event.occurredAt
+        ]
+        subscription.notificationInfo = notificationInfo
+        _ = try await database.save(subscription)
+    }
+
     @discardableResult
     public func saveSignal(_ message: SignalMessage) async throws -> SignalMessage {
         let recordID = CKRecord.ID(recordName: message.id)
@@ -482,15 +504,9 @@ public final class CloudKitStore: @unchecked Sendable {
                 sessionReference
             )
         )
-        let response = try await database.records(
-            matching: query,
-            desiredKeys: signalDesiredKeys,
-            resultsLimit: limit
-        )
+        let records = try await fetchAllMatches(query: query, desiredKeys: signalDesiredKeys, resultsLimit: limit)
 
-        return try response.matchResults.compactMap { _, result in
-            try makeSignalMessage(from: result.get())
-        }
+        return try records.map { try makeSignalMessage(from: $0) }
         .filter { message in
             guard let after else {
                 return true
@@ -507,15 +523,9 @@ public final class CloudKitStore: @unchecked Sendable {
             recordType: CKSchema.RecordType.signal,
             predicate: NSPredicate(value: true)
         )
-        let response = try await database.records(
-            matching: query,
-            desiredKeys: signalDesiredKeys,
-            resultsLimit: limit
-        )
+        let records = try await fetchAllMatches(query: query, desiredKeys: signalDesiredKeys, resultsLimit: limit)
 
-        return try response.matchResults.compactMap { _, result in
-            try makeSignalMessage(from: result.get())
-        }
+        return try records.map { try makeSignalMessage(from: $0) }
         .filter { message in
             guard let after else {
                 return true
@@ -525,6 +535,38 @@ public final class CloudKitStore: @unchecked Sendable {
         .sorted { first, second in
             first.createdAt < second.createdAt
         }
+    }
+
+    /// `CKDatabase.records(matching:)` only returns a single server-decided page of
+    /// results — a large `resultsLimit` does NOT guarantee everything comes back in
+    /// one call. Callers here filter `after: date` in memory once the page is fetched,
+    /// so an un-paginated fetch can silently drop records newer than whatever the
+    /// server happened to include in that first page (e.g. long-lived sessions that
+    /// accumulate many WebRTC signal records across repeated connect attempts). Follow
+    /// `queryCursor` until exhausted so no matching record is ever dropped.
+    private func fetchAllMatches(
+        query: CKQuery,
+        desiredKeys: [String]?,
+        resultsLimit: Int
+    ) async throws -> [CKRecord] {
+        var records: [CKRecord] = []
+        var response = try await database.records(
+            matching: query,
+            desiredKeys: desiredKeys,
+            resultsLimit: resultsLimit
+        )
+        records.append(contentsOf: try response.matchResults.map { try $0.1.get() })
+
+        while let cursor = response.queryCursor {
+            response = try await database.records(
+                continuingMatchFrom: cursor,
+                desiredKeys: desiredKeys,
+                resultsLimit: resultsLimit
+            )
+            records.append(contentsOf: try response.matchResults.map { try $0.1.get() })
+        }
+
+        return records
     }
 
     private var chunkPlaybackDesiredKeys: [String] {
