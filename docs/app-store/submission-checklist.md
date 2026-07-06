@@ -91,7 +91,7 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 # Delivery UUID: 761eb110-6fd5-42c7-95b9-46af3d417875 — build 3
 ```
 
-- [x] Build 3 두 타겟 모두 업로드 완료 (`project.yml`의 `CURRENT_PROJECT_VERSION` 2→3), 처리 상태 확인 중
+- [x] Build 3 두 타겟 모두 업로드·처리 완료 (`project.yml`의 `CURRENT_PROJECT_VERSION` 2→3), 둘 다 `processingState: COMPLETE`
 - [ ] **사람 작업**: TestFlight에서 build 3를 내부 테스트 그룹에 배정하고 재검증 (재생바 길이, save-video, 설정 화면, 보관함 나갔다 재접속 시 WebRTC)
 
 **외부 테스터는 결정에 따라 불필요 (2026-07-06):** 계획 문서의 M9 검증 기준은 "TestFlight 외부 테스터 설치"라고 되어 있지만, 실기기(본인 Mac + iPhone) 검증이 목적이면 그 계정이 이미 내부 테스터로 등록되어 있으니 내부 테스팅만으로 충분하다. 외부 테스터(Beta App Review 필요)는 **팀 멤버가 아닌 다른 사람**에게 정식 출시 전 미리 배포하고 싶을 때만 필요 — PRD §11 출시 전략도 베타 단계 없이 바로 무료 출시라 필수 아님. 필요해지면 아래 항목 진행:
