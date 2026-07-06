@@ -9,21 +9,27 @@ final class SessionPlaybackViewModel: ObservableObject {
     @Published private(set) var isSendingSirenCommand = false
     @Published private(set) var sirenCommandStatusText = ""
 
-    let player = AVQueuePlayer()
+    let player: AVPlayer
 
     private let session: SurveillanceSession
     private let store = CloudKitStore()
     private let encoder = JSONEncoder()
     private var pollingTask: Task<Void, Never>?
-    private var loadedChunkIDs: [String] = []
+    private var loadedLiveChunkIDs: [String] = []
+    private var hasPlayableContent = false
     private var playbackActive = true
 
     init(session: SurveillanceSession) {
         self.session = session
+        self.player = session.status == .recording ? AVQueuePlayer() : AVPlayer()
     }
 
     var isLive: Bool {
         session.status == .recording
+    }
+
+    private var liveQueuePlayer: AVQueuePlayer? {
+        player as? AVQueuePlayer
     }
 
     func start() {
@@ -45,7 +51,7 @@ final class SessionPlaybackViewModel: ObservableObject {
     func setPlaybackActive(_ active: Bool) {
         playbackActive = active
         if active {
-            if !loadedChunkIDs.isEmpty {
+            if hasPlayableContent {
                 player.play()
             }
         } else {
@@ -86,14 +92,20 @@ final class SessionPlaybackViewModel: ObservableObject {
     private func refresh() async {
         do {
             let chunks = try await store.fetchChunks(sessionID: session.id, limit: 800)
-            let nextPlaylist = isLive
-                ? FallbackPlaylist.live(chunks: chunks, now: Date(), targetLatency: 18)
-                : FallbackPlaylist.replay(chunks: chunks)
-            let playableChunks = nextPlaylist.items.filter { $0.assetFileURL != nil }
 
-            playlist = nextPlaylist
-            applyQueue(chunks: playableChunks)
-            updateStatus(chunks: chunks, playableChunks: playableChunks)
+            if isLive {
+                let nextPlaylist = FallbackPlaylist.live(chunks: chunks, now: Date(), targetLatency: 18)
+                let playableChunks = nextPlaylist.items.filter { $0.assetFileURL != nil }
+                playlist = nextPlaylist
+                applyLiveQueue(chunks: playableChunks)
+                updateStatus(chunks: chunks, playableChunks: playableChunks)
+            } else {
+                let nextPlaylist = FallbackPlaylist.replay(chunks: chunks)
+                let playableChunks = nextPlaylist.items.filter { $0.assetFileURL != nil }
+                playlist = nextPlaylist
+                await loadReplayComposition(chunks: nextPlaylist.items)
+                updateStatus(chunks: chunks, playableChunks: playableChunks)
+            }
         } catch {
             statusText = String(format: String(localized: "playback_status_failed_format"), error.localizedDescription)
         }
@@ -127,34 +139,95 @@ final class SessionPlaybackViewModel: ObservableObject {
         }
     }
 
-    private func applyQueue(chunks: [VideoChunk]) {
+    /// Live/fallback playback keeps queueing individual chunk files as they arrive —
+    /// the set of chunks keeps growing, so there's no fixed timeline to build a
+    /// composition from yet. Replay (below) is the one-shot, fixed-timeline case.
+    private func applyLiveQueue(chunks: [VideoChunk]) {
+        guard let liveQueuePlayer else {
+            return
+        }
+
         let nextIDs = chunks.map(\.id)
-        guard nextIDs != loadedChunkIDs else {
+        guard nextIDs != loadedLiveChunkIDs else {
             if !nextIDs.isEmpty {
-                player.play()
+                liveQueuePlayer.play()
             }
             return
         }
 
-        if nextIDs.starts(with: loadedChunkIDs) {
-            append(chunks: Array(chunks.dropFirst(loadedChunkIDs.count)))
+        if nextIDs.starts(with: loadedLiveChunkIDs) {
+            appendLive(chunks: Array(chunks.dropFirst(loadedLiveChunkIDs.count)), to: liveQueuePlayer)
         } else {
-            player.removeAllItems()
-            append(chunks: chunks)
+            liveQueuePlayer.removeAllItems()
+            appendLive(chunks: chunks, to: liveQueuePlayer)
         }
 
-        loadedChunkIDs = nextIDs
+        loadedLiveChunkIDs = nextIDs
+        hasPlayableContent = !nextIDs.isEmpty
         if playbackActive, !nextIDs.isEmpty {
-            player.play()
+            liveQueuePlayer.play()
         }
     }
 
-    private func append(chunks: [VideoChunk]) {
+    private func appendLive(chunks: [VideoChunk], to queuePlayer: AVQueuePlayer) {
         for chunk in chunks {
             guard let fileURL = chunk.assetFileURL else {
                 continue
             }
-            player.insert(AVPlayerItem(url: fileURL), after: nil)
+            queuePlayer.insert(AVPlayerItem(url: fileURL), after: nil)
+        }
+    }
+
+    /// Builds one AVMutableComposition from the session's chunk files, time-ordered,
+    /// so replay gets a single scrubbable timeline with correct total duration instead
+    /// of the queue-of-separate-items behavior live playback uses. `insertTimeRange`
+    /// references the original chunk files directly — no re-encoding, no merged file
+    /// written to disk. Chunks that are missing or fail to load are skipped; whatever
+    /// chunks do load are inserted back-to-back with no gap in the timeline.
+    private func loadReplayComposition(chunks: [VideoChunk]) async {
+        let composition = AVMutableComposition()
+        guard let compositionTrack = composition.addMutableTrack(
+            withMediaType: .video,
+            preferredTrackID: kCMPersistentTrackID_Invalid
+        ) else {
+            return
+        }
+
+        var cursor = CMTime.zero
+        var insertedAny = false
+
+        for chunk in chunks {
+            guard let fileURL = chunk.assetFileURL else {
+                continue
+            }
+
+            let asset = AVURLAsset(url: fileURL)
+            do {
+                guard let assetTrack = try await asset.loadTracks(withMediaType: .video).first else {
+                    continue
+                }
+                let duration = try await asset.load(.duration)
+                try compositionTrack.insertTimeRange(
+                    CMTimeRange(start: .zero, duration: duration),
+                    of: assetTrack,
+                    at: cursor
+                )
+                cursor = cursor + duration
+                insertedAny = true
+            } catch {
+                continue
+            }
+        }
+
+        guard insertedAny else {
+            hasPlayableContent = false
+            return
+        }
+
+        hasPlayableContent = true
+        player.replaceCurrentItem(with: AVPlayerItem(asset: composition))
+        if playbackActive {
+            player.play()
         }
     }
 
