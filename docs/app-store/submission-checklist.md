@@ -39,15 +39,19 @@ Mac 타겟과 iOS 타겟의 번들 ID를 분리했다 (`com.youngminpark.maccctv
 ```
 xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
   --apiKey TMC3PCHDCF --apiIssuer 0d693e18-2317-4107-8b26-26afd98e64ae
-# Delivery UUID: 8871917e-5464-4fed-b897-0a99b7fcbc86 — build 1, processingState VALID 확인됨
+# Delivery UUID: 8871917e-5464-4fed-b897-0a99b7fcbc86 — build 1, processingState VALID
 
 xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
   --apiKey TMC3PCHDCF --apiIssuer 0d693e18-2317-4107-8b26-26afd98e64ae
-# Delivery UUID: c0aade2c-c197-4472-8fe1-2bc03d5c1ff3 — 업로드 직후 Apple 처리 대기 중
+# Delivery UUID: c907cc59-3789-4af7-951e-60675b06049b — build 1, processingState VALID
+# (first two iOS delivery attempts failed silently on Apple's backend — error 90683,
+#  missing NSCameraUsageDescription; WebRTC.framework references camera APIs even
+#  though this app never calls them. Fixed in apps/ios/CCTVCompanion/Support/Info.plist.)
 ```
 
-- [x] 두 빌드 App Store Connect에 업로드 완료
-- [ ] **사람 작업**: TestFlight에서 두 빌드 각각 "내부 테스트" 그룹에 배정 → 외부 테스터 초대 전 베타 검토(Beta App Review) 통과 확인 (Export Compliance 질문 — 암호화 사용 여부 — 이 처음 뜰 수 있음: 이 앱은 표준 HTTPS/TLS 외 자체 암호화가 없으므로 "표준 암호화만 사용" 응답)
+- [x] 두 빌드 App Store Connect에 업로드 완료, 둘 다 `processingState: VALID`
+- [x] **사람 작업 완료**: TestFlight에서 두 빌드 각각 "내부 테스트" 그룹에 배정함
+- [ ] **사람 작업**: 외부 테스터 초대 전 베타 검토(Beta App Review) 통과 확인 — Export Compliance 질문(암호화 사용 여부)이 뜨면 이 앱은 표준 HTTPS/TLS 외 자체 암호화가 없으므로 "표준 암호화만 사용"으로 응답
 - [ ] **사람 작업**: 외부 테스터로 설치 → 온보딩부터 사이렌까지 전 시나리오 수동 검증 (계획 M9 검증 기준)
 
 ### 버전 번호 참고
