@@ -34,6 +34,7 @@
 		594E711524DCFED726646414 /* CCTVKit in Frameworks */ = {isa = PBXBuildFile; productRef = CC0DC04A38B9D5C274D368D6 /* CCTVKit */; };
 		5CF59D2FB28A5BBEC0C7864C /* M1CaptureLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = B04A9EFC2FAC915F59F62D14 /* M1CaptureLaunchHandler.swift */; };
 		5FD759EDB59CB008BA3FDD72 /* EventNavigationRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B292152A782C01300F44D3B9 /* EventNavigationRouter.swift */; };
+		64083E10024003AA23DFD744 /* EscalationDismissSender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 358F1C7890B5A4726969C997 /* EscalationDismissSender.swift */; };
 		71C3FA8A11FEA42D432C1BCA /* SessionLibraryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74590EDC7780A3EB3C5122EE /* SessionLibraryViewModel.swift */; };
 		74FC0CC21FDFE4AD73A56A64 /* IOSCloudKitProbeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66765A1D067DA4C98A98EAFA /* IOSCloudKitProbeView.swift */; };
 		7D87C9D1F2929119751B6112 /* StoreKitTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECFE12D9A12DB2EFE58DA2AD /* StoreKitTest.framework */; };
@@ -82,6 +83,7 @@
 		311655DA13AF3752B298F3B1 /* SleepBlocker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepBlocker.swift; sourceTree = "<group>"; };
 		32503C81F9675A50B06C20EB /* EventNotificationBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventNotificationBootstrap.swift; sourceTree = "<group>"; };
 		33D7BCA4E0AA36840EC9E291 /* TipJarStoreKitSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJarStoreKitSessionTests.swift; sourceTree = "<group>"; };
+		358F1C7890B5A4726969C997 /* EscalationDismissSender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EscalationDismissSender.swift; sourceTree = "<group>"; };
 		3672181E21D2A1495C2960D8 /* EventDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventDetector.swift; sourceTree = "<group>"; };
 		37522887D38BD77AAEA88C31 /* IOSCloudKitProbeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSCloudKitProbeViewModel.swift; sourceTree = "<group>"; };
 		3CAFAD983C8ED22D0656A39D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -384,6 +386,7 @@
 		FDA8F313003C44B3DA819C31 /* Live */ = {
 			isa = PBXGroup;
 			children = (
+				358F1C7890B5A4726969C997 /* EscalationDismissSender.swift */,
 				66765A1D067DA4C98A98EAFA /* IOSCloudKitProbeView.swift */,
 				EB54624CDB1A553B4C6712A6 /* SessionPlaybackView.swift */,
 				4B6EC5F4857C375A251B8AAE /* SessionPlaybackViewModel.swift */,
@@ -475,7 +478,7 @@
 					54374CA213092B0F091EBD9E = {
 						DevelopmentTeam = 878FAHTFQJ;
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.Push\": [\"enabled\": 1], \"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.Push\": [\"enabled\": 1], \"com.apple.iCloud\": [\"enabled\": 1]]";
 					};
 					D14D4B0E61026724F28C6167 = {
 						DevelopmentTeam = 878FAHTFQJ;
@@ -583,6 +586,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				18BA45D094281A9E2FC6F104 /* CCTVCompanionApp.swift in Sources */,
+				64083E10024003AA23DFD744 /* EscalationDismissSender.swift in Sources */,
 				5FD759EDB59CB008BA3FDD72 /* EventNavigationRouter.swift in Sources */,
 				54D21C7F058327548EA5C88C /* EventNotificationBootstrap.swift in Sources */,
 				74FC0CC21FDFE4AD73A56A64 /* IOSCloudKitProbeView.swift in Sources */,
@@ -685,7 +689,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 878FAHTFQJ;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -764,7 +768,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 878FAHTFQJ;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;

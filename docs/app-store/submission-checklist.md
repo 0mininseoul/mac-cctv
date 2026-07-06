@@ -114,6 +114,29 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 - [x] Build 4 두 타겟 모두 업로드·처리 완료 (`project.yml`의 `CURRENT_PROJECT_VERSION` 3→4), 둘 다 `processingState: COMPLETE`
 - [ ] **사람 작업**: TestFlight에서 build 4를 내부 테스트 그룹에 배정하고 재검증 (WebRTC 첫 연결·재접속, save-video 공유 시트의 "비디오 저장")
 
+### Build 5 (2026-07-07) — 무장 직후 애매한 신호에 대한 단계적 에스컬레이션 추가
+
+Task #10 "모션 감지 후 사이렌이 안 울림" 제보 근본 원인 확인: 버그가 아니라 설계대로 동작한 것 — 무장 후 30초 유예 기간(`armGracePeriod`)은 오탐 방지를 위한 1차 게이트라 유예 기간 내 모든 신호를 무조건 `.notifyOnly`(무음 이벤트 기록)로 처리한다. 실제 제보 사례는 무장 24초 후 트랙패드 터치였고, 이는 유예 기간(30초) 이내였다. 유예 기간 자체를 줄이면 소유자 본인의 정상적인 무장 직후 조작에도 사이렌이 울릴 위험이 있어(PRD §8.10: 공공장소 오탐 사이렌은 앱 삭제로 이어질 수 있는 리스크), 유예 기간을 유지하되 애매한 신호에 대해 3단계(`.escalate`)를 추가:
+
+- 유예 기간 이후 터치 등 보강 신호와 함께 모션이 짧게(3초 미만) 감지되면 즉시 사이렌을 울리는 대신, iPhone에 "Mac이 들렸을 수 있습니다" 긴급 푸시(잠금화면에서 바로 취소할 수 있는 Dismiss 액션 포함)를 보내고 15초 카운트다운 시작
+- 카운트다운 중 iPhone에서 취소(알림의 Dismiss 액션 또는 앱 내 "에스컬레이션 취소" 버튼)하면 사이렌 없이 종료, CloudKit에 `escalationDismissed` 이벤트로 감사 기록
+- 취소하지 않고 15초가 지나면 기존과 동일하게 자동으로 사이렌 발동
+- Mac 메뉴바 팝오버에도 대기 중 카운트다운 표시
+- 기존 동작은 변경 없음: 3초 이상 지속되는 확실한 모션은 여전히 즉시 사이렌(에스컬레이션 단계 건너뜀), 모션 없는 단순 터치/전원 분리는 여전히 무음 처리
+
+```
+xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 00ca9826-5a95-4155-a673-b63c060220de — build 5, processingState VALID
+
+xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 32db5c71-5ff4-4118-a728-9fbd26bfa354 — build 5, processingState VALID
+```
+
+- [x] Build 5 두 타겟 모두 업로드·처리 완료 (`project.yml`의 `CURRENT_PROJECT_VERSION` 4→5), 둘 다 `processingState: VALID`
+- [ ] **사람 작업**: TestFlight에서 build 5를 내부 테스트 그룹에 배정하고 실기기로 에스컬레이션 시나리오 검증 (무장 → 30초 유예 대기 → 터치+짧은 흔들림 → 푸시+카운트다운 확인 → Dismiss 취소/타임아웃 두 경로 모두 확인)
+
 **외부 테스터는 결정에 따라 불필요 (2026-07-06):** 계획 문서의 M9 검증 기준은 "TestFlight 외부 테스터 설치"라고 되어 있지만, 실기기(본인 Mac + iPhone) 검증이 목적이면 그 계정이 이미 내부 테스터로 등록되어 있으니 내부 테스팅만으로 충분하다. 외부 테스터(Beta App Review 필요)는 **팀 멤버가 아닌 다른 사람**에게 정식 출시 전 미리 배포하고 싶을 때만 필요 — PRD §11 출시 전략도 베타 단계 없이 바로 무료 출시라 필수 아님. 필요해지면 아래 항목 진행:
 
 - [ ] **(선택) 외부 테스터가 필요해지면**: 베타 검토(Beta App Review) 제출 전 App Review Information Notes 작성 필요
