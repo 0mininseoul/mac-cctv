@@ -13,6 +13,12 @@
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "CCTV Companion" } }
       }
     },
+    "NSCameraUsageDescription" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CCTV Companion does not use your iPhone's camera. This app only receives live video streamed from your Mac; the permission is declared because the video-streaming library it depends on supports camera capture, a capability this app never enables." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "CCTV Companion은 iPhone 카메라를 사용하지 않습니다. 이 앱은 Mac에서 보내는 실시간 영상을 받기만 하며, 사용 중인 영상 전송 라이브러리가 카메라 캡처 기능을 지원해 이 권한이 선언되어 있을 뿐 실제로 활성화되지 않습니다." } }
+      }
+    },
     "NSLocalNetworkUsageDescription" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Connect to your Mac on the local network for realtime CCTV video." } },
