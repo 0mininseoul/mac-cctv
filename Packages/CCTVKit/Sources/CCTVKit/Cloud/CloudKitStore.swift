@@ -625,7 +625,10 @@ public final class CloudKitStore: @unchecked Sendable {
             index: Int(indexValue),
             startedAt: startedAt,
             duration: duration,
-            assetFileURL: (record[CKSchema.Chunk.video] as? CKAsset)?.fileURL,
+            assetFileURL: ChunkAssetCache.shared.stableFileURL(
+                chunkID: record.recordID.recordName,
+                sourceURL: (record[CKSchema.Chunk.video] as? CKAsset)?.fileURL
+            ),
             byteCount: record[CKSchema.Chunk.byteCount] as? Int64 ?? 0
         )
     }
