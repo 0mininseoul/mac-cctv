@@ -15,7 +15,12 @@ final class WebRTCReceiver: NSObject, ObservableObject {
     private let channel: SignalingChannel
     private let diagnostics: (@Sendable (String) -> Void)?
     private let factory: RTCPeerConnectionFactory
-    private let policy = LiveConnectionPolicy(timeout: 10)
+    // Every connection (first or reconnect) now round-trips a viewerReady →
+    // fresh-offer handshake before ICE/DTLS negotiation even starts, so the old
+    // 10s budget (sized for an already-waiting offer) was too tight — bumped to
+    // give that handshake room without changing the user-visible fallback intent.
+    private let policy = LiveConnectionPolicy(timeout: 20)
+    private let signalPollInterval: UInt64 = 500_000_000
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
     private var peerConnection: RTCPeerConnection?
@@ -163,7 +168,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
             while !Task.isCancelled {
                 await self?.receiveOnce()
                 do {
-                    try await Task.sleep(nanoseconds: 2_000_000_000)
+                    try await Task.sleep(nanoseconds: self?.signalPollInterval ?? 500_000_000)
                 } catch {
                     break
                 }

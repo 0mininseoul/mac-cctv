@@ -28,6 +28,8 @@
 	<string>CCTV Companion does not use your iPhone's camera. This app only receives live video streamed from your Mac; the permission is declared because the video-streaming library it depends on supports camera capture, a capability this app never enables.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Connect to your Mac on the local network for realtime CCTV video.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Used only when you choose Save Video in the share sheet, to save the exported recording to your Photo Library.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
