@@ -13,9 +13,9 @@
 
 ## 2. App Store Connect — 프라이버시 · 심사 노트
 
-- [ ] **사람 작업**: App Privacy 질문지에서 "데이터 수집 없음" 선택 — 근거는 `docs/app-store/privacy-label.md` 전체 참고, 두 앱 각각 반복
-- [ ] **사람 작업**: App Review Information → Notes에 `docs/app-store/review-notes.md`의 영문 블록 붙여넣기 (두 앱 각각)
-- [ ] **사람 작업**: 카메라 사용 목적 문구는 이미 Info.plist에 반영되어 있음 (재확인만) — `NSCameraUsageDescription`
+- [x] **사람 작업 완료**: App Privacy 질문지에서 "데이터 수집 없음" 선택함 (두 앱 모두)
+- [ ] **사람 작업**: App Review Information → Notes에 `docs/app-store/review-notes.md`의 영문 블록 붙여넣기 — 외부 테스터를 추가하거나 정식 심사에 제출하는 시점에만 필요 (지금 내부 테스팅만으로는 불필요, §5 참고)
+- [x] 카메라 사용 목적 문구는 Info.plist에 반영됨 — `NSCameraUsageDescription` (iOS는 이번에 추가, Mac은 기존부터 있었음)
 
 ## 3. 앱 등록 — 완료
 
@@ -23,8 +23,8 @@ Mac 타겟과 iOS 타겟의 번들 ID를 분리했다 (`com.youngminpark.maccctv
 
 - [x] **"CCTV for Mac"** — macOS, `com.youngminpark.maccctv.mac`, SKU `maccctv-macos-20260705` (App Store Connect app id `6787679673`). 원래 번들 ID가 `.ios`로 잘못 연결되어 있었는데(과거 번들 ID 공유 버그의 흔적), 빌드가 아직 없는 상태라 App Store Connect에서 번들 ID 드롭다운만 바꿔 재사용함 — 앱 삭제·재생성 불필요했음
 - [x] **"CCTV for Mac Companion"** — iOS, `com.youngminpark.maccctv.ios`, SKU `maccctv-ios-20260706` (app id `6787729272`)
-- [ ] **사람 작업**: 두 앱 모두 App Store 카테고리 = Utilities (Mac Info.plist에 `LSApplicationCategoryType: public.app-category.utilities` 이미 반영됨 — iOS는 App Store Connect 등록 화면에서 직접 선택)
-- [ ] **사람 작업**: 가격 = 무료 (PRD §11), 연령 등급 설문 작성
+- [x] **사람 작업 완료**: 두 앱 모두 App Store 카테고리 = Utilities 입력함 (API로 자동화 시도했으나 이 API 키 역할은 앱 등록/빌드 업로드만 가능하고 카테고리·가격·연령등급 등 마케팅 메타데이터 수정은 `403 FORBIDDEN` — 사람이 직접 함)
+- [x] **사람 작업 완료**: 가격 = 무료, 연령 등급 설문 작성함
 
 ## 4. CloudKit 프로덕션 스키마 배포 — 완료
 
@@ -50,9 +50,12 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 ```
 
 - [x] 두 빌드 App Store Connect에 업로드 완료, 둘 다 `processingState: VALID`
-- [x] **사람 작업 완료**: TestFlight에서 두 빌드 각각 "내부 테스트" 그룹에 배정함
-- [ ] **사람 작업**: 외부 테스터 초대 전 베타 검토(Beta App Review) 통과 확인 — Export Compliance 질문(암호화 사용 여부)이 뜨면 이 앱은 표준 HTTPS/TLS 외 자체 암호화가 없으므로 "표준 암호화만 사용"으로 응답
-- [ ] **사람 작업**: 외부 테스터로 설치 → 온보딩부터 사이렌까지 전 시나리오 수동 검증 (계획 M9 검증 기준)
+- [x] **사람 작업 완료**: TestFlight에서 두 빌드 각각 "내부 테스트" 그룹에 배정하고 테스터 추가함
+
+**외부 테스터는 결정에 따라 불필요 (2026-07-06):** 계획 문서의 M9 검증 기준은 "TestFlight 외부 테스터 설치"라고 되어 있지만, 실기기(본인 Mac + iPhone) 검증이 목적이면 그 계정이 이미 내부 테스터로 등록되어 있으니 내부 테스팅만으로 충분하다. 외부 테스터(Beta App Review 필요)는 **팀 멤버가 아닌 다른 사람**에게 정식 출시 전 미리 배포하고 싶을 때만 필요 — PRD §11 출시 전략도 베타 단계 없이 바로 무료 출시라 필수 아님. 필요해지면 아래 항목 진행:
+
+- [ ] **(선택) 외부 테스터가 필요해지면**: 베타 검토(Beta App Review) 제출 전 App Review Information Notes 작성 필요 — Export Compliance 질문(암호화 사용 여부)엔 표준 HTTPS/TLS 외 자체 암호화가 없으므로 "표준 암호화만 사용"으로 응답
+- [ ] **사람 작업**: 내부 테스터로 설치 → 온보딩부터 사이렌까지 전 시나리오 수동 검증 (계획 M9 검증 기준의 실질적 의도)
 
 ### 버전 번호 참고
 
