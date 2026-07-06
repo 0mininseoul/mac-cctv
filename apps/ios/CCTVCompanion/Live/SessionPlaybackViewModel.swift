@@ -8,6 +8,9 @@ final class SessionPlaybackViewModel: ObservableObject {
     @Published private(set) var playlist = FallbackPlaylist()
     @Published private(set) var isSendingSirenCommand = false
     @Published private(set) var sirenCommandStatusText = ""
+    @Published private(set) var isExportingVideo = false
+    @Published private(set) var exportStatusText = ""
+    @Published private(set) var exportedVideoURL: IdentifiableURL?
 
     let player: AVPlayer
 
@@ -18,6 +21,7 @@ final class SessionPlaybackViewModel: ObservableObject {
     private var loadedLiveChunkIDs: [String] = []
     private var hasPlayableContent = false
     private var playbackActive = true
+    private var replayComposition: AVComposition?
 
     init(session: SurveillanceSession) {
         self.session = session
@@ -26,6 +30,10 @@ final class SessionPlaybackViewModel: ObservableObject {
 
     var isLive: Bool {
         session.status == .recording
+    }
+
+    var hasReplayableVideo: Bool {
+        !isLive && replayComposition != nil
     }
 
     private var liveQueuePlayer: AVQueuePlayer? {
@@ -74,6 +82,23 @@ final class SessionPlaybackViewModel: ObservableObject {
 
     func markRealtimeSirenCommandSent() {
         sirenCommandStatusText = String(localized: "siren_command_sent")
+    }
+
+    func exportVideoForSharing() {
+        guard let replayComposition, !isExportingVideo else {
+            return
+        }
+
+        isExportingVideo = true
+        exportStatusText = String(localized: "export_video_in_progress")
+
+        Task { [weak self] in
+            await self?.performExport(composition: replayComposition)
+        }
+    }
+
+    func dismissExportedVideo() {
+        exportedVideoURL = nil
     }
 
     private func loadLoop() async {
@@ -225,9 +250,55 @@ final class SessionPlaybackViewModel: ObservableObject {
         }
 
         hasPlayableContent = true
+        replayComposition = composition
         player.replaceCurrentItem(with: AVPlayerItem(asset: composition))
         if playbackActive {
             player.play()
+        }
+    }
+
+    /// The only place this feature re-encodes anything: a one-shot merged export
+    /// for the share sheet, triggered explicitly by the user. Playback itself never
+    /// re-encodes or writes a merged file (see loadReplayComposition).
+    private func performExport(composition: AVComposition) async {
+        defer {
+            isExportingVideo = false
+        }
+
+        guard let exportSession = AVAssetExportSession(
+            asset: composition,
+            presetName: AVAssetExportPresetHighestQuality
+        ) else {
+            exportStatusText = String(localized: "export_video_failed")
+            return
+        }
+
+        let outputURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("\(session.id)-export.mp4")
+        try? FileManager.default.removeItem(at: outputURL)
+        exportSession.outputURL = outputURL
+        exportSession.outputFileType = .mp4
+
+        do {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                exportSession.exportAsynchronously {
+                    switch exportSession.status {
+                    case .completed:
+                        continuation.resume()
+                    case .cancelled:
+                        continuation.resume(throwing: ExportVideoError.cancelled)
+                    default:
+                        continuation.resume(throwing: exportSession.error ?? ExportVideoError.unknown)
+                    }
+                }
+            }
+            exportStatusText = ""
+            exportedVideoURL = IdentifiableURL(url: outputURL)
+        } catch {
+            exportStatusText = String(
+                format: String(localized: "export_video_failed_format"),
+                error.localizedDescription
+            )
         }
     }
 
@@ -238,6 +309,25 @@ final class SessionPlaybackViewModel: ObservableObject {
             statusText = String(localized: "playback_status_waiting_for_assets")
         } else {
             statusText = ""
+        }
+    }
+}
+
+struct IdentifiableURL: Identifiable {
+    let url: URL
+    var id: URL { url }
+}
+
+private enum ExportVideoError: LocalizedError {
+    case unknown
+    case cancelled
+
+    var errorDescription: String? {
+        switch self {
+        case .unknown:
+            "Video export failed"
+        case .cancelled:
+            "Video export was cancelled"
         }
     }
 }

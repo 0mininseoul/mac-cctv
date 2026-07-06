@@ -361,6 +361,30 @@
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "지금은 후원 항목을 불러올 수 없습니다." } }
       }
     },
+    "save_video_button" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Save Video" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "영상 저장" } }
+      }
+    },
+    "export_video_in_progress" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Exporting video..." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "영상 내보내는 중..." } }
+      }
+    },
+    "export_video_failed" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Couldn't export video." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "영상을 내보낼 수 없습니다." } }
+      }
+    },
+    "export_video_failed_format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Export failed: %@" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "내보내기 실패: %@" } }
+      }
+    },
     "siren_button_title" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Siren" } },

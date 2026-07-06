@@ -1,6 +1,7 @@
 import AVKit
 import CCTVKit
 import SwiftUI
+import UIKit
 
 struct SessionPlaybackView: View {
     @StateObject private var viewModel: SessionPlaybackViewModel
@@ -66,6 +67,15 @@ struct SessionPlaybackView: View {
                     .padding(.vertical, 12)
             }
 
+            if !viewModel.exportStatusText.isEmpty {
+                Text(viewModel.exportStatusText)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+            }
+
             if !viewModel.playlist.missingRanges.isEmpty {
                 List {
                     Section("playback_missing_section") {
@@ -84,6 +94,33 @@ struct SessionPlaybackView: View {
         }
         .navigationTitle(session.startedAt.formatted(date: .abbreviated, time: .shortened))
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if viewModel.hasReplayableVideo {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        viewModel.exportVideoForSharing()
+                    } label: {
+                        if viewModel.isExportingVideo {
+                            ProgressView()
+                        } else {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                    }
+                    .disabled(viewModel.isExportingVideo)
+                    .accessibilityLabel("save_video_button")
+                }
+            }
+        }
+        .sheet(item: Binding(
+            get: { viewModel.exportedVideoURL },
+            set: { newValue in
+                if newValue == nil {
+                    viewModel.dismissExportedVideo()
+                }
+            }
+        )) { identifiableURL in
+            ActivityView(activityItems: [identifiableURL.url])
+        }
         .onAppear {
             viewModel.start()
             webRTCReceiver.start()
@@ -97,6 +134,16 @@ struct SessionPlaybackView: View {
             viewModel.setPlaybackActive(usesDelayedPlayback)
         }
     }
+}
+
+private struct ActivityView: UIViewControllerRepresentable {
+    let activityItems: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 private struct SirenCommandButton: View {
