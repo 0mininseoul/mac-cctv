@@ -137,6 +137,26 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 - [x] Build 5 두 타겟 모두 업로드·처리 완료 (`project.yml`의 `CURRENT_PROJECT_VERSION` 4→5), 둘 다 `processingState: VALID`
 - [ ] **사람 작업**: TestFlight에서 build 5를 내부 테스트 그룹에 배정하고 실기기로 에스컬레이션 시나리오 검증 (무장 → 30초 유예 대기 → 터치+짧은 흔들림 → 푸시+카운트다운 확인 → Dismiss 취소/타임아웃 두 경로 모두 확인)
 
+### Build 6 (2026-07-07) — 에스컬레이션 파라미터 조정 및 iOS에 Mac 실제 상태 반영
+
+사용자 피드백 두 가지 반영:
+
+- 무장 유예 기간 30초 → 15초, 에스컬레이션 카운트다운 10초(기존 15초 계획을 5초로 줄였다가 최종 10초로 재조정) — `AutoSirenTriggerPolicy.armGracePeriod`/`escalationTimeout`
+- Task #10 후속 제보: iOS "에스컬레이션 취소" 버튼이 Mac에 실제로 취소할 대상이 없을 때도 항상 탭 가능했고 "전송됨"만 표시되어 실제 효과가 있었는지 알 수 없었음. Session 레코드에 `escalationDeadline`(Date?) 필드를 추가해 Mac이 에스컬레이션 시작/취소/타임아웃 시점마다 반영하도록 하고, iOS는 기존 3초 라이브 폴링 루프에서 이 필드를 함께 조회해 실제로 대기 중일 때만 카운트다운과 취소 버튼을 노출하도록 변경 (`SessionPlaybackViewModel`, `SessionPlaybackView`)
+
+```
+xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: f8cf14ce-7391-45ef-8d91-bab6e402159d — build 6, processingState VALID
+
+xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: bcf62f61-fb23-495c-9ea1-3811b4f119d2 — build 6, processingState VALID
+```
+
+- [x] Build 6 두 타겟 모두 업로드·처리 완료 (`project.yml`의 `CURRENT_PROJECT_VERSION` 5→6), 둘 다 `processingState: VALID`
+- [ ] **사람 작업**: TestFlight에서 build 6를 내부 테스트 그룹에 배정하고 실기기 검증 (무장 → 15초 유예 대기 → 터치+짧은 흔들림 → 푸시+10초 카운트다운 확인 → iPhone에서 Dismiss 시 카운트다운/버튼이 실제로 사라지는지, 그리고 아무 일도 없을 때는 취소 버튼 자체가 안 보이는지 확인)
+
 **외부 테스터는 결정에 따라 불필요 (2026-07-06):** 계획 문서의 M9 검증 기준은 "TestFlight 외부 테스터 설치"라고 되어 있지만, 실기기(본인 Mac + iPhone) 검증이 목적이면 그 계정이 이미 내부 테스터로 등록되어 있으니 내부 테스팅만으로 충분하다. 외부 테스터(Beta App Review 필요)는 **팀 멤버가 아닌 다른 사람**에게 정식 출시 전 미리 배포하고 싶을 때만 필요 — PRD §11 출시 전략도 베타 단계 없이 바로 무료 출시라 필수 아님. 필요해지면 아래 항목 진행:
 
 - [ ] **(선택) 외부 테스터가 필요해지면**: 베타 검토(Beta App Review) 제출 전 App Review Information Notes 작성 필요
