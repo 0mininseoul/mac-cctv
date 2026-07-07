@@ -22,6 +22,7 @@ final class SessionPlaybackViewModel: ObservableObject {
     private let store = CloudKitStore()
     private let encoder = JSONEncoder()
     private var pollingTask: Task<Void, Never>?
+    private var escalationPollTask: Task<Void, Never>?
     private var loadedLiveChunkIDs: [String] = []
     private var hasPlayableContent = false
     private var playbackActive = true
@@ -54,11 +55,23 @@ final class SessionPlaybackViewModel: ObservableObject {
         pollingTask = Task { [weak self] in
             await self?.loadLoop()
         }
+
+        // A 10s escalation countdown can be mostly or entirely gone by the time
+        // the 3s chunk-loading loop below gets around to it, so this polls
+        // independently and much faster — cheap since it's a direct record
+        // fetch by ID, not a query.
+        if isLive {
+            escalationPollTask = Task { [weak self] in
+                await self?.escalationPollLoop()
+            }
+        }
     }
 
     func stop() {
         pollingTask?.cancel()
         pollingTask = nil
+        escalationPollTask?.cancel()
+        escalationPollTask = nil
         escalationTickTask?.cancel()
         escalationTickTask = nil
         player.pause()
@@ -135,11 +148,14 @@ final class SessionPlaybackViewModel: ObservableObject {
         }
     }
 
-    private func refresh() async {
-        if isLive {
+    private func escalationPollLoop() async {
+        while !Task.isCancelled {
             await refreshEscalationState()
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
         }
+    }
 
+    private func refresh() async {
         do {
             let chunks = try await store.fetchChunks(sessionID: session.id, limit: 800)
 

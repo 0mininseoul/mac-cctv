@@ -117,6 +117,18 @@ private struct SirenWarningView: View {
         ZStack(alignment: .bottom) {
             Color.black.ignoresSafeArea()
 
+            Image("SirenWarningBackground")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+
+            LinearGradient(
+                colors: [.clear, .black.opacity(0.85)],
+                startPoint: .center,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
             VStack(spacing: 24) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.system(size: 84, weight: .bold))
