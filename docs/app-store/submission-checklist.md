@@ -157,6 +157,29 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 - [x] Build 6 두 타겟 모두 업로드·처리 완료 (`project.yml`의 `CURRENT_PROJECT_VERSION` 5→6), 둘 다 `processingState: VALID`
 - [ ] **사람 작업**: TestFlight에서 build 6를 내부 테스트 그룹에 배정하고 실기기 검증 (무장 → 15초 유예 대기 → 터치+짧은 흔들림 → 푸시+10초 카운트다운 확인 → iPhone에서 Dismiss 시 카운트다운/버튼이 실제로 사라지는지, 그리고 아무 일도 없을 때는 취소 버튼 자체가 안 보이는지 확인)
 
+### Build 7 (2026-07-08) — build 6 실기기 테스트 결과 5건 반영
+
+실기기 테스트에서 나온 제보 5건 처리:
+
+1. **WebRTC가 연결된 지 ~20초 후 지연 재생으로 전환**: Mac 쪽 진단 로그(`m6-result.txt`)를 확인해보니 피어 연결은 사용자가 직접 감시를 끌 때까지 `connected` 상태를 유지했다 — 즉 실제 네트워크 단절이 아니었다. `LiveConnectionPolicy.connectedFrameGrace`(ICE 연결 이후 첫 프레임을 기다리는 시간)가 5초로 너무 타이트해서, ICE/DTLS는 붙었지만 디코더가 첫 프레임을 5초 안에 못 받으면 iOS가 스스로 피어 연결을 끊고 지연 재생으로 넘어가는 구조였다(재시도 없이 그 세션 동안 고정됨). 5초 → 15초로 완화. 또한 `WebRTCReceiver`의 상세 진단(`M6_RECEIVER_*`)이 지금까지 아무 곳에도 연결되어 있지 않아 iOS 쪽 근거가 전혀 없었음 — iOS 앱그룹 파일에 기록하는 `IOSDiagnostics` 추가, fallback 전환 시점에 연결 후 경과시간도 함께 기록. **다음 테스트에서 Xcode "Devices and Simulators → Download Container"로 iPhone의 `m6-receiver-result.txt`를 확인하면 실제 원인을 확정할 수 있음.**
+2. **deviceMotion 에스컬레이션 시 Mac 팝오버는 10초 카운트다운이 보이는데 iPhone엔 카운트다운도 취소 UI도 안 보임**: build 6에서 처음 추가한 `Session.escalationDeadline` 필드가 원인일 가능성이 매우 높음 — CloudKit은 신규 필드를 Development 스키마에는 자동으로 추가하지만 Production에는 수동으로 "Deploy Schema Changes"를 눌러야 반영된다. TestFlight 빌드는 Production CloudKit 환경을 쓰므로, 이 필드를 한 번도 Production에 배포하지 않았다면 Mac의 저장 자체가 실패했을 것. **사람 작업 필요**: CloudKit Dashboard(icloud.developer.apple.com/dashboard) → 컨테이너 선택 → Schema → Deploy Schema Changes → Session 레코드 타입의 `escalationDeadline` 필드를 Production으로 배포. 근거를 명확히 남기기 위해 `m10-escalation-result.txt` 로그도 매번 덮어쓰던 것을 append로 바꿔, 다음 테스트에서 `M10_SESSION_SYNC_FAILED`가 찍히는지 그대로 확인 가능하게 함.
+3. **사이렌 풀스크린 경고 문구 위치**: 화면 중앙 정렬 → 하단 정렬로 변경(`SirenController.SirenWarningView`). 사용자가 첨부한 이미지는 일반 "JPEG 파일" 플레이스홀더 아이콘으로 전달되어 실제 사진 내용을 확인할 수 없었음 — 이미지 자체를 배경으로 넣는 부분은 보류, 텍스트 위치만 우선 반영.
+4. **푸시 알림 문구가 "이벤트 감지: personMotion"처럼 로우데이터 그대로 옴**: 이벤트 타입별 개별 CKQuerySubscription으로 분리(`ensureEventTypeSubscription`)해 personMotion/inputTouch/powerDisconnect/deviceMotion/lidClose 5종에 각각 자연어 고정 문구 부여(예: "사람이 감지됐어요!", "누군가 맥북을 두드리고 있어요"). 기존 범용 구독(`event-created-v1`)은 이 5종 + `sirenEscalation`(이미 전용 구독 있음)을 제외하도록 predicate 수정 — 중복 푸시 방지.
+5. **iOS 보관함 로딩이 느림**: `SessionLibraryViewModel.load()`가 세션마다 순차적으로 `fetchEvents`를 호출하는 N+1 패턴이었음(세션 10개면 10번 순차 왕복) → `TaskGroup`으로 병렬화. 또한 로딩 전에 `sweepExpired()`(만료 세션 정리)를 블로킹으로 먼저 실행하던 것을 백그라운드로 분리.
+
+```
+xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: f2ddf475-25ce-4f68-a1cb-f9b55466a581 — build 7, processingState VALID
+
+xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 9e188585-aca5-46ad-8ab7-72caafa9c10f — build 7, processingState VALID
+```
+
+- [x] Build 7 두 타겟 모두 업로드·처리 완료 (`project.yml`의 `CURRENT_PROJECT_VERSION` 6→7), 둘 다 `processingState: VALID`
+- [ ] **사람 작업 (중요, 순서대로)**: (a) CloudKit Dashboard에서 `Session.escalationDeadline` 스키마를 Production에 배포 → (b) TestFlight에서 build 7을 내부 테스트 그룹에 배정 → (c) 실기기로 5개 항목 재검증 (WebRTC 연결 유지 여부 및 `m6-receiver-result.txt` 확인, 에스컬레이션 카운트다운이 iPhone에도 보이는지, 사이렌 화면 문구 위치, 푸시 문구, 보관함 로딩 체감 속도)
+
 **외부 테스터는 결정에 따라 불필요 (2026-07-06):** 계획 문서의 M9 검증 기준은 "TestFlight 외부 테스터 설치"라고 되어 있지만, 실기기(본인 Mac + iPhone) 검증이 목적이면 그 계정이 이미 내부 테스터로 등록되어 있으니 내부 테스팅만으로 충분하다. 외부 테스터(Beta App Review 필요)는 **팀 멤버가 아닌 다른 사람**에게 정식 출시 전 미리 배포하고 싶을 때만 필요 — PRD §11 출시 전략도 베타 단계 없이 바로 무료 출시라 필수 아님. 필요해지면 아래 항목 진행:
 
 - [ ] **(선택) 외부 테스터가 필요해지면**: 베타 검토(Beta App Review) 제출 전 App Review Information Notes 작성 필요
