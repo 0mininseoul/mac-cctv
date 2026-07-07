@@ -178,7 +178,26 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 ```
 
 - [x] Build 7 두 타겟 모두 업로드·처리 완료 (`project.yml`의 `CURRENT_PROJECT_VERSION` 6→7), 둘 다 `processingState: VALID`
-- [ ] **사람 작업 (중요, 순서대로)**: (a) CloudKit Dashboard에서 `Session.escalationDeadline` 스키마를 Production에 배포 → (b) TestFlight에서 build 7을 내부 테스트 그룹에 배정 → (c) 실기기로 5개 항목 재검증 (WebRTC 연결 유지 여부 및 `m6-receiver-result.txt` 확인, 에스컬레이션 카운트다운이 iPhone에도 보이는지, 사이렌 화면 문구 위치, 푸시 문구, 보관함 로딩 체감 속도)
+- [x] Build 7 계획 당시 "CloudKit Production 스키마 미배포"를 원인으로 추정했으나, 실제 CloudKit Dashboard의 "Deploy Schema Changes" 확인 결과 Record Types/Indexes/Security Roles 모두 변경사항 0건 — 애초에 `saveSession`/`fetchSession`이 레코드 ID 기반 직접 저장·조회(`database.save`/`database.record(for:)`)라 인덱스·스키마 배포가 필요 없는 API였음. **가설 기각**, 진짜 원인은 build 8 참고.
+
+### Build 8 (2026-07-08) — 사이렌 배경 이미지, 에스컬레이션 폴링 주기 수정
+
+- 사이렌 풀스크린 경고에 사용자가 제공한 이미지(`apps/mac/MacCCTV/Assets.xcassets/SirenWarningBackground.imageset`)를 배경으로 추가, 하단 텍스트 가독성을 위해 하단 그라디언트 스크림 적용
+- iOS 에스컬레이션 상태 폴링 원인 재진단: build 7까지도 `SessionPlaybackViewModel`의 에스컬레이션 상태 조회가 3초 주기 청크 로딩 루프에 얹혀 있었음 — 10초짜리 카운트다운 대비 3초 주기는 앱 실행·WebRTC 연결 지연을 감안하면 폴링 기회가 2~3회뿐이라 놓치기 쉬웠음. 청크 로딩 루프와 분리해 독립적인 1초 주기 `escalationPollLoop`로 변경 (레코드 ID 기반 직접 조회라 비용 저렴)
+- 푸시 알림 문구를 한 파일에서 훑어볼 수 있도록 `docs/push-notification-copy.md` 추가 (실제 반영은 여전히 `Localizable.xcstrings`에서 — APNs의 `alert-loc-key`는 반드시 "Localizable.strings" 테이블에서만 조회되는 OS 레벨 제약이라 완전히 분리된 파일로는 동작 불가)
+
+```
+xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 548a659f-5eae-442c-90ec-6e8c5ee17330 — build 8, processingState VALID
+
+xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 40bac956-063b-4075-ba74-12fdfa51a7be — build 8, processingState VALID
+```
+
+- [x] Build 8 두 타겟 모두 업로드·처리 완료 (`project.yml`의 `CURRENT_PROJECT_VERSION` 7→8), 둘 다 `processingState: VALID`
+- [ ] **사람 작업**: TestFlight에서 build 8을 내부 테스트 그룹에 배정하고 실기기 재검증 — 특히 에스컬레이션 카운트다운이 이제 iPhone에도 뜨는지, 사이렌 배경 이미지, WebRTC 연결 유지 여부(안 되면 `m6-receiver-result.txt`를 Xcode "Devices and Simulators → Download Container"로 확인)
 
 **외부 테스터는 결정에 따라 불필요 (2026-07-06):** 계획 문서의 M9 검증 기준은 "TestFlight 외부 테스터 설치"라고 되어 있지만, 실기기(본인 Mac + iPhone) 검증이 목적이면 그 계정이 이미 내부 테스터로 등록되어 있으니 내부 테스팅만으로 충분하다. 외부 테스터(Beta App Review 필요)는 **팀 멤버가 아닌 다른 사람**에게 정식 출시 전 미리 배포하고 싶을 때만 필요 — PRD §11 출시 전략도 베타 단계 없이 바로 무료 출시라 필수 아님. 필요해지면 아래 항목 진행:
 
