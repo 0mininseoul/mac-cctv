@@ -114,7 +114,7 @@ private struct SirenWarningView: View {
     let warningText: String
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .bottom) {
             Color.black.ignoresSafeArea()
 
             VStack(spacing: 24) {
@@ -130,7 +130,8 @@ private struct SirenWarningView: View {
                     .minimumScaleFactor(0.55)
                     .padding(.horizontal, 40)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(maxWidth: .infinity)
+            .padding(.bottom, 96)
         }
     }
 }

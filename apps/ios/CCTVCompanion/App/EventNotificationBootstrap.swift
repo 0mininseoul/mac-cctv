@@ -19,9 +19,17 @@ enum EventNotificationBootstrap {
             await MainActor.run {
                 UIApplication.shared.registerForRemoteNotifications()
             }
-            try? await CloudKitStore().ensureEventSubscription()
-            try? await CloudKitStore().ensureSignalSubscription()
-            try? await CloudKitStore().ensureEscalationSubscription()
+            let store = CloudKitStore()
+            try? await store.ensureEventSubscription()
+            try? await store.ensureSignalSubscription()
+            try? await store.ensureEscalationSubscription()
+            for type in CloudKitStore.friendlyEventTypes {
+                try? await store.ensureEventTypeSubscription(
+                    type: type,
+                    subscriptionID: "event-\(type.rawValue)-v1",
+                    alertLocalizationKey: "event_\(type.rawValue)_notification_body"
+                )
+            }
         }
     }
 

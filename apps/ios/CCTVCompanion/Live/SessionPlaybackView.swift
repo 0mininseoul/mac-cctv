@@ -11,7 +11,12 @@ struct SessionPlaybackView: View {
     init(session: SurveillanceSession) {
         self.session = session
         _viewModel = StateObject(wrappedValue: SessionPlaybackViewModel(session: session))
-        _webRTCReceiver = StateObject(wrappedValue: WebRTCReceiver(session: session))
+        _webRTCReceiver = StateObject(wrappedValue: WebRTCReceiver(
+            session: session,
+            diagnostics: { line in
+                IOSDiagnostics.append(line, filename: "m6-receiver-result.txt")
+            }
+        ))
     }
 
     var body: some View {

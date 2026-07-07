@@ -442,7 +442,7 @@ final class SurveillanceController: ObservableObject {
         isEscalationPending = true
         escalationSecondsRemaining = Int(autoSirenPolicy.escalationTimeout)
         statusText = String(localized: "surveillance_status_escalation_pending")
-        writeDiagnostic("M10_ESCALATION_STARTED session=\(sessionID)", filename: "m10-escalation-result.txt")
+        appendDiagnostic("M10_ESCALATION_STARTED session=\(sessionID)", filename: "m10-escalation-result.txt")
         await saveSecurityEvent(type: .sirenEscalation, confidence: 1, occurredAt: occurredAt, sessionID: sessionID)
         startEscalationCountdown()
         await updateSessionEscalationState(deadline: occurredAt.addingTimeInterval(autoSirenPolicy.escalationTimeout))
@@ -487,7 +487,7 @@ final class SurveillanceController: ObservableObject {
         let sessionID = activeSessionID ?? "unknown"
         resetEscalationState()
         await updateSessionEscalationState(deadline: nil)
-        writeDiagnostic("M10_ESCALATION_TIMEOUT session=\(sessionID)", filename: "m10-escalation-result.txt")
+        appendDiagnostic("M10_ESCALATION_TIMEOUT session=\(sessionID)", filename: "m10-escalation-result.txt")
         await triggerSiren(source: .automatic)
     }
 
@@ -497,7 +497,7 @@ final class SurveillanceController: ObservableObject {
         }
         await updateSessionEscalationState(deadline: nil)
         let sessionID = activeSessionID
-        writeDiagnostic("M10_ESCALATION_DISMISSED session=\(sessionID ?? "unknown") reason=\(reason)", filename: "m10-escalation-result.txt")
+        appendDiagnostic("M10_ESCALATION_DISMISSED session=\(sessionID ?? "unknown") reason=\(reason)", filename: "m10-escalation-result.txt")
         if case .armed = machine.state {
             statusText = String(localized: "surveillance_status_armed")
         }
@@ -538,7 +538,7 @@ final class SurveillanceController: ObservableObject {
         do {
             _ = try await store.saveSession(session)
         } catch {
-            writeDiagnostic(
+            appendDiagnostic(
                 "M10_SESSION_SYNC_FAILED session=\(sessionID) error=\(error.localizedDescription)",
                 filename: "m10-escalation-result.txt"
             )

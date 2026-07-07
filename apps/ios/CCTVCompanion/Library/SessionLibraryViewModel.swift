@@ -38,15 +38,29 @@ final class SessionLibraryViewModel: ObservableObject {
         statusText = String(localized: "library_status_loading")
         defer { isLoading = false }
 
+        // Retention cleanup doesn't need to block the list from appearing —
+        // run it alongside instead of ahead of the fetch below.
+        Task { _ = try? await store.sweepExpired() }
+
         do {
-            _ = try? await store.sweepExpired()
             let fetchedSessions = try await store.fetchSessions()
-            var items: [SessionListItem] = []
-            for session in fetchedSessions {
-                let events = (try? await store.fetchEvents(sessionID: session.id, limit: 200)) ?? []
-                items.append(SessionListItem(session: session, eventCount: events.count))
+            let store = store
+            let eventCounts = await withTaskGroup(of: (String, Int).self) { group in
+                for session in fetchedSessions {
+                    group.addTask {
+                        let events = (try? await store.fetchEvents(sessionID: session.id, limit: 200)) ?? []
+                        return (session.id, events.count)
+                    }
+                }
+                var counts: [String: Int] = [:]
+                for await (sessionID, count) in group {
+                    counts[sessionID] = count
+                }
+                return counts
             }
-            sessions = items
+            sessions = fetchedSessions.map { session in
+                SessionListItem(session: session, eventCount: eventCounts[session.id] ?? 0)
+            }
             statusText = sessions.isEmpty
                 ? String(localized: "library_status_empty")
                 : String(format: String(localized: "library_status_loaded_format"), sessions.count)

@@ -613,6 +613,36 @@
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "이벤트 감지: %@" } }
       }
     },
+    "event_personMotion_notification_body" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "A person was detected!" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "사람이 감지됐어요!" } }
+      }
+    },
+    "event_inputTouch_notification_body" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Someone is touching your Mac" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "누군가 맥북을 두드리고 있어요" } }
+      }
+    },
+    "event_powerDisconnect_notification_body" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Someone unplugged the charger" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "누군가가 충전기를 뽑았어요" } }
+      }
+    },
+    "event_deviceMotion_notification_body" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Someone moved your Mac" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "누군가 맥북을 움직였어요" } }
+      }
+    },
+    "event_lidClose_notification_body" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Someone closed the lid" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "누군가 맥북 덮개를 닫았어요" } }
+      }
+    },
     "escalation_notification_body" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "A Mac may have been picked up. Tap to view, or Dismiss to cancel the alarm." } },

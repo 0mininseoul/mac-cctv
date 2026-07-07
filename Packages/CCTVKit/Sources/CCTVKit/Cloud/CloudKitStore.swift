@@ -231,10 +231,14 @@ public final class CloudKitStore: @unchecked Sendable {
         return try makeSecurityEvent(from: record)
     }
 
+    /// Catch-all for event types that don't have their own friendly subscription
+    /// below (e.g. sirenAuto/sirenManual/escalationDismissed) — excludes the types
+    /// that do, so those don't also fire this generic "Event detected: X" alert.
     public func ensureEventSubscription(subscriptionID: String = "event-created-v1") async throws {
+        let excludedTypes = Self.friendlyEventTypes.map(\.rawValue) + [SecurityEventType.sirenEscalation.rawValue]
         let subscription = CKQuerySubscription(
             recordType: CKSchema.RecordType.event,
-            predicate: NSPredicate(value: true),
+            predicate: NSPredicate(format: "NOT (%K IN %@)", CKSchema.Event.type, excludedTypes),
             subscriptionID: subscriptionID,
             options: [.firesOnRecordCreation]
         )
@@ -242,6 +246,38 @@ public final class CloudKitStore: @unchecked Sendable {
         notificationInfo.title = "Mac CCTV"
         notificationInfo.alertLocalizationKey = "event_notification_body_format"
         notificationInfo.alertLocalizationArgs = [CKSchema.Event.type]
+        notificationInfo.soundName = "default"
+        notificationInfo.shouldBadge = true
+        notificationInfo.desiredKeys = [
+            CKSchema.Event.session,
+            CKSchema.Event.type,
+            CKSchema.Event.occurredAt
+        ]
+        subscription.notificationInfo = notificationInfo
+        _ = try await database.save(subscription)
+    }
+
+    /// One event type = one natural-language push, e.g. "누군가 맥북을 두드리고 있어요"
+    /// instead of the generic "Event detected: inputTouch". Mirrors
+    /// `ensureEscalationSubscription`'s per-type predicate pattern.
+    public static let friendlyEventTypes: [SecurityEventType] = [
+        .personMotion, .inputTouch, .powerDisconnect, .deviceMotion, .lidClose
+    ]
+
+    public func ensureEventTypeSubscription(
+        type: SecurityEventType,
+        subscriptionID: String,
+        alertLocalizationKey: String
+    ) async throws {
+        let subscription = CKQuerySubscription(
+            recordType: CKSchema.RecordType.event,
+            predicate: NSPredicate(format: "%K == %@", CKSchema.Event.type, type.rawValue),
+            subscriptionID: subscriptionID,
+            options: [.firesOnRecordCreation]
+        )
+        let notificationInfo = CKSubscription.NotificationInfo()
+        notificationInfo.title = "Mac CCTV"
+        notificationInfo.alertLocalizationKey = alertLocalizationKey
         notificationInfo.soundName = "default"
         notificationInfo.shouldBadge = true
         notificationInfo.desiredKeys = [

@@ -19,7 +19,12 @@ final class WebRTCReceiver: NSObject, ObservableObject {
     // fresh-offer handshake before ICE/DTLS negotiation even starts, so the old
     // 10s budget (sized for an already-waiting offer) was too tight — bumped to
     // give that handshake room without changing the user-visible fallback intent.
-    private let policy = LiveConnectionPolicy(timeout: 20)
+    // connectedFrameGrace was also too tight (5s): reaching ICE "connected" is not
+    // the same as the first frame actually decoding — encoder/decoder startup and
+    // throughput ramp-up can eat several more seconds even on a healthy link, and
+    // the old 5s grace was closing an otherwise-fine connection before it had a
+    // real chance to deliver a frame.
+    private let policy = LiveConnectionPolicy(timeout: 20, connectedFrameGrace: 15)
     private let signalPollInterval: UInt64 = 500_000_000
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
@@ -352,6 +357,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
             peerConnectionConnectedAt: peerConnectionConnectedAt,
             peerConnectionFailed: peerConnectionFailed
         )
+        let modeChanged = nextMode != viewingMode
         viewingMode = nextMode
 
         switch nextMode {
@@ -361,6 +367,12 @@ final class WebRTCReceiver: NSObject, ObservableObject {
             statusText = String(localized: "live_status_realtime")
         case let .delayedFallback(reason):
             statusText = fallbackStatusText(reason: reason)
+            if modeChanged {
+                let connectedAfter = peerConnectionConnectedAt.map { now.timeIntervalSince(startedAt) - now.timeIntervalSince($0) }
+                diagnostics?(
+                    "M6_RECEIVER_FALLBACK session=\(session.id) reason=\(reason) elapsed=\(String(format: "%.1f", now.timeIntervalSince(startedAt))) connectedAfter=\(connectedAfter.map { String(format: "%.1f", $0) } ?? "nil")"
+                )
+            }
             peerConnection?.close()
         }
     }
