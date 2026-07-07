@@ -469,6 +469,12 @@
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "전송됨." } }
       }
     },
+    "escalation_countdown_format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Siren in %d s unless dismissed" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "%d초 후 사이렌이 울립니다" } }
+      }
+    },
     "escalation_dismiss_action_title" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Dismiss" } },

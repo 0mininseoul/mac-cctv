@@ -150,10 +150,10 @@ final class AutoSirenTriggerPolicyTests: XCTestCase {
         XCTAssertEqual(decision, .trigger)
     }
 
-    func testDoesNotTriggerDuringFirstThirtySecondsAfterArming() {
+    func testDoesNotTriggerDuringFirstFifteenSecondsAfterArming() {
         let policy = AutoSirenTriggerPolicy()
         let armedAt = Date(timeIntervalSince1970: 1_000)
-        let now = armedAt.addingTimeInterval(29.9)
+        let now = armedAt.addingTimeInterval(14.9)
 
         let decision = policy.decision(
             armedAt: armedAt,

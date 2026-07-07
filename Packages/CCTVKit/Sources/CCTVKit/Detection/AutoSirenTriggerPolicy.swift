@@ -32,9 +32,9 @@ public struct AutoSirenTriggerPolicy: Equatable, Sendable {
         maxDeviceMotionSampleGap: TimeInterval = 1.25,
         inputTouchWindow: TimeInterval = 10,
         powerDisconnectWindow: TimeInterval = 30,
-        armGracePeriod: TimeInterval = 30,
+        armGracePeriod: TimeInterval = 15,
         minimumDeviceMotionConfidence: Double = 0.72,
-        escalationTimeout: TimeInterval = 15
+        escalationTimeout: TimeInterval = 10
     ) {
         self.requiredDeviceMotionDuration = requiredDeviceMotionDuration
         self.maxDeviceMotionSampleGap = maxDeviceMotionSampleGap

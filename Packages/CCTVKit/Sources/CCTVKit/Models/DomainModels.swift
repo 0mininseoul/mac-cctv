@@ -12,19 +12,22 @@ public struct SurveillanceSession: Identifiable, Codable, Equatable, Sendable {
     public var endedAt: Date?
     public var deviceName: String
     public var status: SessionStatus
+    public var escalationDeadline: Date?
 
     public init(
         id: String,
         startedAt: Date,
         endedAt: Date? = nil,
         deviceName: String,
-        status: SessionStatus
+        status: SessionStatus,
+        escalationDeadline: Date? = nil
     ) {
         self.id = id
         self.startedAt = startedAt
         self.endedAt = endedAt
         self.deviceName = deviceName
         self.status = status
+        self.escalationDeadline = escalationDeadline
     }
 }
 

@@ -169,7 +169,8 @@ public final class CloudKitStore: @unchecked Sendable {
                 CKSchema.Session.startedAt,
                 CKSchema.Session.endedAt,
                 CKSchema.Session.deviceName,
-                CKSchema.Session.status
+                CKSchema.Session.status,
+                CKSchema.Session.escalationDeadline
             ],
             resultsLimit: limit
         )
@@ -613,6 +614,7 @@ public final class CloudKitStore: @unchecked Sendable {
         record[CKSchema.Session.endedAt] = session.endedAt as CKRecordValue?
         record[CKSchema.Session.deviceName] = session.deviceName as CKRecordValue
         record[CKSchema.Session.status] = session.status.rawValue as CKRecordValue
+        record[CKSchema.Session.escalationDeadline] = session.escalationDeadline as CKRecordValue?
     }
 
     private func apply(_ event: SecurityEvent, to record: CKRecord) {
@@ -647,7 +649,8 @@ public final class CloudKitStore: @unchecked Sendable {
             startedAt: startedAt,
             endedAt: record[CKSchema.Session.endedAt] as? Date,
             deviceName: deviceName,
-            status: status
+            status: status,
+            escalationDeadline: record[CKSchema.Session.escalationDeadline] as? Date
         )
     }
 

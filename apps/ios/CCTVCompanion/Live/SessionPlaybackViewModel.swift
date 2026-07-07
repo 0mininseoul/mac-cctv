@@ -10,6 +10,8 @@ final class SessionPlaybackViewModel: ObservableObject {
     @Published private(set) var sirenCommandStatusText = ""
     @Published private(set) var isSendingEscalationDismiss = false
     @Published private(set) var escalationDismissStatusText = ""
+    @Published private(set) var isEscalationPending = false
+    @Published private(set) var escalationSecondsRemaining = 0
     @Published private(set) var isExportingVideo = false
     @Published private(set) var exportStatusText = ""
     @Published private(set) var exportedVideoURL: IdentifiableURL?
@@ -24,6 +26,8 @@ final class SessionPlaybackViewModel: ObservableObject {
     private var hasPlayableContent = false
     private var playbackActive = true
     private var replayComposition: AVComposition?
+    private var escalationDeadline: Date?
+    private var escalationTickTask: Task<Void, Never>?
 
     init(session: SurveillanceSession) {
         self.session = session
@@ -55,6 +59,8 @@ final class SessionPlaybackViewModel: ObservableObject {
     func stop() {
         pollingTask?.cancel()
         pollingTask = nil
+        escalationTickTask?.cancel()
+        escalationTickTask = nil
         player.pause()
     }
 
@@ -130,6 +136,10 @@ final class SessionPlaybackViewModel: ObservableObject {
     }
 
     private func refresh() async {
+        if isLive {
+            await refreshEscalationState()
+        }
+
         do {
             let chunks = try await store.fetchChunks(sessionID: session.id, limit: 800)
 
@@ -193,6 +203,61 @@ final class SessionPlaybackViewModel: ObservableObject {
                 error.localizedDescription
             )
         }
+    }
+
+    /// Polls the Mac's actual escalation state off the Session record (instead of
+    /// assuming a dismiss always has an effect) so the cancel button only appears,
+    /// and only claims to do something, while an escalation is really pending.
+    private func refreshEscalationState() async {
+        guard let latestSession = try? await store.fetchSession(id: session.id) else {
+            return
+        }
+        applyEscalationDeadline(latestSession.escalationDeadline)
+    }
+
+    private func applyEscalationDeadline(_ deadline: Date?) {
+        guard deadline != escalationDeadline else {
+            return
+        }
+        escalationDeadline = deadline
+
+        if let deadline, deadline > Date() {
+            isEscalationPending = true
+            startEscalationTicking()
+        } else {
+            isEscalationPending = false
+            escalationSecondsRemaining = 0
+            escalationTickTask?.cancel()
+            escalationTickTask = nil
+        }
+    }
+
+    private func startEscalationTicking() {
+        escalationTickTask?.cancel()
+        escalationTickTask = Task { [weak self] in
+            while true {
+                let shouldContinue = await self?.tickEscalationDisplay() ?? false
+                guard shouldContinue else {
+                    return
+                }
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+            }
+        }
+    }
+
+    private func tickEscalationDisplay() -> Bool {
+        guard let escalationDeadline else {
+            return false
+        }
+        let remaining = Int(ceil(escalationDeadline.timeIntervalSinceNow))
+        guard remaining > 0 else {
+            isEscalationPending = false
+            escalationSecondsRemaining = 0
+            self.escalationDeadline = nil
+            return false
+        }
+        escalationSecondsRemaining = remaining
+        return true
     }
 
     /// Live/fallback playback keeps queueing individual chunk files as they arrive —

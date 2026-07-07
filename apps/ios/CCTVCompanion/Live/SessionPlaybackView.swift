@@ -53,21 +53,32 @@ struct SessionPlaybackView: View {
                             .textSelection(.enabled)
                     }
 
-                    Button {
-                        viewModel.sendEscalationDismiss()
-                    } label: {
-                        Label("escalation_dismiss_button_title", systemImage: "xmark.shield")
-                            .font(.subheadline.weight(.medium))
-                            .frame(maxWidth: .infinity, minHeight: 36)
-                    }
-                    .buttonStyle(.bordered)
-                    .disabled(viewModel.isSendingEscalationDismiss)
+                    if viewModel.isEscalationPending {
+                        Text(
+                            String(
+                                format: String(localized: "escalation_countdown_format"),
+                                viewModel.escalationSecondsRemaining
+                            )
+                        )
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.orange)
 
-                    if !viewModel.escalationDismissStatusText.isEmpty {
-                        Text(viewModel.escalationDismissStatusText)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .textSelection(.enabled)
+                        Button {
+                            viewModel.sendEscalationDismiss()
+                        } label: {
+                            Label("escalation_dismiss_button_title", systemImage: "xmark.shield")
+                                .font(.subheadline.weight(.medium))
+                                .frame(maxWidth: .infinity, minHeight: 36)
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(viewModel.isSendingEscalationDismiss)
+
+                        if !viewModel.escalationDismissStatusText.isEmpty {
+                            Text(viewModel.escalationDismissStatusText)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .textSelection(.enabled)
+                        }
                     }
                 }
                 .padding(.horizontal, 16)

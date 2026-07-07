@@ -419,7 +419,9 @@ final class SurveillanceController: ObservableObject {
 
         switch autoSirenPolicy.decision(armedAt: activeStartedAt, now: now, evidence: autoSirenEvidence) {
         case .trigger:
-            resetEscalationState()
+            if resetEscalationState() {
+                await updateSessionEscalationState(deadline: nil)
+            }
             autoSirenTriggered = true
             await triggerSiren(source: .automatic, triggeredAt: now)
             return true
@@ -443,6 +445,7 @@ final class SurveillanceController: ObservableObject {
         writeDiagnostic("M10_ESCALATION_STARTED session=\(sessionID)", filename: "m10-escalation-result.txt")
         await saveSecurityEvent(type: .sirenEscalation, confidence: 1, occurredAt: occurredAt, sessionID: sessionID)
         startEscalationCountdown()
+        await updateSessionEscalationState(deadline: occurredAt.addingTimeInterval(autoSirenPolicy.escalationTimeout))
     }
 
     private func startEscalationCountdown() {
@@ -483,6 +486,7 @@ final class SurveillanceController: ObservableObject {
         }
         let sessionID = activeSessionID ?? "unknown"
         resetEscalationState()
+        await updateSessionEscalationState(deadline: nil)
         writeDiagnostic("M10_ESCALATION_TIMEOUT session=\(sessionID)", filename: "m10-escalation-result.txt")
         await triggerSiren(source: .automatic)
     }
@@ -491,6 +495,7 @@ final class SurveillanceController: ObservableObject {
         guard resetEscalationState() else {
             return
         }
+        await updateSessionEscalationState(deadline: nil)
         let sessionID = activeSessionID
         writeDiagnostic("M10_ESCALATION_DISMISSED session=\(sessionID ?? "unknown") reason=\(reason)", filename: "m10-escalation-result.txt")
         if case .armed = machine.state {
@@ -512,6 +517,32 @@ final class SurveillanceController: ObservableObject {
         isEscalationPending = false
         escalationSecondsRemaining = 0
         return true
+    }
+
+    /// Mirrors the escalation countdown onto the Session record so iOS can poll
+    /// its actual state (rather than always showing the dismiss button as tappable
+    /// regardless of whether anything is really pending on the Mac).
+    private func updateSessionEscalationState(deadline: Date?) async {
+        guard let sessionID = activeSessionID, let activeStartedAt else {
+            return
+        }
+
+        let session = SurveillanceSession(
+            id: sessionID,
+            startedAt: activeStartedAt,
+            endedAt: nil,
+            deviceName: Host.current().localizedName ?? "Mac",
+            status: .recording,
+            escalationDeadline: deadline
+        )
+        do {
+            _ = try await store.saveSession(session)
+        } catch {
+            writeDiagnostic(
+                "M10_SESSION_SYNC_FAILED session=\(sessionID) error=\(error.localizedDescription)",
+                filename: "m10-escalation-result.txt"
+            )
+        }
     }
 
     private func triggerSiren(source: SirenTriggerSource, triggeredAt: Date = Date()) async {
