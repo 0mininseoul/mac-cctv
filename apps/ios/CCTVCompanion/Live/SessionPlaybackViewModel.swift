@@ -12,17 +12,26 @@ final class SessionPlaybackViewModel: ObservableObject {
     @Published private(set) var escalationDismissStatusText = ""
     @Published private(set) var isEscalationPending = false
     @Published private(set) var escalationSecondsRemaining = 0
+    @Published private(set) var isSirenActive = false
+    @Published private(set) var isSendingSilenceSiren = false
+    @Published private(set) var silenceSirenStatusText = ""
+    /// Flips true when the Mac reports the session ended while we were watching
+    /// live, so the view can swap the black live surface for replay playback.
+    @Published private(set) var endedRemotely = false
     @Published private(set) var isExportingVideo = false
     @Published private(set) var exportStatusText = ""
     @Published private(set) var exportedVideoURL: IdentifiableURL?
 
-    let player: AVPlayer
+    let player: AVQueuePlayer
 
     private let session: SurveillanceSession
     private let store = CloudKitStore()
+    private let channel: SignalingChannel
     private let encoder = JSONEncoder()
+    private let decoder = JSONDecoder()
     private var pollingTask: Task<Void, Never>?
-    private var escalationPollTask: Task<Void, Never>?
+    private var macStatePollTask: Task<Void, Never>?
+    private var macStateCursor = Date.distantPast
     private var loadedLiveChunkIDs: [String] = []
     private var hasPlayableContent = false
     private var playbackActive = true
@@ -32,19 +41,22 @@ final class SessionPlaybackViewModel: ObservableObject {
 
     init(session: SurveillanceSession) {
         self.session = session
-        self.player = session.status == .recording ? AVQueuePlayer() : AVPlayer()
+        self.player = AVQueuePlayer()
+        self.channel = CloudKitSignalingChannel(sessionID: session.id, localSender: .ios, store: store)
     }
 
+    /// Live only while the session record says recording *and* the Mac hasn't told
+    /// us mid-stream that it ended.
     var isLive: Bool {
-        session.status == .recording
+        session.status == .recording && !endedRemotely
     }
 
     var hasReplayableVideo: Bool {
         !isLive && replayComposition != nil
     }
 
-    private var liveQueuePlayer: AVQueuePlayer? {
-        player as? AVQueuePlayer
+    private var liveQueuePlayer: AVQueuePlayer {
+        player
     }
 
     func start() {
@@ -56,13 +68,13 @@ final class SessionPlaybackViewModel: ObservableObject {
             await self?.loadLoop()
         }
 
-        // A 10s escalation countdown can be mostly or entirely gone by the time
-        // the 3s chunk-loading loop below gets around to it, so this polls
-        // independently and much faster — cheap since it's a direct record
-        // fetch by ID, not a query.
+        // Mirror the Mac's live state (escalation countdown, siren on/off, session
+        // ended) off the signaling channel. Polled fast and separately from the 3s
+        // chunk loop because a 10s countdown would be mostly gone before that loop
+        // gets to it.
         if isLive {
-            escalationPollTask = Task { [weak self] in
-                await self?.escalationPollLoop()
+            macStatePollTask = Task { [weak self] in
+                await self?.macStatePollLoop()
             }
         }
     }
@@ -70,8 +82,8 @@ final class SessionPlaybackViewModel: ObservableObject {
     func stop() {
         pollingTask?.cancel()
         pollingTask = nil
-        escalationPollTask?.cancel()
-        escalationPollTask = nil
+        macStatePollTask?.cancel()
+        macStatePollTask = nil
         escalationTickTask?.cancel()
         escalationTickTask = nil
         player.pause()
@@ -118,6 +130,19 @@ final class SessionPlaybackViewModel: ObservableObject {
         }
     }
 
+    func sendSilenceSiren() {
+        guard isLive, !isSendingSilenceSiren else {
+            return
+        }
+
+        isSendingSilenceSiren = true
+        silenceSirenStatusText = String(localized: "silence_siren_sending")
+
+        Task { [weak self] in
+            await self?.sendSilenceSirenNow()
+        }
+    }
+
     func exportVideoForSharing() {
         guard let replayComposition, !isExportingVideo else {
             return
@@ -148,9 +173,12 @@ final class SessionPlaybackViewModel: ObservableObject {
         }
     }
 
-    private func escalationPollLoop() async {
+    private func macStatePollLoop() async {
         while !Task.isCancelled {
-            await refreshEscalationState()
+            await refreshMacState()
+            if endedRemotely {
+                return
+            }
             try? await Task.sleep(nanoseconds: 1_000_000_000)
         }
     }
@@ -221,14 +249,82 @@ final class SessionPlaybackViewModel: ObservableObject {
         }
     }
 
-    /// Polls the Mac's actual escalation state off the Session record (instead of
-    /// assuming a dismiss always has an effect) so the cancel button only appears,
-    /// and only claims to do something, while an escalation is really pending.
-    private func refreshEscalationState() async {
-        guard let latestSession = try? await store.fetchSession(id: session.id) else {
+    private func sendSilenceSirenNow() async {
+        defer {
+            isSendingSilenceSiren = false
+        }
+
+        do {
+            let payload = SilenceSirenSignalPayload(requestedAt: Date())
+            let data = try encoder.encode(payload)
+            try await channel.send(
+                SignalMessage(
+                    id: "\(session.id)-ios-silence-\(UUID().uuidString)",
+                    sessionID: session.id,
+                    kind: .silenceSiren,
+                    payload: String(decoding: data, as: UTF8.self),
+                    sender: .ios,
+                    createdAt: Date()
+                )
+            )
+            silenceSirenStatusText = String(localized: "silence_siren_sent")
+        } catch {
+            silenceSirenStatusText = String(
+                format: String(localized: "silence_siren_failed_format"),
+                error.localizedDescription
+            )
+        }
+    }
+
+    /// Reads the Mac's broadcast live state off the signaling channel (escalation
+    /// countdown, siren on/off, session ended). Signals persist, so opening the
+    /// view mid-event still catches the latest state from history via the
+    /// distant-past initial cursor.
+    private func refreshMacState() async {
+        guard let messages = try? await channel.receive(after: macStateCursor) else {
             return
         }
-        applyEscalationDeadline(latestSession.escalationDeadline)
+        let macStates = messages.filter { $0.kind == .macState }
+        if let latest = macStates.max(by: { $0.createdAt < $1.createdAt }),
+           let payload = try? decoder.decode(MacLiveStateSignalPayload.self, from: Data(latest.payload.utf8)) {
+            applyMacState(payload)
+        }
+        // Advance past everything seen so we don't reprocess (macState carries
+        // absolute state, so skipping intermediate ones is fine).
+        macStateCursor = messages.map(\.createdAt).max() ?? macStateCursor
+    }
+
+    private func applyMacState(_ state: MacLiveStateSignalPayload) {
+        isSirenActive = state.sirenActive
+        applyEscalationDeadline(state.escalationDeadline)
+        if state.sessionEnded, !endedRemotely {
+            handleSessionEndedRemotely()
+        }
+    }
+
+    private func handleSessionEndedRemotely() {
+        endedRemotely = true
+        isEscalationPending = false
+        isSirenActive = false
+        escalationSecondsRemaining = 0
+        escalationTickTask?.cancel()
+        escalationTickTask = nil
+        macStatePollTask?.cancel()
+        macStatePollTask = nil
+        pollingTask?.cancel()
+        pollingTask = nil
+        loadedLiveChunkIDs = []
+        player.removeAllItems()
+        // The session just finished; load its recording as replay. The Mac may still
+        // be flushing its last chunks, so refresh a few times to catch them rather
+        // than freezing on a partial (missing-range) view.
+        pollingTask = Task { [weak self] in
+            for _ in 0..<8 {
+                await self?.refresh()
+                if Task.isCancelled { return }
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+            }
+        }
     }
 
     private func applyEscalationDeadline(_ deadline: Date?) {
@@ -280,10 +376,6 @@ final class SessionPlaybackViewModel: ObservableObject {
     /// the set of chunks keeps growing, so there's no fixed timeline to build a
     /// composition from yet. Replay (below) is the one-shot, fixed-timeline case.
     private func applyLiveQueue(chunks: [VideoChunk]) {
-        guard let liveQueuePlayer else {
-            return
-        }
-
         let nextIDs = chunks.map(\.id)
         guard nextIDs != loadedLiveChunkIDs else {
             if !nextIDs.isEmpty {
@@ -322,6 +414,7 @@ final class SessionPlaybackViewModel: ObservableObject {
     /// written to disk. Chunks that are missing or fail to load are skipped; whatever
     /// chunks do load are inserted back-to-back with no gap in the timeline.
     private func loadReplayComposition(chunks: [VideoChunk]) async {
+        let playableChunks = chunks.filter { $0.assetFileURL != nil }
         let composition = AVMutableComposition()
         guard let compositionTrack = composition.addMutableTrack(
             withMediaType: .video,
@@ -331,9 +424,9 @@ final class SessionPlaybackViewModel: ObservableObject {
         }
 
         var cursor = CMTime.zero
-        var insertedAny = false
+        var insertedCount = 0
 
-        for chunk in chunks {
+        for chunk in playableChunks {
             guard let fileURL = chunk.assetFileURL else {
                 continue
             }
@@ -350,20 +443,49 @@ final class SessionPlaybackViewModel: ObservableObject {
                     at: cursor
                 )
                 cursor = cursor + duration
-                insertedAny = true
+                insertedCount += 1
             } catch {
                 continue
             }
         }
 
-        guard insertedAny else {
+        IOSDiagnostics.append(
+            "M4_REPLAY session=\(session.id) chunks=\(chunks.count) playable=\(playableChunks.count) composed=\(insertedCount)",
+            filename: "m4-replay-result.txt"
+        )
+
+        if insertedCount > 0 {
+            hasPlayableContent = true
+            replayComposition = composition
+            player.removeAllItems()
+            player.insert(AVPlayerItem(asset: composition), after: nil)
+            if playbackActive {
+                player.play()
+            }
+            return
+        }
+
+        // Composition produced nothing (e.g. chunk MP4s that AVComposition can't
+        // stitch), but there may still be individually playable files — fall back to
+        // queueing them directly, which is more lenient, so replay isn't just black.
+        guard !playableChunks.isEmpty else {
             hasPlayableContent = false
             return
         }
 
+        replayComposition = nil
+        player.removeAllItems()
+        for chunk in playableChunks {
+            guard let fileURL = chunk.assetFileURL else {
+                continue
+            }
+            player.insert(AVPlayerItem(url: fileURL), after: nil)
+        }
         hasPlayableContent = true
-        replayComposition = composition
-        player.replaceCurrentItem(with: AVPlayerItem(asset: composition))
+        IOSDiagnostics.append(
+            "M4_REPLAY_QUEUE_FALLBACK session=\(session.id) queued=\(playableChunks.count)",
+            filename: "m4-replay-result.txt"
+        )
         if playbackActive {
             player.play()
         }

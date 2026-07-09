@@ -60,6 +60,7 @@ final class SurveillanceController: ObservableObject {
     private var isTransitioning = false
     private var escalationTask: Task<Void, Never>?
     private var escalationActive = false
+    private var escalationDeadline: Date?
 
     private static let sirenWarningTextKey = "siren.warningText"
     private static var defaultSirenWarningText: String {
@@ -265,6 +266,10 @@ final class SurveillanceController: ObservableObject {
         }
 
         eventDetector.stop()
+        // Tell any watching phone the session is over *before* tearing down the
+        // channel, so it switches to replay instead of sitting on a black live
+        // surface with a "missing chunks" list.
+        await broadcastMacState(sessionEnded: true)
         await stopBroadcastSession()
         await stopLiveUploadLoop()
         let chunks = engine.stopAndWaitForChunks(timeout: 30)
@@ -321,6 +326,11 @@ final class SurveillanceController: ObservableObject {
             onDismissEscalation: { [weak self] in
                 Task { @MainActor [weak self] in
                     await self?.cancelEscalation(reason: "remote")
+                }
+            },
+            onSilenceSiren: { [weak self] in
+                Task { @MainActor [weak self] in
+                    await self?.silenceSiren(reason: "remote")
                 }
             }
         )
@@ -419,9 +429,7 @@ final class SurveillanceController: ObservableObject {
 
         switch autoSirenPolicy.decision(armedAt: activeStartedAt, now: now, evidence: autoSirenEvidence) {
         case .trigger:
-            if resetEscalationState() {
-                await updateSessionEscalationState(deadline: nil)
-            }
+            resetEscalationState()
             autoSirenTriggered = true
             await triggerSiren(source: .automatic, triggeredAt: now)
             return true
@@ -441,11 +449,12 @@ final class SurveillanceController: ObservableObject {
         escalationActive = true
         isEscalationPending = true
         escalationSecondsRemaining = Int(autoSirenPolicy.escalationTimeout)
+        escalationDeadline = occurredAt.addingTimeInterval(autoSirenPolicy.escalationTimeout)
         statusText = String(localized: "surveillance_status_escalation_pending")
         appendDiagnostic("M10_ESCALATION_STARTED session=\(sessionID)", filename: "m10-escalation-result.txt")
         await saveSecurityEvent(type: .sirenEscalation, confidence: 1, occurredAt: occurredAt, sessionID: sessionID)
         startEscalationCountdown()
-        await updateSessionEscalationState(deadline: occurredAt.addingTimeInterval(autoSirenPolicy.escalationTimeout))
+        await broadcastMacState()
     }
 
     private func startEscalationCountdown() {
@@ -486,7 +495,6 @@ final class SurveillanceController: ObservableObject {
         }
         let sessionID = activeSessionID ?? "unknown"
         resetEscalationState()
-        await updateSessionEscalationState(deadline: nil)
         appendDiagnostic("M10_ESCALATION_TIMEOUT session=\(sessionID)", filename: "m10-escalation-result.txt")
         await triggerSiren(source: .automatic)
     }
@@ -495,7 +503,7 @@ final class SurveillanceController: ObservableObject {
         guard resetEscalationState() else {
             return
         }
-        await updateSessionEscalationState(deadline: nil)
+        await broadcastMacState()
         let sessionID = activeSessionID
         appendDiagnostic("M10_ESCALATION_DISMISSED session=\(sessionID ?? "unknown") reason=\(reason)", filename: "m10-escalation-result.txt")
         if case .armed = machine.state {
@@ -516,33 +524,42 @@ final class SurveillanceController: ObservableObject {
         escalationActive = false
         isEscalationPending = false
         escalationSecondsRemaining = 0
+        escalationDeadline = nil
         return true
     }
 
-    /// Mirrors the escalation countdown onto the Session record so iOS can poll
-    /// its actual state (rather than always showing the dismiss button as tappable
-    /// regardless of whether anything is really pending on the Mac).
-    private func updateSessionEscalationState(deadline: Date?) async {
-        guard let sessionID = activeSessionID, let activeStartedAt else {
+    /// iOS-initiated remote silence: stops the alarm but keeps surveillance armed,
+    /// unlike the hotkey/stop which ends the whole session. Clears accumulated
+    /// evidence so a stale reading doesn't immediately re-trigger, while allowing a
+    /// genuinely new event to escalate again.
+    private func silenceSiren(reason: String) async {
+        guard case .siren = machine.state else {
             return
         }
-
-        let session = SurveillanceSession(
-            id: sessionID,
-            startedAt: activeStartedAt,
-            endedAt: nil,
-            deviceName: Host.current().localizedName ?? "Mac",
-            status: .recording,
-            escalationDeadline: deadline
-        )
         do {
-            _ = try await store.saveSession(session)
+            try machine.apply(.silenceSiren(silencedAt: Date()))
         } catch {
-            appendDiagnostic(
-                "M10_SESSION_SYNC_FAILED session=\(sessionID) error=\(error.localizedDescription)",
-                filename: "m10-escalation-result.txt"
-            )
+            return
         }
+        stopSirenIfNeeded(reason: reason)
+        autoSirenTriggered = false
+        autoSirenEvidence.removeAll()
+        statusText = String(localized: "surveillance_status_armed")
+        appendDiagnostic("M7_SIREN_SILENCED session=\(activeSessionID ?? "unknown") reason=\(reason)", filename: "m7-result.txt")
+        await broadcastMacState()
+    }
+
+    /// Pushes the Mac's transient live state to any connected/upcoming viewer over
+    /// the signaling channel. Replaces the earlier `Session.escalationDeadline`
+    /// field approach, which failed in production because CloudKit rejects writes
+    /// to fields not already deployed in the production schema. A new SignalKind
+    /// value reuses the existing Signal `kind` column, so it needs no schema deploy.
+    private func broadcastMacState(sessionEnded: Bool = false) async {
+        await broadcastSession?.sendMacState(
+            escalationDeadline: escalationDeadline,
+            sirenActive: sirenController.isActive,
+            sessionEnded: sessionEnded
+        )
     }
 
     private func triggerSiren(source: SirenTriggerSource, triggeredAt: Date = Date()) async {
@@ -574,6 +591,7 @@ final class SurveillanceController: ObservableObject {
             occurredAt: triggeredAt,
             sessionID: sessionID
         )
+        await broadcastMacState()
     }
 
     private func saveSecurityEvent(

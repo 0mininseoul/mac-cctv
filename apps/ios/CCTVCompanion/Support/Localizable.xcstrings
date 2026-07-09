@@ -451,6 +451,42 @@
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "길게 눌러 사이렌을 울립니다." } }
       }
     },
+    "siren_button_hold_hint" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Press and hold to sound the siren" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "꾹 눌러서 사이렌을 울립니다" } }
+      }
+    },
+    "siren_button_hold_progress" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Keep holding..." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "계속 누르세요..." } }
+      }
+    },
+    "silence_siren_button_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Turn Off Siren" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "사이렌 끄기" } }
+      }
+    },
+    "silence_siren_sending" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sending..." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "전송 중..." } }
+      }
+    },
+    "silence_siren_sent" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sent — siren turned off." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "전송됨 — 사이렌을 껐습니다." } }
+      }
+    },
+    "silence_siren_failed_format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Failed: %@" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "실패: %@" } }
+      }
+    },
     "siren_command_failed_format" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Failed: %@" } },

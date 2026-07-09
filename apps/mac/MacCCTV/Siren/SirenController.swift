@@ -114,37 +114,36 @@ private struct SirenWarningView: View {
     let warningText: String
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Color.black.ignoresSafeArea()
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                // Image gets the upper portion; the warning text sits on a solid
+                // black band below it so it's always legible instead of being
+                // swallowed by the photo.
+                Image("SirenWarningBackground")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geometry.size.width, height: geometry.size.height * 0.62)
+                    .clipped()
 
-            Image("SirenWarningBackground")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+                VStack(spacing: 20) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 64, weight: .bold))
+                        .foregroundStyle(.red)
 
-            LinearGradient(
-                colors: [.clear, .black.opacity(0.85)],
-                startPoint: .center,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
-
-            VStack(spacing: 24) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 84, weight: .bold))
-                    .foregroundStyle(.red)
-
-                Text(warningText)
-                    .font(.system(size: 64, weight: .black))
-                    .foregroundStyle(.white)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.55)
-                    .padding(.horizontal, 40)
+                    Text(warningText)
+                        .font(.system(size: 60, weight: .black))
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(3)
+                        .minimumScaleFactor(0.4)
+                        .padding(.horizontal, 40)
+                }
+                .frame(width: geometry.size.width, height: geometry.size.height * 0.38)
+                .background(Color.black)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.bottom, 96)
         }
+        .background(Color.black)
+        .ignoresSafeArea()
     }
 }
 

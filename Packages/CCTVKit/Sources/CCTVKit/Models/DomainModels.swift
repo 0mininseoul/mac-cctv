@@ -12,22 +12,19 @@ public struct SurveillanceSession: Identifiable, Codable, Equatable, Sendable {
     public var endedAt: Date?
     public var deviceName: String
     public var status: SessionStatus
-    public var escalationDeadline: Date?
 
     public init(
         id: String,
         startedAt: Date,
         endedAt: Date? = nil,
         deviceName: String,
-        status: SessionStatus,
-        escalationDeadline: Date? = nil
+        status: SessionStatus
     ) {
         self.id = id
         self.startedAt = startedAt
         self.endedAt = endedAt
         self.deviceName = deviceName
         self.status = status
-        self.escalationDeadline = escalationDeadline
     }
 }
 
@@ -94,6 +91,14 @@ public enum SignalKind: String, CaseIterable, Sendable {
     case sirenCommand
     case viewerReady
     case dismissEscalation
+    /// iOS → Mac: silence an active siren but keep surveillance armed (unlike the
+    /// hotkey/stop which ends the whole session).
+    case silenceSiren
+    /// Mac → iOS: broadcasts the Mac's transient live state (escalation countdown,
+    /// siren on/off, session ended) so the phone can reflect it without needing a
+    /// CloudKit schema field — new SignalKind values reuse the existing `kind`
+    /// string column, so they never require a production schema deploy.
+    case macState
 }
 
 public enum SignalSender: String, CaseIterable, Sendable {

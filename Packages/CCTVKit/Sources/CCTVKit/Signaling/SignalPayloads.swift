@@ -48,3 +48,36 @@ public struct DismissEscalationSignalPayload: Codable, Equatable, Sendable {
         self.requestedAt = requestedAt
     }
 }
+
+/// iOS → Mac: silence an active siren while keeping surveillance armed.
+public struct SilenceSirenSignalPayload: Codable, Equatable, Sendable {
+    public var requestedAt: Date
+
+    public init(requestedAt: Date) {
+        self.requestedAt = requestedAt
+    }
+}
+
+/// Mac → iOS: the Mac's transient live state, re-sent whenever it changes so the
+/// phone can mirror the escalation countdown, siren on/off, and session-ended
+/// transition. Carried over the existing Signal record's string columns, so it
+/// needs no CloudKit schema change (unlike a new Session field, which production
+/// rejects with "Cannot create or modify field ... in production schema").
+public struct MacLiveStateSignalPayload: Codable, Equatable, Sendable {
+    public var escalationDeadline: Date?
+    public var sirenActive: Bool
+    public var sessionEnded: Bool
+    public var sentAt: Date
+
+    public init(
+        escalationDeadline: Date?,
+        sirenActive: Bool,
+        sessionEnded: Bool,
+        sentAt: Date = Date()
+    ) {
+        self.escalationDeadline = escalationDeadline
+        self.sirenActive = sirenActive
+        self.sessionEnded = sessionEnded
+        self.sentAt = sentAt
+    }
+}

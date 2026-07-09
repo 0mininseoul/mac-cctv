@@ -238,7 +238,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
             0
         case .ice:
             1
-        case .answer, .sirenCommand, .viewerReady, .dismissEscalation:
+        case .answer, .sirenCommand, .viewerReady, .dismissEscalation, .silenceSiren, .macState:
             2
         }
     }
@@ -261,8 +261,13 @@ final class WebRTCReceiver: NSObject, ObservableObject {
             try await flushPendingRemoteIceCandidates(on: peerConnection)
             let answer = try await peerConnection.makeAnswer()
             try await peerConnection.setLocal(answer)
-            try await send(description: answer, kind: .answer)
-            diagnostics?("M6_RECEIVER_ANSWER_SENT session=\(session.id)")
+            // Non-trickle ICE (mirrors the Mac's offer): wait for gathering, then
+            // send the answer with candidates already in the SDP, so no per-candidate
+            // CloudKit round-trips are needed.
+            await waitForIceGatheringComplete(peerConnection, timeout: 2.5)
+            let localDescription = peerConnection.localDescription ?? answer
+            try await send(description: localDescription, kind: .answer)
+            diagnostics?("M6_RECEIVER_ANSWER_SENT session=\(session.id) gathering=\(peerConnection.iceGatheringState.rawValue)")
             statusText = String(localized: "live_status_answer_sent")
         case .ice:
             let payload = try decoder.decode(IceCandidateSignalPayload.self, from: Data(message.payload.utf8))
@@ -278,7 +283,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
             }
             try await peerConnection.add(candidate)
             diagnostics?("M6_RECEIVER_REMOTE_ICE_ADDED session=\(session.id) \(candidateSummary(payload.sdp)) mid=\(payload.sdpMid ?? "nil") index=\(payload.sdpMLineIndex)")
-        case .answer, .sirenCommand, .viewerReady, .dismissEscalation:
+        case .answer, .sirenCommand, .viewerReady, .dismissEscalation, .silenceSiren, .macState:
             return
         }
     }
@@ -300,6 +305,13 @@ final class WebRTCReceiver: NSObject, ObservableObject {
             diagnostics?("M6_RECEIVER_VIEWER_READY_SENT session=\(session.id)")
         } catch {
             diagnostics?("M6_RECEIVER_VIEWER_READY_SEND_FAILED session=\(session.id) error=\(error.localizedDescription)")
+        }
+    }
+
+    private func waitForIceGatheringComplete(_ connection: RTCPeerConnection, timeout: TimeInterval) async {
+        let deadline = Date().addingTimeInterval(timeout)
+        while connection.iceGatheringState != .complete, Date() < deadline {
+            try? await Task.sleep(nanoseconds: 100_000_000)
         }
     }
 
@@ -404,30 +416,6 @@ final class WebRTCReceiver: NSObject, ObservableObject {
         )
     }
 
-    private func send(candidate: RTCIceCandidate) async {
-        do {
-            let payload = IceCandidateSignalPayload(
-                sdp: candidate.sdp,
-                sdpMLineIndex: candidate.sdpMLineIndex,
-                sdpMid: candidate.sdpMid
-            )
-            let data = try encoder.encode(payload)
-            try await channel.send(
-                SignalMessage(
-                    id: "\(session.id)-ios-ice-\(UUID().uuidString)",
-                    sessionID: session.id,
-                    kind: .ice,
-                    payload: String(decoding: data, as: UTF8.self),
-                    sender: .ios,
-                    createdAt: Date()
-                )
-            )
-            diagnostics?("M6_RECEIVER_LOCAL_ICE_SENT session=\(session.id) \(candidateSummary(candidate.sdp)) mid=\(candidate.sdpMid ?? "nil") index=\(candidate.sdpMLineIndex)")
-        } catch {
-            statusText = String(format: String(localized: "live_status_signal_failed_format"), error.localizedDescription)
-            diagnostics?("M6_RECEIVER_ICE_SEND_FAILED session=\(session.id) error=\(error.localizedDescription)")
-        }
-    }
 }
 
 extension WebRTCReceiver: RTCPeerConnectionDelegate {
@@ -469,8 +457,10 @@ extension WebRTCReceiver: RTCPeerConnectionDelegate {
     }
 
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
+        // Non-trickle: candidates are carried in the answer SDP (see handle(_:)), so
+        // they are not sent individually.
         Task { @MainActor [weak self] in
-            await self?.send(candidate: candidate)
+            self?.diagnostics?("M6_RECEIVER_LOCAL_ICE_GATHERED session=\(self?.session.id ?? "?") \(candidateSummary(candidate.sdp))")
         }
     }
 

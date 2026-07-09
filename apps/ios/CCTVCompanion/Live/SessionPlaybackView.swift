@@ -22,7 +22,7 @@ struct SessionPlaybackView: View {
     var body: some View {
         VStack(spacing: 0) {
             ZStack(alignment: .bottomLeading) {
-                if webRTCReceiver.usesRealtimeSurface {
+                if webRTCReceiver.usesRealtimeSurface && viewModel.isLive {
                     WebRTCVideoView(rendererView: webRTCReceiver.rendererView)
                         .background(.black)
                 } else {
@@ -30,7 +30,7 @@ struct SessionPlaybackView: View {
                         .background(.black)
                 }
 
-                if session.status == .recording {
+                if viewModel.isLive {
                     Text(webRTCReceiver.statusText)
                         .font(.caption.weight(.semibold))
                         .padding(.horizontal, 10)
@@ -43,19 +43,39 @@ struct SessionPlaybackView: View {
 
             if viewModel.isLive {
                 VStack(alignment: .leading, spacing: 8) {
-                    SirenCommandButton(isSending: viewModel.isSendingSirenCommand) {
-                        if webRTCReceiver.sendSirenCommandOverRealtimeChannel() {
-                            viewModel.markRealtimeSirenCommandSent()
-                        } else {
-                            viewModel.sendSirenCommand()
+                    if viewModel.isSirenActive {
+                        Button {
+                            viewModel.sendSilenceSiren()
+                        } label: {
+                            Label("silence_siren_button_title", systemImage: "speaker.slash.fill")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity, minHeight: 44)
                         }
-                    }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.red)
+                        .disabled(viewModel.isSendingSilenceSiren)
 
-                    if !viewModel.sirenCommandStatusText.isEmpty {
-                        Text(viewModel.sirenCommandStatusText)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .textSelection(.enabled)
+                        if !viewModel.silenceSirenStatusText.isEmpty {
+                            Text(viewModel.silenceSirenStatusText)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .textSelection(.enabled)
+                        }
+                    } else {
+                        SirenCommandButton(isSending: viewModel.isSendingSirenCommand) {
+                            if webRTCReceiver.sendSirenCommandOverRealtimeChannel() {
+                                viewModel.markRealtimeSirenCommandSent()
+                            } else {
+                                viewModel.sendSirenCommand()
+                            }
+                        }
+
+                        if !viewModel.sirenCommandStatusText.isEmpty {
+                            Text(viewModel.sirenCommandStatusText)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .textSelection(.enabled)
+                        }
                     }
 
                     if viewModel.isEscalationPending {
@@ -109,7 +129,7 @@ struct SessionPlaybackView: View {
                     .padding(.vertical, 12)
             }
 
-            if !viewModel.playlist.missingRanges.isEmpty {
+            if !viewModel.playlist.missingRanges.isEmpty && !viewModel.endedRemotely {
                 List {
                     Section("playback_missing_section") {
                         ForEach(viewModel.playlist.missingRanges, id: \.startIndex) { range in
@@ -166,6 +186,14 @@ struct SessionPlaybackView: View {
         .onChange(of: webRTCReceiver.usesDelayedPlayback) { _, usesDelayedPlayback in
             viewModel.setPlaybackActive(usesDelayedPlayback)
         }
+        .onChange(of: viewModel.endedRemotely) { _, ended in
+            // Mac reported the session ended mid-watch: tear down the live WebRTC
+            // surface so the view falls back to replay of the finished recording.
+            if ended {
+                webRTCReceiver.stop()
+                viewModel.setPlaybackActive(true)
+            }
+        }
     }
 }
 
@@ -182,47 +210,74 @@ private struct ActivityView: UIViewControllerRepresentable {
 private struct SirenCommandButton: View {
     let isSending: Bool
     let action: () -> Void
+    private let holdDuration: TimeInterval = 0.8
     @State private var isPressing = false
+    @State private var fillProgress: CGFloat = 0
 
     var body: some View {
-        Label("siren_button_title", systemImage: "speaker.wave.3.fill")
-            .font(.headline)
-            .frame(maxWidth: .infinity, minHeight: 44)
-            .padding(.vertical, 4)
-            .foregroundStyle(.red)
+        VStack(spacing: 6) {
+            ZStack {
+                // Fills left-to-right while held so it's obvious this is a
+                // hold-to-activate control, not a tap.
+                GeometryReader { geometry in
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(Color.red.opacity(0.28))
+                        .frame(width: geometry.size.width * fillProgress)
+                }
+
+                Label(
+                    isPressing ? "siren_button_hold_progress" : "siren_button_title",
+                    systemImage: "speaker.wave.3.fill"
+                )
+                .font(.headline)
+                .foregroundStyle(.red)
+            }
+            .frame(maxWidth: .infinity, minHeight: 48)
             .background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color.red.opacity(isPressing ? 0.22 : 0.12))
+                    .fill(Color.red.opacity(0.10))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .stroke(Color.red.opacity(0.35), lineWidth: 1)
             )
-            .opacity(isSending ? 0.55 : 1)
-            .contentShape(Rectangle())
-            .onLongPressGesture(
-                minimumDuration: 0.8,
-                pressing: { pressing in
-                    guard !isSending else {
-                        return
-                    }
-                    isPressing = pressing
-                },
-                perform: {
-                    guard !isSending else {
-                        return
-                    }
-                    isPressing = false
-                    action()
-                }
-            )
-            .accessibilityAddTraits(.isButton)
-            .accessibilityHint("siren_button_accessibility_hint")
-            .accessibilityAction {
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+            Text("siren_button_hold_hint")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .opacity(isSending ? 0.55 : 1)
+        .contentShape(Rectangle())
+        .onLongPressGesture(
+            minimumDuration: holdDuration,
+            pressing: { pressing in
                 guard !isSending else {
                     return
                 }
+                isPressing = pressing
+                withAnimation(pressing ? .linear(duration: holdDuration) : .easeOut(duration: 0.2)) {
+                    fillProgress = pressing ? 1 : 0
+                }
+            },
+            perform: {
+                guard !isSending else {
+                    return
+                }
+                isPressing = false
+                withAnimation(.easeOut(duration: 0.2)) {
+                    fillProgress = 0
+                }
                 action()
             }
+        )
+        .accessibilityAddTraits(.isButton)
+        .accessibilityHint("siren_button_accessibility_hint")
+        .accessibilityAction {
+            guard !isSending else {
+                return
+            }
+            action()
+        }
     }
 }

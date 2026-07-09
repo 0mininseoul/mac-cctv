@@ -169,8 +169,7 @@ public final class CloudKitStore: @unchecked Sendable {
                 CKSchema.Session.startedAt,
                 CKSchema.Session.endedAt,
                 CKSchema.Session.deviceName,
-                CKSchema.Session.status,
-                CKSchema.Session.escalationDeadline
+                CKSchema.Session.status
             ],
             resultsLimit: limit
         )
@@ -309,6 +308,14 @@ public final class CloudKitStore: @unchecked Sendable {
         ]
         subscription.notificationInfo = notificationInfo
         _ = try await database.save(subscription)
+    }
+
+    /// CloudKit does not reliably update a subscription's predicate or notification
+    /// copy when you re-save the same ID — a stale one keeps firing with its old
+    /// text. So when copy/predicate changes we bump the subscription ID version and
+    /// delete the old ID via this. Deleting a non-existent subscription is a no-op.
+    public func deleteSubscription(id: String) async throws {
+        _ = try await database.deleteSubscription(withID: id)
     }
 
     @discardableResult
@@ -650,7 +657,6 @@ public final class CloudKitStore: @unchecked Sendable {
         record[CKSchema.Session.endedAt] = session.endedAt as CKRecordValue?
         record[CKSchema.Session.deviceName] = session.deviceName as CKRecordValue
         record[CKSchema.Session.status] = session.status.rawValue as CKRecordValue
-        record[CKSchema.Session.escalationDeadline] = session.escalationDeadline as CKRecordValue?
     }
 
     private func apply(_ event: SecurityEvent, to record: CKRecord) {
@@ -685,8 +691,7 @@ public final class CloudKitStore: @unchecked Sendable {
             startedAt: startedAt,
             endedAt: record[CKSchema.Session.endedAt] as? Date,
             deviceName: deviceName,
-            status: status,
-            escalationDeadline: record[CKSchema.Session.escalationDeadline] as? Date
+            status: status
         )
     }
 

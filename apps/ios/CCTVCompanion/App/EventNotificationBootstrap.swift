@@ -20,13 +20,25 @@ enum EventNotificationBootstrap {
                 UIApplication.shared.registerForRemoteNotifications()
             }
             let store = CloudKitStore()
-            try? await store.ensureEventSubscription()
+            // Remove the legacy catch-all ("Event detected: <rawType>") and the v1
+            // per-type subscriptions. Re-saving an existing subscription ID does not
+            // reliably update its copy/predicate on the server, so a stale one keeps
+            // firing with the old text — the only reliable path is delete + recreate
+            // under a bumped version ID.
+            try? await store.deleteSubscription(id: "event-created-v1")
+            for type in CloudKitStore.friendlyEventTypes {
+                try? await store.deleteSubscription(id: "event-\(type.rawValue)-v1")
+            }
+
             try? await store.ensureSignalSubscription()
             try? await store.ensureEscalationSubscription()
+            // Friendly natural-language push per event type. sirenAuto/sirenManual/
+            // escalationDismissed intentionally get no push (they're not alarming on
+            // their own), so there is no generic catch-all anymore.
             for type in CloudKitStore.friendlyEventTypes {
                 try? await store.ensureEventTypeSubscription(
                     type: type,
-                    subscriptionID: "event-\(type.rawValue)-v1",
+                    subscriptionID: "event-\(type.rawValue)-v2",
                     alertLocalizationKey: "event_\(type.rawValue)_notification_body"
                 )
             }

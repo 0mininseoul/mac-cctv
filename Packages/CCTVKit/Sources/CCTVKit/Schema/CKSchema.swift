@@ -17,7 +17,6 @@ public enum CKSchema {
         public static let endedAt = "endedAt"
         public static let deviceName = "deviceName"
         public static let status = "status"
-        public static let escalationDeadline = "escalationDeadline"
     }
 
     public enum Chunk {

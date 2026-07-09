@@ -9,6 +9,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
     private let diagnostics: @Sendable (String) -> Void
     private let onSirenCommand: @Sendable () -> Void
     private let onDismissEscalation: @Sendable () -> Void
+    private let onSilenceSiren: @Sendable () -> Void
     private let factory: RTCPeerConnectionFactory
     private let videoSource: RTCVideoSource
     private let videoCapturer: RTCVideoCapturer
@@ -29,13 +30,15 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
         channel: SignalingChannel,
         diagnostics: @escaping @Sendable (String) -> Void,
         onSirenCommand: @escaping @Sendable () -> Void,
-        onDismissEscalation: @escaping @Sendable () -> Void
+        onDismissEscalation: @escaping @Sendable () -> Void,
+        onSilenceSiren: @escaping @Sendable () -> Void
     ) {
         self.sessionID = sessionID
         self.channel = channel
         self.diagnostics = diagnostics
         self.onSirenCommand = onSirenCommand
         self.onDismissEscalation = onDismissEscalation
+        self.onSilenceSiren = onSilenceSiren
         let factory = RTCPeerConnectionFactory(
             encoderFactory: RTCDefaultVideoEncoderFactory(),
             decoderFactory: RTCDefaultVideoDecoderFactory()
@@ -74,8 +77,22 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
 
         let offer = try await connection.makeOffer()
         try await connection.setLocal(offer)
-        try await send(description: offer, kind: .offer)
-        diagnostics("M6_BROADCAST_OFFER_SENT session=\(sessionID)")
+        // Non-trickle ICE: wait for candidate gathering to finish (bounded), then
+        // send the local description with all candidates baked into the SDP. Over
+        // CloudKit — where every trickled candidate is a separate high-latency
+        // record round-trip — this collapses ~10+ ICE messages into the single
+        // offer, which is the dominant cause of the slow first connect.
+        await waitForIceGatheringComplete(connection, timeout: 2.5)
+        let localDescription = connection.localDescription ?? offer
+        try await send(description: localDescription, kind: .offer)
+        diagnostics("M6_BROADCAST_OFFER_SENT session=\(sessionID) gathering=\(connection.iceGatheringState.rawValue)")
+    }
+
+    private func waitForIceGatheringComplete(_ connection: RTCPeerConnection, timeout: TimeInterval) async {
+        let deadline = Date().addingTimeInterval(timeout)
+        while connection.iceGatheringState != .complete, Date() < deadline {
+            try? await Task.sleep(nanoseconds: 100_000_000)
+        }
     }
 
     func stop() async {
@@ -191,7 +208,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
 
     private func signalPriority(_ kind: SignalKind) -> Int {
         switch kind {
-        case .sirenCommand, .dismissEscalation:
+        case .sirenCommand, .dismissEscalation, .silenceSiren:
             0
         case .viewerReady:
             1
@@ -199,7 +216,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
             2
         case .ice:
             3
-        case .offer:
+        case .offer, .macState:
             4
         }
     }
@@ -216,6 +233,13 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
             let age = Date().timeIntervalSince(message.createdAt)
             diagnostics("M10_DISMISS_ESCALATION_RECEIVED session=\(sessionID) sender=\(message.sender.rawValue) age=\(String(format: "%.2f", age))")
             onDismissEscalation()
+            return
+        }
+
+        if message.kind == .silenceSiren {
+            let age = Date().timeIntervalSince(message.createdAt)
+            diagnostics("M7_SILENCE_SIREN_RECEIVED session=\(sessionID) sender=\(message.sender.rawValue) age=\(String(format: "%.2f", age))")
+            onSilenceSiren()
             return
         }
 
@@ -264,8 +288,36 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
             }
             try await peerConnection.add(candidate)
             diagnostics("M6_BROADCAST_REMOTE_ICE_ADDED session=\(sessionID) \(candidateSummary(payload.sdp)) mid=\(payload.sdpMid ?? "nil") index=\(payload.sdpMLineIndex)")
-        case .offer, .sirenCommand, .viewerReady, .dismissEscalation:
+        case .offer, .sirenCommand, .viewerReady, .dismissEscalation, .silenceSiren, .macState:
             return
+        }
+    }
+
+    /// Broadcasts the Mac's current transient live state to the viewer. Sent on
+    /// every state change (escalation begin/end, siren on/off, session ended) so a
+    /// connected phone mirrors it, and persisted so a phone that opens later still
+    /// reads the latest state from history.
+    func sendMacState(escalationDeadline: Date?, sirenActive: Bool, sessionEnded: Bool) async {
+        do {
+            let payload = MacLiveStateSignalPayload(
+                escalationDeadline: escalationDeadline,
+                sirenActive: sirenActive,
+                sessionEnded: sessionEnded
+            )
+            let data = try encoder.encode(payload)
+            try await channel.send(
+                SignalMessage(
+                    id: "\(sessionID)-mac-macState-\(UUID().uuidString)",
+                    sessionID: sessionID,
+                    kind: .macState,
+                    payload: String(decoding: data, as: UTF8.self),
+                    sender: .mac,
+                    createdAt: Date()
+                )
+            )
+            diagnostics("M11_MAC_STATE_SENT session=\(sessionID) escalation=\(escalationDeadline != nil) siren=\(sirenActive) ended=\(sessionEnded)")
+        } catch {
+            diagnostics("M11_MAC_STATE_SEND_FAILED session=\(sessionID) error=\(error.localizedDescription)")
         }
     }
 
@@ -300,29 +352,6 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
         )
     }
 
-    private func send(candidate: RTCIceCandidate) async {
-        do {
-            let payload = IceCandidateSignalPayload(
-                sdp: candidate.sdp,
-                sdpMLineIndex: candidate.sdpMLineIndex,
-                sdpMid: candidate.sdpMid
-            )
-            let data = try encoder.encode(payload)
-            try await channel.send(
-                SignalMessage(
-                    id: "\(sessionID)-mac-ice-\(UUID().uuidString)",
-                    sessionID: sessionID,
-                    kind: .ice,
-                    payload: String(decoding: data, as: UTF8.self),
-                    sender: .mac,
-                    createdAt: Date()
-                )
-            )
-            diagnostics("M6_BROADCAST_LOCAL_ICE_SENT session=\(sessionID) \(candidateSummary(candidate.sdp)) mid=\(candidate.sdpMid ?? "nil") index=\(candidate.sdpMLineIndex)")
-        } catch {
-            diagnostics("M6_BROADCAST_ICE_SEND_FAILED session=\(sessionID) error=\(error.localizedDescription)")
-        }
-    }
 }
 
 extension BroadcastSession: RTCPeerConnectionDelegate {
@@ -343,9 +372,9 @@ extension BroadcastSession: RTCPeerConnectionDelegate {
     }
 
     func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
-        Task { [weak self] in
-            await self?.send(candidate: candidate)
-        }
+        // Non-trickle: candidates travel inside the offer SDP (see negotiate()), so
+        // they are not sent individually. Kept for diagnostics only.
+        diagnostics("M6_BROADCAST_LOCAL_ICE_GATHERED session=\(sessionID) \(candidateSummary(candidate.sdp))")
     }
 
     func peerConnection(_ peerConnection: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {}
