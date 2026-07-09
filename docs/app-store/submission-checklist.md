@@ -197,7 +197,36 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 ```
 
 - [x] Build 8 두 타겟 모두 업로드·처리 완료 (`project.yml`의 `CURRENT_PROJECT_VERSION` 7→8), 둘 다 `processingState: VALID`
-- [ ] **사람 작업**: TestFlight에서 build 8을 내부 테스트 그룹에 배정하고 실기기 재검증 — 특히 에스컬레이션 카운트다운이 이제 iPhone에도 뜨는지, 사이렌 배경 이미지, WebRTC 연결 유지 여부(안 되면 `m6-receiver-result.txt`를 Xcode "Devices and Simulators → Download Container"로 확인)
+- [x] **build 8 실기기 결과로 근본 원인 확정**: `m10-escalation-result.txt`에 `Cannot create or modify field 'escalationDeadline' in record 'Session' in production schema` 에러가 실제로 찍힘 → build 7의 "가설 기각"이 틀렸고, **처음 가설(Production 스키마 미배포)이 맞았음**. Dashboard "Deploy Schema Changes"가 0건으로 보인 건 이 필드가 Development 스키마에조차 없었기 때문(TestFlight=Production 쓰기 실패로 추론 안 됨). → build 9에서 접근 방식 자체를 바꿈(아래).
+
+### Build 9 (2026-07-09) — build 8 실기기 결과 8건 반영 + 상태동기화 재설계
+
+**핵심 재설계 — 실시간 상태를 Signal 채널로 전송(스키마 배포 불필요):** `Session.escalationDeadline` 필드는 Production 스키마에 없으면 쓰기가 실패한다(확정됨). 이후 사이렌 상태·세션 종료 등 상태가 늘 때마다 스키마 배포가 필요해지는 구조라, **신규 `SignalKind.macState` 메시지로 Mac→iOS 실시간 상태(에스컬레이션 마감시각/사이렌 on-off/세션종료)를 전송**하도록 전환. SignalKind에 enum 값을 추가하는 건 기존 Signal의 `kind` 문자열 컬럼에 새 값을 넣는 것뿐이라 **CloudKit 스키마 변경이 전혀 필요 없음.** `Session.escalationDeadline` 필드는 완전히 제거. → 앞으로 CloudKit Dashboard 수동 작업 불필요.
+
+실기기 제보 8건:
+
+1. **공포짤 이용등급**: 코드 아님 — **사람 작업**: App Store Connect → 앱 → 앱 정보(또는 제출 시) → 연령 등급 설문에서 "공포/무서움 테마(Horror/Fear Themes)"를 "가끔/약함" 이상으로 답하면 12+로 상향됨. 4+ 유지 불가(공포 이미지 포함).
+2. **사이렌 문구가 이미지에 가려 안 보임**: 겹침 레이아웃(scaledToFill 전체 덮기)이 원인. 이미지 상단 62% + 하단 38% 불투명 검은 밴드에 큰 문구를 배치해 항상 보이게 재구성(`SirenWarningView`).
+3. **종료된 세션 영상 하나도 재생 안 됨**: `AVComposition` 스티칭이 청크 MP4에서 실패하는 것으로 추정. 컴포지션이 비면 개별 파일을 `AVQueuePlayer`에 큐잉하는 폴백 추가(더 관대함) + `m4-replay-result.txt`에 청크수/재생가능수/합성수 진단 기록.
+4. **푸시 문구 그대로**: 원인 확정 — 기존 `event-created-v1` catch-all 구독이 서버에 그대로 남아 옛 문구("이벤트 감지: …")로 계속 발송. **`database.save`는 기존 구독 ID의 predicate/문구를 갱신하지 못함.** 레거시 구독을 삭제하고 버전업(v2)한 타입별 구독을 재생성하도록 변경. 범용 catch-all은 제거(사이렌 관련 이벤트는 푸시 안 함).
+5. **WebRTC 17초**: CloudKit이 ICE 후보 1개당 별도 레코드 왕복이라 지배적 지연. **non-trickle ICE로 전환** — ICE gathering 완료(최대 2.5초)까지 기다렸다가 후보가 포함된 SDP를 offer/answer로 한 번에 전송, 개별 후보 trickle 제거. CloudKit 왕복 ~10회 이상 → offer/answer 2회로 축소.
+6. **종료 후 '누락 청크' 화면**: iOS가 세션 종료를 몰라 라이브 UI 유지가 원인. Mac이 종료 시 `macState(sessionEnded)` 전송 → iOS가 받으면 WebRTC 내리고 replay로 자동 전환(누락구간 UI 숨김).
+7. **사이렌 버튼 '꾹 누르기' 힌트 없음**: 누르는 동안 좌→우로 채워지는 진행 표시 + "꾹 눌러서 사이렌을 울립니다" 힌트 문구 추가.
+8. **사이렌 울릴 때 iOS에 끄기 버튼 없음**: `SignalKind.silenceSiren` 추가 — iOS가 보내면 Mac이 사이렌만 끄고 armed 유지(`.silenceSiren` 상태전환). Mac이 `macState(sirenActive)` 전송 → iOS가 사이렌 활성 시 '사이렌 끄기' 버튼 표시.
+
+```
+xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 6d3da680-4e42-49d0-a2be-d923a14e9893 — build 9, processingState VALID
+
+xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 8456d978-3767-47b4-aa7a-7a6bf080a1f7 — build 9, processingState VALID
+```
+
+- [x] Build 9 두 타겟 모두 업로드·처리 완료 (`CURRENT_PROJECT_VERSION` 8→9), 둘 다 `processingState: VALID`
+- [ ] **사람 작업 1 (연령 등급)**: App Store Connect에서 연령 등급을 12+로 상향(공포 이미지). CloudKit Dashboard 수동 작업은 이제 불필요.
+- [ ] **사람 작업 2 (재검증)**: TestFlight build 9 배정 후 8건 재확인 — 특히 (a) 에스컬레이션/사이렌 상태가 iPhone에 뜨는지, (b) 종료 세션 영상 재생(안 되면 `m4-replay-result.txt` 확인), (c) WebRTC 연결 시간 단축(안 되면 `m6-receiver-result.txt` 확인), (d) 사이렌 끄기 버튼 동작
 
 **외부 테스터는 결정에 따라 불필요 (2026-07-06):** 계획 문서의 M9 검증 기준은 "TestFlight 외부 테스터 설치"라고 되어 있지만, 실기기(본인 Mac + iPhone) 검증이 목적이면 그 계정이 이미 내부 테스터로 등록되어 있으니 내부 테스팅만으로 충분하다. 외부 테스터(Beta App Review 필요)는 **팀 멤버가 아닌 다른 사람**에게 정식 출시 전 미리 배포하고 싶을 때만 필요 — PRD §11 출시 전략도 베타 단계 없이 바로 무료 출시라 필수 아님. 필요해지면 아래 항목 진행:
 
