@@ -94,6 +94,9 @@ public enum SignalKind: String, CaseIterable, Sendable {
     /// iOS → Mac: silence an active siren but keep surveillance armed (unlike the
     /// hotkey/stop which ends the whole session).
     case silenceSiren
+    /// iOS → Mac: end the whole surveillance session remotely (equivalent to the
+    /// Mac-side stop hotkey), so the phone can stop a session it's watching live.
+    case endSession
     /// Mac → iOS: broadcasts the Mac's transient live state (escalation countdown,
     /// siren on/off, session ended) so the phone can reflect it without needing a
     /// CloudKit schema field — new SignalKind values reuse the existing `kind`

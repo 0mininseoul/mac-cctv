@@ -188,14 +188,6 @@ final class SurveillanceController: ObservableObject {
         defer { isTransitioning = false }
 
         do {
-            let accountStatus = try await store.accountStatus()
-            guard accountStatus == .available else {
-                statusText = String(localized: "surveillance_status_icloud_unavailable")
-                return
-            }
-
-            await reconcileOrphanedSessions()
-
             let startedAt = Date()
             let sessionID = "m3-\(Int(startedAt.timeIntervalSince1970))"
             let outputDirectory = try Self.outputDirectory(for: sessionID)
@@ -214,8 +206,26 @@ final class SurveillanceController: ObservableObject {
                 deviceName: deviceName,
                 status: .recording
             )
+
             try sleepBlocker.start()
-            try await engine.start()
+            // Kick the camera off immediately (the user has already committed to
+            // arming) so its ~2s hardware warmup overlaps the iCloud readiness
+            // round-trips below instead of stacking after them — the camera turns on
+            // ~1-2s sooner. No pre-arm warmup: the camera only starts once armed.
+            async let cameraStarted: Void = engine.start()
+
+            let accountStatus = try await store.accountStatus()
+            guard accountStatus == .available else {
+                try? await cameraStarted
+                _ = engine.stopAndWaitForChunks(timeout: 5)
+                sleepBlocker.stop()
+                statusText = String(localized: "surveillance_status_icloud_unavailable")
+                return
+            }
+
+            await reconcileOrphanedSessions()
+
+            try await cameraStarted
             captureEngine = engine
             _ = try await store.saveSession(recordingSession)
 
@@ -331,6 +341,12 @@ final class SurveillanceController: ObservableObject {
             onSilenceSiren: { [weak self] in
                 Task { @MainActor [weak self] in
                     await self?.silenceSiren(reason: "remote")
+                }
+            },
+            onEndSession: { [weak self] in
+                Task { @MainActor [weak self] in
+                    self?.writeDiagnostic("M12_END_SESSION_APPLIED session=\(sessionID)", filename: "m6-result.txt")
+                    await self?.stopSurveillance(finalStatus: .ended)
                 }
             }
         )

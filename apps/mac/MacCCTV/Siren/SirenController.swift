@@ -115,32 +115,42 @@ private struct SirenWarningView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            VStack(spacing: 0) {
-                // Image gets the upper portion; the warning text sits on a solid
-                // black band below it so it's always legible instead of being
-                // swallowed by the photo.
+            ZStack(alignment: .bottom) {
+                // The horror image fills the entire screen; the warning text overlays
+                // on top, anchored to the bottom over a dark gradient scrim that keeps
+                // it legible without hiding the photo behind a solid band.
                 Image("SirenWarningBackground")
                     .resizable()
                     .scaledToFill()
-                    .frame(width: geometry.size.width, height: geometry.size.height * 0.62)
+                    .frame(width: geometry.size.width, height: geometry.size.height)
                     .clipped()
 
-                VStack(spacing: 20) {
+                VStack(spacing: 24) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 64, weight: .bold))
+                        .font(.system(size: 72, weight: .bold))
                         .foregroundStyle(.red)
 
                     Text(warningText)
-                        .font(.system(size: 60, weight: .black))
+                        .font(.system(size: 68, weight: .black))
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
                         .lineLimit(3)
                         .minimumScaleFactor(0.4)
-                        .padding(.horizontal, 40)
+                        .padding(.horizontal, 48)
+                        .shadow(color: .black.opacity(0.9), radius: 12, x: 0, y: 4)
                 }
-                .frame(width: geometry.size.width, height: geometry.size.height * 0.38)
-                .background(Color.black)
+                .frame(maxWidth: .infinity)
+                .padding(.bottom, geometry.size.height * 0.10)
+                .padding(.top, 60)
+                .background(
+                    LinearGradient(
+                        colors: [.black.opacity(0), .black.opacity(0.55), .black.opacity(0.85)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
             }
+            .frame(width: geometry.size.width, height: geometry.size.height)
         }
         .background(Color.black)
         .ignoresSafeArea()

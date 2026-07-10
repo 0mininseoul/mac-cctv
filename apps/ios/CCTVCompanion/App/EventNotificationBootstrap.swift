@@ -19,27 +19,95 @@ enum EventNotificationBootstrap {
             await MainActor.run {
                 UIApplication.shared.registerForRemoteNotifications()
             }
-            let store = CloudKitStore()
-            // Remove the legacy catch-all ("Event detected: <rawType>") and the v1
-            // per-type subscriptions. Re-saving an existing subscription ID does not
-            // reliably update its copy/predicate on the server, so a stale one keeps
-            // firing with the old text — the only reliable path is delete + recreate
-            // under a bumped version ID.
-            try? await store.deleteSubscription(id: "event-created-v1")
-            for type in CloudKitStore.friendlyEventTypes {
-                try? await store.deleteSubscription(id: "event-\(type.rawValue)-v1")
-            }
+            await synchronizeSubscriptions()
+        }
+    }
 
-            try? await store.ensureSignalSubscription()
-            try? await store.ensureEscalationSubscription()
-            // Friendly natural-language push per event type. sirenAuto/sirenManual/
-            // escalationDismissed intentionally get no push (they're not alarming on
-            // their own), so there is no generic catch-all anymore.
-            for type in CloudKitStore.friendlyEventTypes {
-                try? await store.ensureEventTypeSubscription(
+    /// Idempotent, non-destructive subscription sync.
+    ///
+    /// Build 9 regressed all pushes by deleting the (stale) catch-all subscription
+    /// and *then* recreating per-type ones — every step wrapped in `try?`, so if a
+    /// recreate failed after the delete succeeded, the user was left with zero
+    /// subscriptions and no pushes at all. This instead: fetch what exists, create
+    /// only what's missing, and delete the obsolete IDs *only after* all desired
+    /// ones are confirmed present — so there is never a window with no coverage.
+    /// Every step is logged to `m-notif-result.txt` (pull via Xcode "Download
+    /// Container…") so the subscription state can be verified on a TestFlight build.
+    private static func synchronizeSubscriptions() async {
+        let store = CloudKitStore()
+
+        let existing: Set<String>
+        do {
+            existing = try await store.fetchExistingSubscriptionIDs()
+        } catch {
+            IOSDiagnostics.append(
+                "M11_SUBS_FETCH_FAILED error=\(error.localizedDescription)",
+                filename: "m-notif-result.txt"
+            )
+            return
+        }
+        IOSDiagnostics.append(
+            "M11_SUBS_EXISTING count=\(existing.count) ids=\(existing.sorted().joined(separator: ","))",
+            filename: "m-notif-result.txt"
+        )
+
+        // The full set we want present, each with an idempotent creator.
+        var desired: [(id: String, create: () async throws -> Void)] = [
+            ("signal-created-v1", { try await store.ensureSignalSubscription() }),
+            ("escalation-created-v1", { try await store.ensureEscalationSubscription() })
+        ]
+        for type in CloudKitStore.friendlyEventTypes {
+            let id = "event-\(type.rawValue)-v2"
+            desired.append((id, {
+                try await store.ensureEventTypeSubscription(
                     type: type,
-                    subscriptionID: "event-\(type.rawValue)-v2",
+                    subscriptionID: id,
                     alertLocalizationKey: "event_\(type.rawValue)_notification_body"
+                )
+            }))
+        }
+
+        var allDesiredPresent = true
+        for entry in desired {
+            if existing.contains(entry.id) {
+                IOSDiagnostics.append("M11_SUBS_SKIP id=\(entry.id)", filename: "m-notif-result.txt")
+                continue
+            }
+            do {
+                try await entry.create()
+                IOSDiagnostics.append("M11_SUBS_CREATED id=\(entry.id)", filename: "m-notif-result.txt")
+            } catch {
+                allDesiredPresent = false
+                IOSDiagnostics.append(
+                    "M11_SUBS_CREATE_FAILED id=\(entry.id) error=\(error.localizedDescription)",
+                    filename: "m-notif-result.txt"
+                )
+            }
+        }
+
+        // Only remove the legacy catch-all + v1 per-type IDs once the friendly v2 set
+        // is fully in place, so a transient create failure never strands the user
+        // with no working subscription. The stale generic keeps firing (old copy)
+        // until then — an ugly push beats a missing one.
+        guard allDesiredPresent else {
+            IOSDiagnostics.append(
+                "M11_SUBS_KEEP_LEGACY reason=desired-incomplete",
+                filename: "m-notif-result.txt"
+            )
+            return
+        }
+        var obsolete = ["event-created-v1"]
+        for type in CloudKitStore.friendlyEventTypes {
+            obsolete.append("event-\(type.rawValue)-v1")
+        }
+        for id in obsolete where existing.contains(id) {
+            do {
+                try await store.deleteSubscription(id: id)
+                IOSDiagnostics.append("M11_SUBS_DELETED id=\(id)", filename: "m-notif-result.txt")
+            } catch {
+                IOSDiagnostics.append(
+                    "M11_SUBS_DELETE_FAILED id=\(id) error=\(error.localizedDescription)",
+                    filename: "m-notif-result.txt"
                 )
             }
         }

@@ -25,7 +25,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
     // the old 5s grace was closing an otherwise-fine connection before it had a
     // real chance to deliver a frame.
     private let policy = LiveConnectionPolicy(timeout: 20, connectedFrameGrace: 15)
-    private let signalPollInterval: UInt64 = 500_000_000
+    private let signalPollInterval: UInt64 = 250_000_000
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
     private var peerConnection: RTCPeerConnection?
@@ -42,6 +42,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
     private var hasRemoteDescription = false
     private var remoteVideoTrack: RTCVideoTrack?
     private var frameObserver: RemoteFrameObserver?
+    private var gatheredCandidateCount = 0
 
     init(
         session: SurveillanceSession,
@@ -77,6 +78,19 @@ final class WebRTCReceiver: NSObject, ObservableObject {
         !usesRealtimeSurface
     }
 
+    /// True while we're still negotiating the realtime stream (before the first
+    /// frame), so the view can show a prominent "connecting" overlay instead of a
+    /// small corner chip.
+    var isConnectingLive: Bool {
+        guard session.status == .recording else {
+            return false
+        }
+        if case .connecting = viewingMode {
+            return true
+        }
+        return false
+    }
+
     func start() {
         guard session.status == .recording, signalTask == nil else {
             return
@@ -90,6 +104,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
             processedSignalIDs.removeAll()
             pendingRemoteIceCandidates.removeAll()
             hasRemoteDescription = false
+            gatheredCandidateCount = 0
             // Ignore this session's entire prior signal history (e.g. a stale offer/ice
             // from a previous connection attempt before backgrounding) — only react to
             // whatever the broadcaster sends fresh in response to viewerReady below.
@@ -148,7 +163,10 @@ final class WebRTCReceiver: NSObject, ObservableObject {
     private func makePeerConnection() throws -> RTCPeerConnection {
         let configuration = RTCConfiguration()
         configuration.sdpSemantics = .unifiedPlan
-        configuration.continualGatheringPolicy = .gatherContinually
+        // Non-trickle: gather once and bake candidates into the answer SDP.
+        // .gatherContinually never reports .complete, so the old code always burned
+        // the full gathering timeout before sending the answer.
+        configuration.continualGatheringPolicy = .gatherOnce
         configuration.iceServers = [
             RTCIceServer(urlStrings: ["stun:stun.l.google.com:19302"])
         ]
@@ -238,7 +256,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
             0
         case .ice:
             1
-        case .answer, .sirenCommand, .viewerReady, .dismissEscalation, .silenceSiren, .macState:
+        case .answer, .sirenCommand, .viewerReady, .dismissEscalation, .silenceSiren, .endSession, .macState:
             2
         }
     }
@@ -264,10 +282,10 @@ final class WebRTCReceiver: NSObject, ObservableObject {
             // Non-trickle ICE (mirrors the Mac's offer): wait for gathering, then
             // send the answer with candidates already in the SDP, so no per-candidate
             // CloudKit round-trips are needed.
-            await waitForIceGatheringComplete(peerConnection, timeout: 2.5)
+            await waitForIceGatheringReady(peerConnection, timeout: 2.0)
             let localDescription = peerConnection.localDescription ?? answer
             try await send(description: localDescription, kind: .answer)
-            diagnostics?("M6_RECEIVER_ANSWER_SENT session=\(session.id) gathering=\(peerConnection.iceGatheringState.rawValue)")
+            diagnostics?("M6_RECEIVER_ANSWER_SENT session=\(session.id) gathering=\(peerConnection.iceGatheringState.rawValue) candidates=\(gatheredCandidateCount)")
             statusText = String(localized: "live_status_answer_sent")
         case .ice:
             let payload = try decoder.decode(IceCandidateSignalPayload.self, from: Data(message.payload.utf8))
@@ -283,7 +301,7 @@ final class WebRTCReceiver: NSObject, ObservableObject {
             }
             try await peerConnection.add(candidate)
             diagnostics?("M6_RECEIVER_REMOTE_ICE_ADDED session=\(session.id) \(candidateSummary(payload.sdp)) mid=\(payload.sdpMid ?? "nil") index=\(payload.sdpMLineIndex)")
-        case .answer, .sirenCommand, .viewerReady, .dismissEscalation, .silenceSiren, .macState:
+        case .answer, .sirenCommand, .viewerReady, .dismissEscalation, .silenceSiren, .endSession, .macState:
             return
         }
     }
@@ -308,10 +326,21 @@ final class WebRTCReceiver: NSObject, ObservableObject {
         }
     }
 
-    private func waitForIceGatheringComplete(_ connection: RTCPeerConnection, timeout: TimeInterval) async {
-        let deadline = Date().addingTimeInterval(timeout)
-        while connection.iceGatheringState != .complete, Date() < deadline {
-            try? await Task.sleep(nanoseconds: 100_000_000)
+    /// Returns as soon as gathering is `.complete` (reliable now with `.gatherOnce`)
+    /// or, on a LAN where host candidates arrive in ~100ms and are all we need, once
+    /// we have candidates and a brief settle window has passed — so the answer isn't
+    /// held back waiting on STUN reflexive candidates. `timeout` is the hard ceiling.
+    private func waitForIceGatheringReady(_ connection: RTCPeerConnection, timeout: TimeInterval) async {
+        let start = Date()
+        let earliestSend = start.addingTimeInterval(0.6)
+        while Date().timeIntervalSince(start) < timeout {
+            if connection.iceGatheringState == .complete {
+                return
+            }
+            if gatheredCandidateCount >= 1, Date() >= earliestSend {
+                return
+            }
+            try? await Task.sleep(nanoseconds: 50_000_000)
         }
     }
 
@@ -457,9 +486,11 @@ extension WebRTCReceiver: RTCPeerConnectionDelegate {
     }
 
     nonisolated func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
-        // Non-trickle: candidates are carried in the answer SDP (see handle(_:)), so
-        // they are not sent individually.
+        // Non-trickle: candidates are carried in the answer SDP (see handle(_:)). The
+        // count lets waitForIceGatheringReady send as soon as a usable (host)
+        // candidate exists on a LAN instead of waiting on STUN.
         Task { @MainActor [weak self] in
+            self?.gatheredCandidateCount += 1
             self?.diagnostics?("M6_RECEIVER_LOCAL_ICE_GATHERED session=\(self?.session.id ?? "?") \(candidateSummary(candidate.sdp))")
         }
     }

@@ -58,6 +58,15 @@ public struct SilenceSirenSignalPayload: Codable, Equatable, Sendable {
     }
 }
 
+/// iOS → Mac: end the whole surveillance session remotely.
+public struct EndSessionSignalPayload: Codable, Equatable, Sendable {
+    public var requestedAt: Date
+
+    public init(requestedAt: Date) {
+        self.requestedAt = requestedAt
+    }
+}
+
 /// Mac → iOS: the Mac's transient live state, re-sent whenever it changes so the
 /// phone can mirror the escalation countdown, siren on/off, and session-ended
 /// transition. Carried over the existing Signal record's string columns, so it

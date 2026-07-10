@@ -10,6 +10,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
     private let onSirenCommand: @Sendable () -> Void
     private let onDismissEscalation: @Sendable () -> Void
     private let onSilenceSiren: @Sendable () -> Void
+    private let onEndSession: @Sendable () -> Void
     private let factory: RTCPeerConnectionFactory
     private let videoSource: RTCVideoSource
     private let videoCapturer: RTCVideoCapturer
@@ -24,6 +25,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
     private var pendingRemoteIceCandidates: [RTCIceCandidate] = []
     private var hasRemoteDescription = false
     private var ingestedFrameCount = 0
+    private var gatheredCandidateCount = 0
 
     init(
         sessionID: String,
@@ -31,7 +33,8 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
         diagnostics: @escaping @Sendable (String) -> Void,
         onSirenCommand: @escaping @Sendable () -> Void,
         onDismissEscalation: @escaping @Sendable () -> Void,
-        onSilenceSiren: @escaping @Sendable () -> Void
+        onSilenceSiren: @escaping @Sendable () -> Void,
+        onEndSession: @escaping @Sendable () -> Void
     ) {
         self.sessionID = sessionID
         self.channel = channel
@@ -39,6 +42,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
         self.onSirenCommand = onSirenCommand
         self.onDismissEscalation = onDismissEscalation
         self.onSilenceSiren = onSilenceSiren
+        self.onEndSession = onEndSession
         let factory = RTCPeerConnectionFactory(
             encoderFactory: RTCDefaultVideoEncoderFactory(),
             decoderFactory: RTCDefaultVideoDecoderFactory()
@@ -66,6 +70,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
         hasRemoteDescription = false
         pendingRemoteIceCandidates.removeAll()
 
+        gatheredCandidateCount = 0
         let connection = try makePeerConnection()
         peerConnection = connection
         controlDataChannel = makeControlDataChannel(on: connection)
@@ -77,21 +82,33 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
 
         let offer = try await connection.makeOffer()
         try await connection.setLocal(offer)
-        // Non-trickle ICE: wait for candidate gathering to finish (bounded), then
-        // send the local description with all candidates baked into the SDP. Over
-        // CloudKit — where every trickled candidate is a separate high-latency
-        // record round-trip — this collapses ~10+ ICE messages into the single
-        // offer, which is the dominant cause of the slow first connect.
-        await waitForIceGatheringComplete(connection, timeout: 2.5)
+        // Non-trickle ICE: wait for candidate gathering, then send the local
+        // description with all candidates baked into the SDP. Over CloudKit — where
+        // every trickled candidate is a separate high-latency record round-trip —
+        // this collapses ~10+ ICE messages into the single offer, the dominant cause
+        // of slow first connect.
+        await waitForIceGatheringReady(connection, timeout: 2.0)
         let localDescription = connection.localDescription ?? offer
         try await send(description: localDescription, kind: .offer)
-        diagnostics("M6_BROADCAST_OFFER_SENT session=\(sessionID) gathering=\(connection.iceGatheringState.rawValue)")
+        diagnostics("M6_BROADCAST_OFFER_SENT session=\(sessionID) gathering=\(connection.iceGatheringState.rawValue) candidates=\(gatheredCandidateCount)")
     }
 
-    private func waitForIceGatheringComplete(_ connection: RTCPeerConnection, timeout: TimeInterval) async {
-        let deadline = Date().addingTimeInterval(timeout)
-        while connection.iceGatheringState != .complete, Date() < deadline {
-            try? await Task.sleep(nanoseconds: 100_000_000)
+    /// Returns as soon as gathering is genuinely done (`.complete`, now reliable with
+    /// `.gatherOnce`) or — on a LAN where host candidates arrive in ~100ms and that's
+    /// all we need — once we have candidates and a brief settle window has passed, so
+    /// we don't burn the full timeout waiting on STUN reflexive candidates we don't
+    /// need. `timeout` is the hard ceiling if neither happens.
+    private func waitForIceGatheringReady(_ connection: RTCPeerConnection, timeout: TimeInterval) async {
+        let start = Date()
+        let earliestSend = start.addingTimeInterval(0.6)
+        while Date().timeIntervalSince(start) < timeout {
+            if connection.iceGatheringState == .complete {
+                return
+            }
+            if gatheredCandidateCount >= 1, Date() >= earliestSend {
+                return
+            }
+            try? await Task.sleep(nanoseconds: 50_000_000)
         }
     }
 
@@ -128,7 +145,10 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
     private func makePeerConnection() throws -> RTCPeerConnection {
         let configuration = RTCConfiguration()
         configuration.sdpSemantics = .unifiedPlan
-        configuration.continualGatheringPolicy = .gatherContinually
+        // Non-trickle ICE gathers once and bakes candidates into the offer SDP;
+        // .gatherContinually never reports .complete, so the old code always burned
+        // the full gathering timeout before sending. .gatherOnce lets .complete fire.
+        configuration.continualGatheringPolicy = .gatherOnce
         configuration.iceServers = [
             RTCIceServer(urlStrings: ["stun:stun.l.google.com:19302"])
         ]
@@ -208,7 +228,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
 
     private func signalPriority(_ kind: SignalKind) -> Int {
         switch kind {
-        case .sirenCommand, .dismissEscalation, .silenceSiren:
+        case .sirenCommand, .dismissEscalation, .silenceSiren, .endSession:
             0
         case .viewerReady:
             1
@@ -240,6 +260,13 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
             let age = Date().timeIntervalSince(message.createdAt)
             diagnostics("M7_SILENCE_SIREN_RECEIVED session=\(sessionID) sender=\(message.sender.rawValue) age=\(String(format: "%.2f", age))")
             onSilenceSiren()
+            return
+        }
+
+        if message.kind == .endSession {
+            let age = Date().timeIntervalSince(message.createdAt)
+            diagnostics("M12_END_SESSION_RECEIVED session=\(sessionID) sender=\(message.sender.rawValue) age=\(String(format: "%.2f", age))")
+            onEndSession()
             return
         }
 
@@ -288,7 +315,7 @@ final class BroadcastSession: NSObject, @unchecked Sendable {
             }
             try await peerConnection.add(candidate)
             diagnostics("M6_BROADCAST_REMOTE_ICE_ADDED session=\(sessionID) \(candidateSummary(payload.sdp)) mid=\(payload.sdpMid ?? "nil") index=\(payload.sdpMLineIndex)")
-        case .offer, .sirenCommand, .viewerReady, .dismissEscalation, .silenceSiren, .macState:
+        case .offer, .sirenCommand, .viewerReady, .dismissEscalation, .silenceSiren, .endSession, .macState:
             return
         }
     }
@@ -373,7 +400,9 @@ extension BroadcastSession: RTCPeerConnectionDelegate {
 
     func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
         // Non-trickle: candidates travel inside the offer SDP (see negotiate()), so
-        // they are not sent individually. Kept for diagnostics only.
+        // they are not sent individually. The count lets negotiate() send as soon as
+        // it has a usable (host) candidate on a LAN instead of waiting on STUN.
+        gatheredCandidateCount += 1
         diagnostics("M6_BROADCAST_LOCAL_ICE_GATHERED session=\(sessionID) \(candidateSummary(candidate.sdp))")
     }
 

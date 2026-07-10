@@ -318,6 +318,15 @@ public final class CloudKitStore: @unchecked Sendable {
         _ = try await database.deleteSubscription(withID: id)
     }
 
+    /// IDs of every subscription currently registered server-side for this user, so
+    /// the bootstrap can create only what's missing instead of destructively
+    /// delete-then-recreate (a window where a failed recreate leaves zero
+    /// subscriptions and pushes go dark).
+    public func fetchExistingSubscriptionIDs() async throws -> Set<String> {
+        let subscriptions = try await database.allSubscriptions()
+        return Set(subscriptions.map(\.subscriptionID))
+    }
+
     @discardableResult
     public func saveSignal(_ message: SignalMessage) async throws -> SignalMessage {
         let recordID = CKRecord.ID(recordName: message.id)

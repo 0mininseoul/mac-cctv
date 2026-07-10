@@ -15,6 +15,8 @@ final class SessionPlaybackViewModel: ObservableObject {
     @Published private(set) var isSirenActive = false
     @Published private(set) var isSendingSilenceSiren = false
     @Published private(set) var silenceSirenStatusText = ""
+    @Published private(set) var isSendingEndSession = false
+    @Published private(set) var endSessionStatusText = ""
     /// Flips true when the Mac reports the session ended while we were watching
     /// live, so the view can swap the black live surface for replay playback.
     @Published private(set) var endedRemotely = false
@@ -140,6 +142,19 @@ final class SessionPlaybackViewModel: ObservableObject {
 
         Task { [weak self] in
             await self?.sendSilenceSirenNow()
+        }
+    }
+
+    func sendEndSession() {
+        guard isLive, !isSendingEndSession else {
+            return
+        }
+
+        isSendingEndSession = true
+        endSessionStatusText = String(localized: "end_session_sending")
+
+        Task { [weak self] in
+            await self?.sendEndSessionNow()
         }
     }
 
@@ -271,6 +286,33 @@ final class SessionPlaybackViewModel: ObservableObject {
         } catch {
             silenceSirenStatusText = String(
                 format: String(localized: "silence_siren_failed_format"),
+                error.localizedDescription
+            )
+        }
+    }
+
+    private func sendEndSessionNow() async {
+        defer {
+            isSendingEndSession = false
+        }
+
+        do {
+            let payload = EndSessionSignalPayload(requestedAt: Date())
+            let data = try encoder.encode(payload)
+            try await channel.send(
+                SignalMessage(
+                    id: "\(session.id)-ios-end-\(UUID().uuidString)",
+                    sessionID: session.id,
+                    kind: .endSession,
+                    payload: String(decoding: data, as: UTF8.self),
+                    sender: .ios,
+                    createdAt: Date()
+                )
+            )
+            endSessionStatusText = String(localized: "end_session_sent")
+        } catch {
+            endSessionStatusText = String(
+                format: String(localized: "end_session_failed_format"),
                 error.localizedDescription
             )
         }

@@ -684,6 +684,60 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "A Mac may have been picked up. Tap to view, or Dismiss to cancel the alarm." } },
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "Mac이 들렸을 수 있습니다. 확인하거나 취소를 눌러 경보를 중지하세요." } }
       }
+    },
+    "end_session_button_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "End" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "종료" } }
+      }
+    },
+    "end_session_sending" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Ending session…" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "세션 종료 중…" } }
+      }
+    },
+    "end_session_sent" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Session ended" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "세션을 종료했어요" } }
+      }
+    },
+    "end_session_failed_format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "End failed: %@" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "종료 실패: %@" } }
+      }
+    },
+    "end_session_confirm_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "End this session?" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "세션을 종료할까요?" } }
+      }
+    },
+    "end_session_confirm_message" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Surveillance on your Mac will stop immediately." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "Mac의 감시가 즉시 중지됩니다." } }
+      }
+    },
+    "end_session_confirm_action" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "End Session" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "세션 종료" } }
+      }
+    },
+    "end_session_confirm_cancel" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "취소" } }
+      }
+    },
+    "live_connecting_overlay_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Connecting live…" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "실시간 연결 중…" } }
+      }
     }
   },
   "version" : "1.0"
