@@ -228,6 +228,31 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 - [ ] **사람 작업 1 (연령 등급)**: App Store Connect에서 연령 등급을 12+로 상향(공포 이미지). CloudKit Dashboard 수동 작업은 이제 불필요.
 - [ ] **사람 작업 2 (재검증)**: TestFlight build 9 배정 후 8건 재확인 — 특히 (a) 에스컬레이션/사이렌 상태가 iPhone에 뜨는지, (b) 종료 세션 영상 재생(안 되면 `m4-replay-result.txt` 확인), (c) WebRTC 연결 시간 단축(안 되면 `m6-receiver-result.txt` 확인), (d) 사이렌 끄기 버튼 동작
 
+### Build 10 (2026-07-11) — build 9 실기기 결과 7건 반영
+
+Build 9 실기기 테스트에서 8건 제보(⑧ 종료 세션 자동재생은 이미 정상 확인되어 제외 → 7건). 각 항목은 이 개발 Mac의 실제 런타임 진단 로그·청크 파일·git 델타로 근본 원인을 확인함. 설계 문서: `docs/superpowers/specs/2026-07-10-build10-field-test-fixes-design.md`.
+
+1. **카메라 ~3초 뒤 켜짐**: 무장 플로우가 `accountStatus`+`reconcile` CloudKit 왕복을 `engine.start()` 앞에 직렬로 쌓던 것이 원인. 카메라 예열(`async let`)을 그 왕복과 **병렬화**해 카메라가 ~1-2초 먼저 켜짐(무장 후에만 켜짐 — 사전 예열 아님, 사용자 선택). `SurveillanceController.startSurveillance`.
+2. **꺼진 앱에서 푸시 전멸 (build 9 회귀, 확정)**: build 8까지는 초기 빌드의 stale `event-created-v1`(전체 이벤트·옛 문구) 구독이 푸시를 실어나르고 있었고, build 9가 그걸 삭제 후 per-type v2로 교체하는데 모든 에러를 `try?`로 삼켜, 삭제만 성공하고 생성 실패 시 구독 0개가 됨. **멱등·비파괴 재작성**(`synchronizeSubscriptions`): 기존 구독 조회(`fetchExistingSubscriptionIDs`) → 없는 것만 생성 → 전부 확인된 뒤에만 구식 삭제. iOS `m-notif-result.txt`에 `M11_SUBS_*` 진단 기록. (aps-environment/백그라운드모드는 재검토 후 제외 — export가 이미 production 재작성, 가시성 알림엔 백그라운드모드 불필요.)
+3. **연결 로딩 표시 작음**: 좌하단 작은 칩 → 라이브·미연결 시 **중앙 대형 오버레이**(스피너 + "실시간 연결 중…"). `WebRTCReceiver.isConnectingLive` 바인딩.
+4. **사이렌 버튼 너무 큼**: 세로 스택(48pt+힌트+상태) → **가로 한 줄**(사이렌 홀드버튼 38pt + 종료 버튼), 힌트는 공유 캡션 한 줄로. `LiveControlBar`.
+5. **원격 종료 버튼**: 신규 `SignalKind.endSession`(iOS→Mac, 우선순위 0). Mac이 받으면 `stopSurveillance(.ended)`(종료 전 `sessionEnded` 방송 → iOS 자동 replay 전환). iOS는 오작동 방지 확인 다이얼로그 1회.
+6. **WebRTC ~10초**: m6 로그의 `OFFER_SENT gathering=1`로 확정 — `.gatherContinually`는 `.complete`를 보고하지 않아 양쪽이 매번 2.5초 타임아웃을 꽉 채움. **`.gatherOnce`로 전환**(`.complete` 정상 발화) + host 후보 준비 즉시(≥1, ~0.6초) 전송 + iOS 시그널 폴링 500→250ms. 기대 ~10초 → ~4-5초.
+7. **공포짤 전체화면 못 채움**: VStack(이미지 62%+검은밴드 38%) → **ZStack 전체 채움 + 하단 그라디언트 스크림 위 오버레이 자막**(폰트 확대). `SirenWarningView`.
+
+```
+xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: c8a26bf9-dc15-4c00-8250-cbf766e5ebe8 — build 10, processingState VALID
+
+xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: bc4e023b-cec5-439a-a2a8-1d92df489a9a — build 10, processingState VALID
+```
+
+- [x] Build 10 두 타겟 모두 업로드·처리 완료 (`CURRENT_PROJECT_VERSION` 9→10), 둘 다 `processingState: VALID`
+- [ ] **사람 작업 (재검증)**: TestFlight build 10 배정 후 7건 재확인 — 특히 (a) **꺼진 앱에서 푸시 도착**(안 오면 iPhone `m-notif-result.txt`의 `M11_SUBS_*` 확인), (b) 원격 종료 버튼, (c) WebRTC 연결 시간(안 되면 `m6-receiver-result.txt`의 `candidates=`·`gathering=` 확인), (d) 카메라 시작 체감 속도, (e) 사이렌 풀스크린/컨트롤바 레이아웃
+
 **외부 테스터는 결정에 따라 불필요 (2026-07-06):** 계획 문서의 M9 검증 기준은 "TestFlight 외부 테스터 설치"라고 되어 있지만, 실기기(본인 Mac + iPhone) 검증이 목적이면 그 계정이 이미 내부 테스터로 등록되어 있으니 내부 테스팅만으로 충분하다. 외부 테스터(Beta App Review 필요)는 **팀 멤버가 아닌 다른 사람**에게 정식 출시 전 미리 배포하고 싶을 때만 필요 — PRD §11 출시 전략도 베타 단계 없이 바로 무료 출시라 필수 아님. 필요해지면 아래 항목 진행:
 
 - [ ] **(선택) 외부 테스터가 필요해지면**: 베타 검토(Beta App Review) 제출 전 App Review Information Notes 작성 필요
