@@ -20,6 +20,15 @@ public final class ChunkAssetCache: @unchecked Sendable {
         self.cacheDirectory = cacheDirectory
     }
 
+    /// Local cached URL for a chunk if it's already on disk, without downloading or
+    /// needing the CKAsset — lets replay skip re-downloading chunks it already has.
+    public func cachedFileURL(chunkID: String) -> URL? {
+        lock.lock()
+        defer { lock.unlock() }
+        let destinationURL = cacheDirectory.appendingPathComponent("\(chunkID).mp4")
+        return fileManager.fileExists(atPath: destinationURL.path) ? destinationURL : nil
+    }
+
     public func stableFileURL(chunkID: String, sourceURL: URL?) -> URL? {
         lock.lock()
         defer { lock.unlock() }

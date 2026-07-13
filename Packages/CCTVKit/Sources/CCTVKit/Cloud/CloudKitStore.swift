@@ -182,6 +182,20 @@ public final class CloudKitStore: @unchecked Sendable {
         }
     }
 
+    /// Chunk list WITHOUT downloading the video assets — a fast query used by replay
+    /// to see which chunks it already has cached locally, so it only downloads the
+    /// missing ones instead of re-fetching every asset on each open. Returned chunks
+    /// carry a local `assetFileURL` if already cached (via `ChunkAssetCache`), else nil.
+    public func fetchChunkMetadata(sessionID: String, limit: Int = 800) async throws -> [VideoChunk] {
+        do {
+            return try await fetchChunksBySessionReference(sessionID: sessionID, limit: limit, includeVideo: false)
+        } catch where shouldFallbackFromSessionReferenceQuery(error) {
+            return try await fetchChunksByStartedAt(limit: limit).filter { chunk in
+                chunk.sessionID == sessionID
+            }
+        }
+    }
+
     public func fetchChunks(sessionID: String, limit: Int = 600) async throws -> [VideoChunk] {
         do {
             return try await fetchChunksBySessionReference(sessionID: sessionID, limit: limit)
@@ -440,7 +454,7 @@ public final class CloudKitStore: @unchecked Sendable {
         }
     }
 
-    private func fetchChunksBySessionReference(sessionID: String, limit: Int) async throws -> [VideoChunk] {
+    private func fetchChunksBySessionReference(sessionID: String, limit: Int, includeVideo: Bool = true) async throws -> [VideoChunk] {
         let sessionReference = CKRecord.Reference(
             recordID: CKRecord.ID(recordName: sessionID),
             action: .none
@@ -455,7 +469,7 @@ public final class CloudKitStore: @unchecked Sendable {
         )
         let response = try await database.records(
             matching: query,
-            desiredKeys: chunkPlaybackDesiredKeys,
+            desiredKeys: includeVideo ? chunkPlaybackDesiredKeys : chunkMetadataDesiredKeys,
             resultsLimit: limit
         )
 
@@ -630,6 +644,18 @@ public final class CloudKitStore: @unchecked Sendable {
             CKSchema.Chunk.duration,
             CKSchema.Chunk.byteCount,
             CKSchema.Chunk.video
+        ]
+    }
+
+    /// Same as playback keys but WITHOUT the video CKAsset, so the query returns fast
+    /// without downloading any MP4 files (see `fetchChunkMetadata`).
+    private var chunkMetadataDesiredKeys: [String] {
+        [
+            CKSchema.Chunk.session,
+            CKSchema.Chunk.index,
+            CKSchema.Chunk.startedAt,
+            CKSchema.Chunk.duration,
+            CKSchema.Chunk.byteCount
         ]
     }
 

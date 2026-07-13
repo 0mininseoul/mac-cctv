@@ -125,22 +125,24 @@ private struct SirenWarningView: View {
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .clipped()
 
-                VStack(spacing: 24) {
+                VStack(spacing: 28) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 72, weight: .bold))
+                        .font(.system(size: 84, weight: .bold))
                         .foregroundStyle(.red)
 
                     Text(warningText)
-                        .font(.system(size: 68, weight: .black))
+                        // Scaled to the screen so the warning reads large on any
+                        // display; capped so a very wide screen doesn't overshoot.
+                        .font(.system(size: min(geometry.size.height * 0.11, 160), weight: .black))
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
                         .lineLimit(3)
                         .minimumScaleFactor(0.4)
                         .padding(.horizontal, 48)
-                        .shadow(color: .black.opacity(0.9), radius: 12, x: 0, y: 4)
+                        .shadow(color: .black.opacity(0.9), radius: 14, x: 0, y: 4)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.bottom, geometry.size.height * 0.10)
+                .padding(.bottom, geometry.size.height * 0.09)
                 .padding(.top, 60)
                 .background(
                     LinearGradient(

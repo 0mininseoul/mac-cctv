@@ -110,10 +110,9 @@ struct SessionPlaybackView: View {
         )) { identifiableURL in
             ActivityView(activityItems: [identifiableURL.url])
         }
-        .confirmationDialog(
+        .alert(
             "end_session_confirm_title",
-            isPresented: $showEndConfirmation,
-            titleVisibility: .visible
+            isPresented: $showEndConfirmation
         ) {
             Button("end_session_confirm_action", role: .destructive) {
                 viewModel.sendEndSession()
@@ -182,84 +181,58 @@ private struct LiveConnectingOverlay: View {
     }
 }
 
-/// Compact live control row: a thin hold-to-siren control on the left and a remote
-/// end-session button on the right, with a single caption line for hint/status —
-/// about a third the height of the old stacked layout.
+/// Live control bar with a deliberate hierarchy: the siren is the single red
+/// emergency action (hold-to-activate, full width), and ending the session is a
+/// neutral, compact secondary tap — so the two never read as competing red buttons
+/// (the old awkwardness). One caption line carries the hold hint or action status.
 private struct LiveControlBar: View {
     @ObservedObject var viewModel: SessionPlaybackViewModel
     @ObservedObject var webRTCReceiver: WebRTCReceiver
     let onRequestEnd: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 10) {
-                if viewModel.isSirenActive {
-                    Button {
-                        viewModel.sendSilenceSiren()
-                    } label: {
-                        Label("silence_siren_button_title", systemImage: "speaker.slash.fill")
-                            .font(.subheadline.weight(.semibold))
-                            .frame(maxWidth: .infinity, minHeight: 38)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.red)
-                    .disabled(viewModel.isSendingSilenceSiren)
-                } else {
-                    SirenCommandButton(isSending: viewModel.isSendingSirenCommand) {
-                        if webRTCReceiver.sendSirenCommandOverRealtimeChannel() {
-                            viewModel.markRealtimeSirenCommandSent()
-                        } else {
-                            viewModel.sendSirenCommand()
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                Group {
+                    if viewModel.isSirenActive {
+                        SilenceSirenButton(isSending: viewModel.isSendingSilenceSiren) {
+                            viewModel.sendSilenceSiren()
+                        }
+                    } else {
+                        SirenHoldButton(isSending: viewModel.isSendingSirenCommand) {
+                            if webRTCReceiver.sendSirenCommandOverRealtimeChannel() {
+                                viewModel.markRealtimeSirenCommandSent()
+                            } else {
+                                viewModel.sendSirenCommand()
+                            }
                         }
                     }
                 }
+                .frame(maxWidth: .infinity)
 
-                Button(role: .destructive) {
-                    onRequestEnd()
-                } label: {
-                    Label("end_session_button_title", systemImage: "stop.circle.fill")
-                        .font(.subheadline.weight(.semibold))
-                        .frame(minHeight: 38)
-                        .padding(.horizontal, 6)
-                }
-                .buttonStyle(.bordered)
-                .tint(.red)
-                .disabled(viewModel.isSendingEndSession)
+                EndSessionButton(isSending: viewModel.isSendingEndSession, action: onRequestEnd)
             }
 
             if let caption = controlCaption {
                 Text(caption)
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .textSelection(.enabled)
+                    .transition(.opacity)
             }
 
             if viewModel.isEscalationPending {
-                HStack(spacing: 10) {
-                    Text(
-                        String(
-                            format: String(localized: "escalation_countdown_format"),
-                            viewModel.escalationSecondsRemaining
-                        )
-                    )
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.orange)
-
-                    Button {
-                        viewModel.sendEscalationDismiss()
-                    } label: {
-                        Label("escalation_dismiss_button_title", systemImage: "xmark.shield")
-                            .font(.caption.weight(.medium))
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                    .disabled(viewModel.isSendingEscalationDismiss)
-                }
+                EscalationCountdownStrip(viewModel: viewModel)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.top, 14)
+        .padding(.bottom, 12)
         .background(.regularMaterial)
+        .animation(.easeInOut(duration: 0.2), value: viewModel.isSirenActive)
+        .animation(.easeInOut(duration: 0.2), value: viewModel.isEscalationPending)
     }
 
     /// One shared caption line: prefers whatever action feedback is live, otherwise
@@ -278,20 +251,33 @@ private struct LiveControlBar: View {
     }
 }
 
-private struct SirenCommandButton: View {
+private enum LiveControlMetrics {
+    static let height: CGFloat = 52
+    static let corner: CGFloat = 14
+}
+
+/// Hold-to-activate siren. A gradient fills left→right while pressed so the
+/// hold-not-tap affordance is unmistakable, the label flips to a "keep holding"
+/// state, and a success haptic fires on completion.
+private struct SirenHoldButton: View {
     let isSending: Bool
     let action: () -> Void
     private let holdDuration: TimeInterval = 0.8
     @State private var isPressing = false
     @State private var fillProgress: CGFloat = 0
+    @State private var fireHaptic = false
 
     var body: some View {
         ZStack {
-            // Fills left-to-right while held so it's obvious this is a
-            // hold-to-activate control, not a tap.
             GeometryReader { geometry in
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color.red.opacity(0.28))
+                RoundedRectangle(cornerRadius: LiveControlMetrics.corner, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.red.opacity(0.95), Color(red: 0.74, green: 0.09, blue: 0.11)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
                     .frame(width: geometry.size.width * fillProgress)
             }
 
@@ -299,19 +285,20 @@ private struct SirenCommandButton: View {
                 isPressing ? "siren_button_hold_progress" : "siren_button_title",
                 systemImage: "speaker.wave.3.fill"
             )
-            .font(.subheadline.weight(.semibold))
-            .foregroundStyle(.red)
+            .font(.headline)
+            .foregroundStyle(fillProgress > 0.55 ? Color.white : Color.red)
+            .animation(.easeInOut(duration: 0.15), value: fillProgress > 0.55)
         }
-        .frame(maxWidth: .infinity, minHeight: 38)
+        .frame(maxWidth: .infinity, minHeight: LiveControlMetrics.height)
         .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Color.red.opacity(0.10))
+            RoundedRectangle(cornerRadius: LiveControlMetrics.corner, style: .continuous)
+                .fill(Color.red.opacity(0.12))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(Color.red.opacity(0.35), lineWidth: 1)
+            RoundedRectangle(cornerRadius: LiveControlMetrics.corner, style: .continuous)
+                .stroke(Color.red.opacity(0.45), lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: LiveControlMetrics.corner, style: .continuous))
         .opacity(isSending ? 0.55 : 1)
         .contentShape(Rectangle())
         .onLongPressGesture(
@@ -330,12 +317,14 @@ private struct SirenCommandButton: View {
                     return
                 }
                 isPressing = false
+                fireHaptic.toggle()
                 withAnimation(.easeOut(duration: 0.2)) {
                     fillProgress = 0
                 }
                 action()
             }
         )
+        .sensoryFeedback(.success, trigger: fireHaptic)
         .accessibilityAddTraits(.isButton)
         .accessibilityHint("siren_button_accessibility_hint")
         .accessibilityAction {
@@ -344,5 +333,91 @@ private struct SirenCommandButton: View {
             }
             action()
         }
+    }
+}
+
+/// Prominent red button shown while the Mac siren is sounding, to turn it off.
+private struct SilenceSirenButton: View {
+    let isSending: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label("silence_siren_button_title", systemImage: "speaker.slash.fill")
+                .font(.headline)
+                .frame(maxWidth: .infinity, minHeight: LiveControlMetrics.height)
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(.red)
+        .clipShape(RoundedRectangle(cornerRadius: LiveControlMetrics.corner, style: .continuous))
+        .disabled(isSending)
+    }
+}
+
+/// Neutral, compact secondary control — deliberately not red so it doesn't compete
+/// with the siren for "danger" weight. Icon-over-label keeps it narrow.
+private struct EndSessionButton: View {
+    let isSending: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 3) {
+                Image(systemName: "stop.fill")
+                    .font(.subheadline.weight(.bold))
+                Text("end_session_button_title")
+                    .font(.caption.weight(.semibold))
+            }
+            .frame(width: 74, height: LiveControlMetrics.height)
+            .foregroundStyle(.primary)
+            .background(
+                RoundedRectangle(cornerRadius: LiveControlMetrics.corner, style: .continuous)
+                    .fill(Color(uiColor: .tertiarySystemFill))
+            )
+        }
+        .buttonStyle(.plain)
+        .opacity(isSending ? 0.55 : 1)
+        .disabled(isSending)
+        .accessibilityLabel("end_session_button_title")
+    }
+}
+
+/// Orange countdown strip shown only while an auto-siren escalation is pending, with
+/// a one-tap dismiss. Visually distinct from the siren/end row.
+private struct EscalationCountdownStrip: View {
+    @ObservedObject var viewModel: SessionPlaybackViewModel
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+            Text(
+                String(
+                    format: String(localized: "escalation_countdown_format"),
+                    viewModel.escalationSecondsRemaining
+                )
+            )
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(.orange)
+
+            Spacer(minLength: 8)
+
+            Button {
+                viewModel.sendEscalationDismiss()
+            } label: {
+                Label("escalation_dismiss_button_title", systemImage: "xmark.shield")
+                    .font(.subheadline.weight(.medium))
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .tint(.orange)
+            .disabled(viewModel.isSendingEscalationDismiss)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.orange.opacity(0.12))
+        )
     }
 }

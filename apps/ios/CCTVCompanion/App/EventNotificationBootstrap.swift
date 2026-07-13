@@ -57,7 +57,12 @@ enum EventNotificationBootstrap {
             ("escalation-created-v1", { try await store.ensureEscalationSubscription() })
         ]
         for type in CloudKitStore.friendlyEventTypes {
-            let id = "event-\(type.rawValue)-v2"
+            // v3: the v2 IDs may exist on the server in a non-firing state (a
+            // `type == X` predicate requires the Event `type` field to be marked
+            // Queryable in the *production* schema; until that's deployed the save is
+            // rejected/inert). Bumping the ID forces a clean recreation once type is
+            // queryable, instead of the idempotent "skip if exists" keeping a broken one.
+            let id = "event-\(type.rawValue)-v3"
             desired.append((id, {
                 try await store.ensureEventTypeSubscription(
                     type: type,
@@ -85,8 +90,8 @@ enum EventNotificationBootstrap {
             }
         }
 
-        // Only remove the legacy catch-all + v1 per-type IDs once the friendly v2 set
-        // is fully in place, so a transient create failure never strands the user
+        // Only remove the legacy catch-all + older per-type IDs once the friendly v3
+        // set is fully in place, so a transient create failure never strands the user
         // with no working subscription. The stale generic keeps firing (old copy)
         // until then — an ugly push beats a missing one.
         guard allDesiredPresent else {
@@ -99,6 +104,7 @@ enum EventNotificationBootstrap {
         var obsolete = ["event-created-v1"]
         for type in CloudKitStore.friendlyEventTypes {
             obsolete.append("event-\(type.rawValue)-v1")
+            obsolete.append("event-\(type.rawValue)-v2")
         }
         for id in obsolete where existing.contains(id) {
             do {

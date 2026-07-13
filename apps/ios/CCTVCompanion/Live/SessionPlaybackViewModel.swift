@@ -199,25 +199,56 @@ final class SessionPlaybackViewModel: ObservableObject {
     }
 
     private func refresh() async {
+        if isLive {
+            await refreshLive()
+        } else {
+            await refreshReplay()
+        }
+    }
+
+    private func refreshLive() async {
         do {
             let chunks = try await store.fetchChunks(sessionID: session.id, limit: 800)
-
-            if isLive {
-                let nextPlaylist = FallbackPlaylist.live(chunks: chunks, now: Date(), targetLatency: 18)
-                let playableChunks = nextPlaylist.items.filter { $0.assetFileURL != nil }
-                playlist = nextPlaylist
-                applyLiveQueue(chunks: playableChunks)
-                updateStatus(chunks: chunks, playableChunks: playableChunks)
-            } else {
-                let nextPlaylist = FallbackPlaylist.replay(chunks: chunks)
-                let playableChunks = nextPlaylist.items.filter { $0.assetFileURL != nil }
-                playlist = nextPlaylist
-                await loadReplayComposition(chunks: nextPlaylist.items)
-                updateStatus(chunks: chunks, playableChunks: playableChunks)
-            }
+            let nextPlaylist = FallbackPlaylist.live(chunks: chunks, now: Date(), targetLatency: 18)
+            let playableChunks = nextPlaylist.items.filter { $0.assetFileURL != nil }
+            playlist = nextPlaylist
+            applyLiveQueue(chunks: playableChunks)
+            updateStatus(chunks: chunks, playableChunks: playableChunks)
         } catch {
             statusText = String(format: String(localized: "playback_status_failed_format"), error.localizedDescription)
         }
+    }
+
+    /// Ended-session replay. Instead of re-downloading every chunk's video on each
+    /// open (the old path fetched all assets up front — ~seconds even for locally
+    /// cached recordings), do a fast metadata query first, then download only the
+    /// chunks not already in the local cache. A session watched live or re-opened
+    /// plays effectively instantly; a first-time one downloads only what's missing.
+    private func refreshReplay() async {
+        do {
+            let metadata = try await store.fetchChunkMetadata(sessionID: session.id, limit: 800)
+            let resolved = try await resolveReplayChunks(metadata)
+            let nextPlaylist = FallbackPlaylist.replay(chunks: resolved)
+            let playableChunks = nextPlaylist.items.filter { $0.assetFileURL != nil }
+            playlist = nextPlaylist
+            await loadReplayComposition(chunks: nextPlaylist.items)
+            updateStatus(chunks: resolved, playableChunks: playableChunks)
+        } catch {
+            statusText = String(format: String(localized: "playback_status_failed_format"), error.localizedDescription)
+        }
+    }
+
+    /// Merge freshly-downloaded video assets for the not-yet-cached chunks back into
+    /// the ordered metadata list. Chunks already cached locally (assetFileURL set by
+    /// the metadata fetch) need no network at all.
+    private func resolveReplayChunks(_ metadata: [VideoChunk]) async throws -> [VideoChunk] {
+        let uncachedIDs = metadata.filter { $0.assetFileURL == nil }.map(\.id)
+        guard !uncachedIDs.isEmpty else {
+            return metadata
+        }
+        let downloaded = try await store.fetchChunks(ids: uncachedIDs)
+        let downloadedByID = Dictionary(downloaded.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        return metadata.map { downloadedByID[$0.id] ?? $0 }
     }
 
     private func sendSirenCommandNow() async {
@@ -468,23 +499,48 @@ final class SessionPlaybackViewModel: ObservableObject {
         var cursor = CMTime.zero
         var insertedCount = 0
 
-        for chunk in playableChunks {
-            guard let fileURL = chunk.assetFileURL else {
-                continue
-            }
-
-            let asset = AVURLAsset(url: fileURL)
-            do {
-                guard let assetTrack = try await asset.loadTracks(withMediaType: .video).first else {
+        // Load each chunk's duration concurrently (the main per-chunk latency), then
+        // stitch them into the composition in index order. Only Sendable values (URL,
+        // CMTime) cross the task boundary; the actual track insert stays serial since
+        // AVMutableComposition mutation must not run concurrently.
+        let durations: [(index: Int, url: URL, duration: CMTime)] = await withTaskGroup(
+            of: (Int, URL, CMTime)?.self
+        ) { group in
+            for (index, chunk) in playableChunks.enumerated() {
+                guard let fileURL = chunk.assetFileURL else {
                     continue
                 }
-                let duration = try await asset.load(.duration)
+                group.addTask {
+                    let asset = AVURLAsset(url: fileURL)
+                    guard (try? await asset.loadTracks(withMediaType: .video))?.first != nil,
+                          let duration = try? await asset.load(.duration) else {
+                        return nil
+                    }
+                    return (index, fileURL, duration)
+                }
+            }
+            var collected: [(index: Int, url: URL, duration: CMTime)] = []
+            for await result in group {
+                if let result {
+                    collected.append((index: result.0, url: result.1, duration: result.2))
+                }
+            }
+            return collected
+        }
+        .sorted { $0.index < $1.index }
+
+        for item in durations {
+            let asset = AVURLAsset(url: item.url)
+            guard let assetTrack = try? await asset.loadTracks(withMediaType: .video).first else {
+                continue
+            }
+            do {
                 try compositionTrack.insertTimeRange(
-                    CMTimeRange(start: .zero, duration: duration),
+                    CMTimeRange(start: .zero, duration: item.duration),
                     of: assetTrack,
                     at: cursor
                 )
-                cursor = cursor + duration
+                cursor = cursor + item.duration
                 insertedCount += 1
             } catch {
                 continue
