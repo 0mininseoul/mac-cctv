@@ -251,7 +251,39 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 ```
 
 - [x] Build 10 두 타겟 모두 업로드·처리 완료 (`CURRENT_PROJECT_VERSION` 9→10), 둘 다 `processingState: VALID`
-- [ ] **사람 작업 (재검증)**: TestFlight build 10 배정 후 7건 재확인 — 특히 (a) **꺼진 앱에서 푸시 도착**(안 오면 iPhone `m-notif-result.txt`의 `M11_SUBS_*` 확인), (b) 원격 종료 버튼, (c) WebRTC 연결 시간(안 되면 `m6-receiver-result.txt`의 `candidates=`·`gathering=` 확인), (d) 카메라 시작 체감 속도, (e) 사이렌 풀스크린/컨트롤바 레이아웃
+- [x] **사람 작업 (재검증) 완료**: build 10 테스트 — WebRTC 8초로 단축, 카메라·레이아웃·모달 관련 후속 피드백은 build 11로 반영. 푸시는 여전히 미도착 → build 11에서 진짜 근본원인 확정.
+
+### Build 11 (2026-07-12) — 푸시 진짜 근본원인 확정 + 라이브 컨트롤 재설계 + 재생 속도
+
+build 10에서도 푸시 전멸이 계속돼 systematic-debugging으로 재조사. 설계: `docs/superpowers/specs/2026-07-12-build11-push-rootcause-ui-replay-design.md`.
+
+**② 푸시 진짜 근본원인 (코드+git으로 확정, 로그 불필요):** `type == X` predicate를 쓰는 구독(per-type, escalation, catch-all)은 **`Event.type` 필드가 Production 스키마에서 Queryable로 인덱싱돼 있어야** 저장·발화된다. 앱은 Event를 `session`·`value:true`로만 쿼리해서 `type`은 Production에서 queryable로 설정된 적이 없다 → `type==X` 구독은 전부 저장 실패. build 8까지 푸시를 실어나른 건 `value:true`(전체매치) 구독뿐이었고 build 9가 그걸 지웠다. (signal/macState 동기화가 계속 잘 된 것도 그게 `value:true`라서.) `escalationDeadline` 때와 같은 Production 스키마 계열 문제.
+
+1. **카메라 시작**: build 10에서 iCloud 왕복과 병렬화 완료(추가 변경 없음, 체감 확인 대상).
+2. **라이브 하단 버튼 어색**: 사이렌·종료가 둘 다 빨강으로 경쟁 → **위계 재설계**(frontend-design): 사이렌=유일한 빨강 긴급 hold(그라디언트 채움+햅틱), 종료=중립 회색 컴팩트 secondary. 통일 52pt/14pt 라운드. `LiveControlBar` + 컴포넌트 분리.
+3. **종료 확인 모달 상단**: `.confirmationDialog`(하단 액션시트) → `.alert`(중앙 모달).
+4. **종료 세션 재생 11초**: `fetchChunks`가 목록 조회 시 모든 청크 MP4를 재다운로드하던 것이 원인. `fetchChunkMetadata`(video 제외 빠른 쿼리) + `ChunkAssetCache.cachedFileURL`로 **캐시 안 된 청크만 다운로드**, 컴포지션 duration 로딩 **병렬화**. 재열람/라이브로 본 세션은 사실상 즉시 재생.
+5. **사이렌 텍스트**: 화면 높이 비례(`height*0.11`, 최대 160pt)로 확대.
+6. **WebRTC**: build 10에서 8초로 개선됨(추가 최적화 보류).
+
+```
+xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 28d62cf6-14e8-4f3d-8197-a52b32076fe8 — build 11, processingState VALID
+
+xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 9f9ee685-deea-4c07-b480-909763e8e109 — build 11, processingState VALID
+```
+
+- [x] Build 11 두 타겟 업로드·처리 완료 (`CURRENT_PROJECT_VERSION` 10→11), 둘 다 `processingState: VALID`
+- [ ] **사람 작업 1 (필수 — 푸시 근본 해결)**: CloudKit Dashboard에서 `Event.type`을 Queryable로 표시 후 Production 배포:
+  1. https://icloud.developer.apple.com/dashboard → 컨테이너 `iCloud.com.youngminpark.maccctv` 선택
+  2. 좌측 **Schema → Indexes**(또는 Record Types → **Event**)
+  3. **Event** 레코드 타입에서 `type` 필드에 **QUERYABLE** 인덱스 추가 (Add Index → Field: type, Index Type: Queryable → Save)
+  4. 우상단 **Deploy Schema Changes…** → Development에서 **Production**으로 배포 확정
+  5. 배포 후 iPhone에서 **build 11 앱을 한 번 재실행**(구독 부트스트랩이 재실행돼 v3 per-type 구독 생성)
+- [ ] **사람 작업 2 (재검증)**: 위 배포 후 — (a) 꺼진 앱에서 이벤트 주면 친근 문구 푸시 도착(안 오면 iPhone `m-notif-result.txt`의 `M11_SUBS_CREATED` vs `M11_SUBS_CREATE_FAILED` 확인), (b) 라이브 하단 컨트롤/종료 모달, (c) 종료 세션 재생 즉시성, (d) 사이렌 텍스트 크기
 
 **외부 테스터는 결정에 따라 불필요 (2026-07-06):** 계획 문서의 M9 검증 기준은 "TestFlight 외부 테스터 설치"라고 되어 있지만, 실기기(본인 Mac + iPhone) 검증이 목적이면 그 계정이 이미 내부 테스터로 등록되어 있으니 내부 테스팅만으로 충분하다. 외부 테스터(Beta App Review 필요)는 **팀 멤버가 아닌 다른 사람**에게 정식 출시 전 미리 배포하고 싶을 때만 필요 — PRD §11 출시 전략도 베타 단계 없이 바로 무료 출시라 필수 아님. 필요해지면 아래 항목 진행:
 
