@@ -318,12 +318,14 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 ```
 xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
   --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
-# Delivery UUID: 858dcb9d-2bce-4471-bfc1-db87a2234fc9 — build 12
+# Delivery UUID: 858dcb9d-2bce-4471-bfc1-db87a2234fc9 — build 12 (UPLOAD SUCCEEDED)
 
 xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
   --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
-# Delivery UUID: (iOS 업로드가 일시 네트워크 오류로 재시도 중 — 완료 후 UUID/처리상태 기입 예정)
+# Delivery UUID: ef8e73c4-d53c-4b69-b972-f033f9d82f8d — build 12 (UPLOAD SUCCEEDED)
 ```
+
+> 두 타겟 모두 업로드 접수 완료(UPLOAD SUCCEEDED). 업로드 시점 개발 Mac의 네트워크(DNS)가 불안정해 `processingState VALID` 확인 폴링은 지연됨 — App Store Connect에서 처리 완료 후 TestFlight 배정.
 
 ### 버전 번호 참고
 
