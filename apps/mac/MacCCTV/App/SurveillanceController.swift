@@ -395,6 +395,16 @@ final class SurveillanceController: ObservableObject {
             _ = await evaluateAutoSiren(now: occurredAt)
         }
 
+        // Evidence-preservation flush runs *before* the notification/rate-limit gates:
+        // a lid close or power disconnect can immediately precede shutdown, so the
+        // in-progress chunk must be finalized and pushed to the cloud right away even
+        // if notifications are off or the event is rate-limited (PRD M8). Those gates
+        // only affect the event *record* saved below. (flushCurrentChunkForEvent
+        // self-guards on there being an active recording, so this no-ops when idle.)
+        if type == .lidClose || type == .powerDisconnect {
+            await flushCurrentChunkForEvent()
+        }
+
         guard notificationsEnabled,
               isRecordingEventState,
               let sessionID = activeSessionID else {
@@ -403,10 +413,6 @@ final class SurveillanceController: ObservableObject {
 
         guard eventRateLimiter.shouldRecord(type, at: occurredAt) else {
             return
-        }
-
-        if type == .lidClose || type == .powerDisconnect {
-            await flushCurrentChunkForEvent()
         }
 
         await saveSecurityEvent(type: type, confidence: confidence, occurredAt: occurredAt, sessionID: sessionID)
