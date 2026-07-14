@@ -344,6 +344,23 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 # Delivery UUID: 9e850920-2984-42b6-9899-dc392f57916a — build 13
 ```
 
+### Build 14 (2026-07-13) — 종료 세션 재생 로딩 인디케이터
+
+build 13 실기기: 종료된 세션은 재생 버튼을 누르고 3초+ 기다려야 재생되고 로딩 표시가 없음. **원인**: replay 로딩(메타데이터 쿼리 + 미캐시 청크 다운로드 + 컴포지션 합성) 동안 플레이어에 아직 아이템이 없어 화면이 검은 채로 아무 신호가 없었고, 자동재생 전에 사용자가 play를 누르게 됨. **수정**: `isPreparingReplay` 상태를 추가해 첫 로딩 동안 **중앙 스피너 오버레이("영상 불러오는 중…")** 표시, 준비되면 자동 재생(기존 `playbackActive` 경로) + 스피너 페이드아웃. (다운로드 자체는 build 11의 캐시-우선/미캐시만 다운로드/병렬 합성 유지 — 재열람·라이브로 본 세션은 빠름.)
+
+- [ ] Build 14 두 타겟 업로드·처리
+- [ ] **재검증**: 종료 세션 열람 시 스피너 표시 후 자동 재생.
+
+```
+xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 7d140619-46cf-4ca0-bd72-ebfaa5a15cbc — build 14
+
+xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: d2469ef7-bda4-4ce4-8047-70421fc42609 — build 14
+```
+
 ### 버전 번호 참고
 
 현재 `project.yml`은 `MARKETING_VERSION: 0.1.0`, `CURRENT_PROJECT_VERSION: 1`이다. 최초 정식 제출이라면 "1.0"으로 올리는 것이 관례적이지만, 이는 제품 의사결정이라 임의로 바꾸지 않았다 — 원하면 알려주면 반영한다.
