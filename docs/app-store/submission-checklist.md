@@ -301,6 +301,30 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
   7. iPhone 보관함에서 방금 세션 재생 확인, CloudKit Console(Production 환경)에 Session/Chunk 레코드 실제로 쌓였는지 확인
   8. 문제 생기면 바로 알려주기 — Production 환경·Release 서명이라 Debug 빌드에서 안 보이던 문제(엔타이틀먼트 차이 등)가 나올 수 있음
 
+### Build 12 (2026-07-13) — 푸시 근본원인 확정(프로덕션 프로브) + 자동 폴백
+
+**근본원인 확정 (프로덕션에 직접 CKQuerySubscription을 만들어 확인):** Private DB 서버 로그에 `SubscriptionCreate` 6건이 `BAD_REQUEST`, 그리고 프로덕션 컨테이너에 직접 프로브를 돌린 결과:
+- `Event value:true` 구독 → **성공** (Signal 구독·build 8 catch-all과 동일 형태)
+- `Event type == X` 구독(alert/silent 무관) → **실패**, `code=12 server="attempting to create a subscription in a production container"`
+
+즉 `type == X` predicate 구독은 **Event `type` queryable 인덱스가 프로덕션 스키마에 실제로 배포돼 있어야** 하는데(대시보드 표시와 무관하게) 배포가 안 돼 거부된다. `value:true`는 필드 인덱스가 필요 없어 항상 성공. `escalationDeadline`과 동일 계열의 dev↔prod 스키마 분기.
+
+**해결 — 자동 폴백(스키마 상태와 무관하게 푸시 보장):** `synchronizeSubscriptions`가 per-type(`type==X`, 친근 문구)를 시도하고, 하나라도 실패하면 `value:true` 전체매치 구독(`event-all-v1`, 제너릭 문구 `event_generic_notification_body`)을 만들어 푸시가 무조건 도착하게 한다. 인덱스가 실제로 배포되면 per-type이 성공하며 폴백은 자동 제거(self-healing). 모드는 `m-notif-result.txt`의 `M11_SUBS_MODE per-type|fallback`으로 확인.
+
+- [ ] Build 12 두 타겟 업로드·처리
+- [ ] **사람 작업(선택 — 친근 per-type 문구를 원하면)**: CloudKit Dashboard에서 **Development 환경 → "Deploy Schema Changes…"** 를 실제로 실행해 Event `type` queryable 인덱스를 프로덕션에 배포. (프로덕션 화면에 인덱스가 "보이는" 것과 실제 배포는 다름 — 배포 전엔 프로덕션이 `type==X` 구독을 거부함.) 배포 후 앱 재실행 시 자동으로 per-type 문구로 승격.
+- [ ] **재검증**: 꺼진 앱에서 이벤트 → 푸시 도착(폴백이면 "🚨 Mac에서 이상이 감지됐어요", 인덱스 배포됐으면 "사람이 감지됐어요!" 등 per-type).
+
+```
+xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 858dcb9d-2bce-4471-bfc1-db87a2234fc9 — build 12
+
+xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: (iOS 업로드가 일시 네트워크 오류로 재시도 중 — 완료 후 UUID/처리상태 기입 예정)
+```
+
 ### 버전 번호 참고
 
 현재 `project.yml`은 `MARKETING_VERSION: 0.1.0`, `CURRENT_PROJECT_VERSION: 1`이다. 최초 정식 제출이라면 "1.0"으로 올리는 것이 관례적이지만, 이는 제품 의사결정이라 임의로 바꾸지 않았다 — 원하면 알려주면 반영한다.
