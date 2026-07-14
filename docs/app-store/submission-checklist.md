@@ -361,6 +361,23 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 # Delivery UUID: d2469ef7-bda4-4ce4-8047-70421fc42609 — build 14
 ```
 
+### Build 15 (2026-07-13) — 보관함 최근 세션 백그라운드 프리페치 (Wi-Fi)
+
+종료 세션 재생이 "본 것만 빨라지는" 구조였음(청크는 세션을 열 때만 다운로드→캐시). 최근에 볼 확률이 높은 세션을 미리 받아 즉시 재생되게 함. **구현**: 보관함 로드 후 최근 **종료 세션 3개**의 청크를 백그라운드로 캐시 워밍(`CloudKitStore.prefetchSessionChunks` = 메타데이터→미캐시만 다운로드). **Wi-Fi(비-expensive/비-constrained)일 때만** 실행(`Reachability`)해 셀룰러 데이터 절약. 목록 로딩은 안 막고 fire-and-forget. `m-prefetch-result.txt`에 `M13_PREFETCH` 로깅.
+
+- [ ] Build 15 두 타겟 업로드·처리
+- [ ] **재검증**: Wi-Fi에서 보관함 진입 후 잠시 뒤 최근 세션 3개가 즉시 재생되는지(스피너 없이/짧게).
+
+```
+xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 35baef1e-dce6-45ad-a8ca-0d269953a9f0 — build 15
+
+xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: ac351f5a-418d-497f-9762-ea6180044ec0 — build 15
+```
+
 ### 버전 번호 참고
 
 현재 `project.yml`은 `MARKETING_VERSION: 0.1.0`, `CURRENT_PROJECT_VERSION: 1`이다. 최초 정식 제출이라면 "1.0"으로 올리는 것이 관례적이지만, 이는 제품 의사결정이라 임의로 바꾸지 않았다 — 원하면 알려주면 반영한다.

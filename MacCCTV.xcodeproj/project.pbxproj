@@ -16,6 +16,7 @@
 		18BA45D094281A9E2FC6F104 /* CCTVCompanionApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CACEC2A30F0B0D28EA4EB50 /* CCTVCompanionApp.swift */; };
 		1AB2E18EBAD3149A367D6AD3 /* M4PlaybackLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D2565259B1F3723D408EBCD /* M4PlaybackLaunchHandler.swift */; };
 		1E4DDB35A9D729B8626CE86B /* CaptureSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A398E53B0362902D775BF7 /* CaptureSettings.swift */; };
+		2434113CED7283AE58EE0FB6 /* Reachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E026B4DF79C8B34CCCF84E4 /* Reachability.swift */; };
 		288AB77738C39F08466EE84A /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = F8D51694791FFE6571A667A8 /* InfoPlist.xcstrings */; };
 		28A0DF06D884C916A1349DB2 /* MacCCTVTips.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 521FA01085945CE8A129120E /* MacCCTVTips.storekit */; };
 		2AE9EDC79DC87791030AAFE0 /* WebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = 23F2B3C5E4BC0EFB8F215515 /* WebRTC */; };
@@ -77,6 +78,7 @@
 		0598E0BDD1D1C294A62A94AB /* M0ProbeLaunchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M0ProbeLaunchHandler.swift; sourceTree = "<group>"; };
 		0ACB4C1D7C5A5AFA2B10C0AC /* MacCCTVTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacCCTVTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1B7B2B778F6E0C691EA02C91 /* TipJarAppStoreConnectProductTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJarAppStoreConnectProductTests.swift; sourceTree = "<group>"; };
+		1E026B4DF79C8B34CCCF84E4 /* Reachability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reachability.swift; sourceTree = "<group>"; };
 		1E1054ADF924B134952F92A1 /* M2UploadLaunchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M2UploadLaunchHandler.swift; sourceTree = "<group>"; };
 		282FCA4FE21DB7980D7DCB36 /* MacCCTV.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacCCTV.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		28B65B440D4B33CCC1962465 /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
@@ -167,6 +169,7 @@
 		048EF1AF1A92FAAF4574A975 /* Library */ = {
 			isa = PBXGroup;
 			children = (
+				1E026B4DF79C8B34CCCF84E4 /* Reachability.swift */,
 				E94F7C32CF3A354413CADE4C /* SessionLibraryView.swift */,
 				74590EDC7780A3EB3C5122EE /* SessionLibraryViewModel.swift */,
 				DD850BF5D3652F5125572FEF /* TipJarView.swift */,
@@ -481,7 +484,7 @@
 					54374CA213092B0F091EBD9E = {
 						DevelopmentTeam = 878FAHTFQJ;
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.Push\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.iCloud\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.Push\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1]]";
 					};
 					D14D4B0E61026724F28C6167 = {
 						DevelopmentTeam = 878FAHTFQJ;
@@ -599,6 +602,7 @@
 				1AB2E18EBAD3149A367D6AD3 /* M4PlaybackLaunchHandler.swift in Sources */,
 				50B494ED430814DAEA9FC796 /* M5EventPollLaunchHandler.swift in Sources */,
 				108268D93371ACF10565F6E5 /* M6LiveLaunchHandler.swift in Sources */,
+				2434113CED7283AE58EE0FB6 /* Reachability.swift in Sources */,
 				90F84CD00B18EEB6B3B87C80 /* SessionLibraryView.swift in Sources */,
 				71C3FA8A11FEA42D432C1BCA /* SessionLibraryViewModel.swift in Sources */,
 				110F222E22059DB633A9751C /* SessionPlaybackView.swift in Sources */,
@@ -693,7 +697,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 15;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 878FAHTFQJ;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -772,7 +776,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 15;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 878FAHTFQJ;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
