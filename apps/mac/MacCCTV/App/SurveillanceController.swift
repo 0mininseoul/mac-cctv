@@ -124,6 +124,16 @@ final class SurveillanceController: ObservableObject {
             try? await Task.sleep(nanoseconds: 750_000_000)
             self?.registerHotkey()
         }
+
+        // Catch-up: re-upload chunks left on disk when a session's upload didn't finish
+        // (failed end-of-session upload, or a force-quit), then delete only the local
+        // copies that upload successfully — so no recorded evidence is lost (PRD M4).
+        if let chunksBaseDirectory = try? Self.chunksBaseDirectory() {
+            let store = store
+            Task {
+                await ChunkCatchUpUploader(store: store, baseDirectory: chunksBaseDirectory).run()
+            }
+        }
     }
 
     func toggleFromButton() {
@@ -747,12 +757,16 @@ final class SurveillanceController: ObservableObject {
     }
 
     private static func outputDirectory(for sessionID: String) throws -> URL {
+        try chunksBaseDirectory().appendingPathComponent(sessionID)
+    }
+
+    private static func chunksBaseDirectory() throws -> URL {
         guard let appGroupURL = FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: CKSchema.appGroupIdentifier
         ) else {
             throw SurveillanceControllerError.appGroupUnavailable
         }
-        return appGroupURL.appendingPathComponent("M3Chunks").appendingPathComponent(sessionID)
+        return appGroupURL.appendingPathComponent("M3Chunks")
     }
 
     private func makePendingChunks(

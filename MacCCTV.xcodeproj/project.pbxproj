@@ -24,6 +24,7 @@
 		2D9FE6114734D60ACD06DA7C /* M0ProbeLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F4F93FC1015721C90A7951F /* M0ProbeLaunchHandler.swift */; };
 		2E31E0E8B1C5662D7C0269D4 /* M0ProbeLaunchHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0598E0BDD1D1C294A62A94AB /* M0ProbeLaunchHandler.swift */; };
 		301F46300732B79417FB9267 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FFD661A51CF049749A8C8324 /* Localizable.xcstrings */; };
+		3213153F19E2AE97EFAAAD90 /* ChunkCatchUpUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E4B8C421D3083E1DE788A7 /* ChunkCatchUpUploader.swift */; };
 		341E8B3B38C68988ADDCB631 /* ChunkWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30DF144D2C9E6F0DAE977038 /* ChunkWriter.swift */; };
 		3A947F4E50BF47434E205DE2 /* IOSDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = C04DAA7A0A3A0F5A65FA6C1A /* IOSDiagnostics.swift */; };
 		3D2E8DDE7C6AF8EDE270624E /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B1D32FC93E70F76FE80203 /* SettingsView.swift */; };
@@ -107,6 +108,7 @@
 		7D2565259B1F3723D408EBCD /* M4PlaybackLaunchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M4PlaybackLaunchHandler.swift; sourceTree = "<group>"; };
 		7D78207AB6F5951B117E39E8 /* LocalChunkStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalChunkStore.swift; sourceTree = "<group>"; };
 		7F9E9F68FED9F5530D4C6F5A /* BroadcastSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BroadcastSession.swift; sourceTree = "<group>"; };
+		80E4B8C421D3083E1DE788A7 /* ChunkCatchUpUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChunkCatchUpUploader.swift; sourceTree = "<group>"; };
 		85DD33AC436E7638A9D6C90B /* MacCCTVRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacCCTVRootView.swift; sourceTree = "<group>"; };
 		86B1D32FC93E70F76FE80203 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		8F4F93FC1015721C90A7951F /* M0ProbeLaunchHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M0ProbeLaunchHandler.swift; sourceTree = "<group>"; };
@@ -180,6 +182,7 @@
 		1427F1D57BF14490A7AE16DB /* App */ = {
 			isa = PBXGroup;
 			children = (
+				80E4B8C421D3083E1DE788A7 /* ChunkCatchUpUploader.swift */,
 				0598E0BDD1D1C294A62A94AB /* M0ProbeLaunchHandler.swift */,
 				B04A9EFC2FAC915F59F62D14 /* M1CaptureLaunchHandler.swift */,
 				1E1054ADF924B134952F92A1 /* M2UploadLaunchHandler.swift */,
@@ -484,7 +487,7 @@
 					54374CA213092B0F091EBD9E = {
 						DevelopmentTeam = 878FAHTFQJ;
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.Push\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.iCloud\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.Push\": [\"enabled\": 1]]";
 					};
 					D14D4B0E61026724F28C6167 = {
 						DevelopmentTeam = 878FAHTFQJ;
@@ -567,6 +570,7 @@
 				47C0CC79E30E86495698DE08 /* BroadcastSession.swift in Sources */,
 				BAF86A2F9766ED7D90FE5841 /* CaptureEngine.swift in Sources */,
 				1E4DDB35A9D729B8626CE86B /* CaptureSettings.swift in Sources */,
+				3213153F19E2AE97EFAAAD90 /* ChunkCatchUpUploader.swift in Sources */,
 				341E8B3B38C68988ADDCB631 /* ChunkWriter.swift in Sources */,
 				AA6E199B798F2FF1571CFF5F /* EventDetector.swift in Sources */,
 				437399AF3869AC00D5426F75 /* HotkeyManager.swift in Sources */,
