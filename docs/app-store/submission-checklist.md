@@ -387,7 +387,7 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 4. **종료 시 진행 청크 플러시 (M8)**: `NSApplication.willTerminateNotification`에서 best-effort로 진행 중 청크를 디스크에 finalize(다음 실행에 catch-up이 재업로드).
 5. **사이렌 기본 문구**: 기본값·placeholder를 "도둑님 안녕하세요?"로(기존 커스텀 값 유지).
 
-- [ ] Build 16 두 타겟 업로드·처리
+- [x] Build 16 두 타겟 업로드·처리 완료 (`CURRENT_PROJECT_VERSION` 15→16), 둘 다 `processingState: VALID`
 - [ ] **재검증**: (a) 알림 OFF에서 뚜껑 닫기/전원 분리 시 마지막 청크가 업로드되는지, (b) 세션 종료 시 업로드 실패 후 재실행하면 로컬 청크가 재업로드되는지(`m4-catchup-result.txt`), (c) 사이렌 기본 문구.
 
 ```
