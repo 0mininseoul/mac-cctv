@@ -277,6 +277,36 @@ public final class CloudKitStore: @unchecked Sendable {
         .personMotion, .inputTouch, .powerDisconnect, .deviceMotion, .lidClose
     ]
 
+    /// Fallback event subscription that matches ALL events via `NSPredicate(value: true)`
+    /// — the only predicate CloudKit accepts for a new subscription in a *production*
+    /// container when the field's queryable index isn't actually deployed (the per-type
+    /// `type == X` subs fail there with "attempting to create a subscription in a
+    /// production container"). Needs no queryable field, so it always saves. Copy is a
+    /// single warm generic line (a match-all sub can only carry one message).
+    public func ensureGenericEventSubscription(
+        subscriptionID: String = "event-all-v1",
+        alertLocalizationKey: String = "event_generic_notification_body"
+    ) async throws {
+        let subscription = CKQuerySubscription(
+            recordType: CKSchema.RecordType.event,
+            predicate: NSPredicate(value: true),
+            subscriptionID: subscriptionID,
+            options: [.firesOnRecordCreation]
+        )
+        let notificationInfo = CKSubscription.NotificationInfo()
+        notificationInfo.title = "Mac CCTV"
+        notificationInfo.alertLocalizationKey = alertLocalizationKey
+        notificationInfo.soundName = "default"
+        notificationInfo.shouldBadge = true
+        notificationInfo.desiredKeys = [
+            CKSchema.Event.session,
+            CKSchema.Event.type,
+            CKSchema.Event.occurredAt
+        ]
+        subscription.notificationInfo = notificationInfo
+        _ = try await database.save(subscription)
+    }
+
     public func ensureEventTypeSubscription(
         type: SecurityEventType,
         subscriptionID: String,

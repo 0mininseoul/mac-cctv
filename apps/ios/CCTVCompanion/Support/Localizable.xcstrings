@@ -738,6 +738,12 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Connecting live…" } },
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "실시간 연결 중…" } }
       }
+    },
+    "event_generic_notification_body" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "🚨 Something was detected on your Mac" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "🚨 Mac에서 이상이 감지됐어요" } }
+      }
     }
   },
   "version" : "1.0"
