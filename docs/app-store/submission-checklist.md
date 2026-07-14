@@ -378,6 +378,28 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 # Delivery UUID: ac351f5a-418d-497f-9762-ea6180044ec0 — build 15
 ```
 
+### Build 16 (2026-07-15) — PRD Must 갭 4건 + 사이렌 기본 문구
+
+코드 리뷰에서 나온 PRD Must 갭 4건(개별 커밋) + 사이렌 기본 문구 변경:
+1. **긴급 증거 플러시 순서 (M8)**: `recordSecurityEvent`에서 lidClose/powerDisconnect의 `flushCurrentChunkForEvent()`를 `notificationsEnabled` guard·레이트리미터보다 **앞으로** 이동 — 알림을 꺼도 증거 플러시는 항상 동작.
+2. **로컬-only 청크 catch-up (M4)**: 앱 시작 시 출력 디렉터리를 스캔해 세션 레코드는 있는데 클라우드에 없는 청크를 재업로드, 성공분만 로컬 삭제. 판정 로직은 순수 `ChunkCatchUpPlanner`로 분리 + 단위 테스트 6개(`swift test` 58→64).
+3. **7일 보존 sweep 정상 경로 배선 (M5)**: 기존 `--m2-sweep` 플래그에만 있던 `sweepExpired()`를 Mac 정상 실행(`SurveillanceController.init`)에서 fire-and-forget로 실행 — iOS와 동일.
+4. **종료 시 진행 청크 플러시 (M8)**: `NSApplication.willTerminateNotification`에서 best-effort로 진행 중 청크를 디스크에 finalize(다음 실행에 catch-up이 재업로드).
+5. **사이렌 기본 문구**: 기본값·placeholder를 "도둑님 안녕하세요?"로(기존 커스텀 값 유지).
+
+- [ ] Build 16 두 타겟 업로드·처리
+- [ ] **재검증**: (a) 알림 OFF에서 뚜껑 닫기/전원 분리 시 마지막 청크가 업로드되는지, (b) 세션 종료 시 업로드 실패 후 재실행하면 로컬 청크가 재업로드되는지(`m4-catchup-result.txt`), (c) 사이렌 기본 문구.
+
+```
+xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 76a24edf-942c-4c1b-a91c-253b32c13e09 — build 16
+
+xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 64b9eeb0-6de2-4484-8717-e3968daaf0c2 — build 16
+```
+
 ### 버전 번호 참고
 
 현재 `project.yml`은 `MARKETING_VERSION: 0.1.0`, `CURRENT_PROJECT_VERSION: 1`이다. 최초 정식 제출이라면 "1.0"으로 올리는 것이 관례적이지만, 이는 제품 의사결정이라 임의로 바꾸지 않았다 — 원하면 알려주면 반영한다.
