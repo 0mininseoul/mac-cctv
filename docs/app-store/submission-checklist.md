@@ -327,6 +327,23 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 
 > 두 타겟 모두 `processingState VALID` 확인 완료. (업로드 시점 개발 Mac의 DNS가 일시 불안정해 iOS 업로드/폴링을 재시도했으나 최종 성공.)
 
+### Build 13 (2026-07-13) — 라이브 하단 컨트롤 UI 재설계 (frontend-design)
+
+build 12 실기기에서 라이브 하단 사이렌 버튼이 화면 절반을 차지하며 부풀던 문제. **원인**: `SirenHoldButton` 안의 채움용 `GeometryReader`가 greedy인데 버튼이 `minHeight`만 지정돼 상한 없이 남는 세로 공간을 다 먹었음. **수정**: 컨트롤 독을 **고정 58pt 높이**로 바꾸고(비디오가 `maxHeight:.infinity`로 남는 공간 차지), frontend-design으로 재구성 — 사이렌은 홀드 시 빨강 그라디언트가 좌→우로 쓸고 글로우+햅틱이 나는 pill(힌트는 라벨 `꾹 눌러 사이렌`에 흡수), 종료는 중립 secondary(66pt), 상단 헤어라인 구분선. `event value:true` 폴백 푸시(build 12)로 이미 푸시는 도착 확인됨.
+
+- [ ] Build 13 두 타겟 업로드·처리
+- [ ] **재검증**: 라이브 하단 컨트롤(사이렌 pill 크기·홀드 애니메이션·종료 버튼), 사이렌 풀스크린 텍스트 크기(build 11).
+
+```
+xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 0ce68a89-217f-401f-a4ba-088ee102fba1 — build 13
+
+xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 9e850920-2984-42b6-9899-dc392f57916a — build 13
+```
+
 ### 버전 번호 참고
 
 현재 `project.yml`은 `MARKETING_VERSION: 0.1.0`, `CURRENT_PROJECT_VERSION: 1`이다. 최초 정식 제출이라면 "1.0"으로 올리는 것이 관례적이지만, 이는 제품 의사결정이라 임의로 바꾸지 않았다 — 원하면 알려주면 반영한다.
