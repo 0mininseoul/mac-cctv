@@ -365,7 +365,7 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 
 종료 세션 재생이 "본 것만 빨라지는" 구조였음(청크는 세션을 열 때만 다운로드→캐시). 최근에 볼 확률이 높은 세션을 미리 받아 즉시 재생되게 함. **구현**: 보관함 로드 후 최근 **종료 세션 3개**의 청크를 백그라운드로 캐시 워밍(`CloudKitStore.prefetchSessionChunks` = 메타데이터→미캐시만 다운로드). **Wi-Fi(비-expensive/비-constrained)일 때만** 실행(`Reachability`)해 셀룰러 데이터 절약. 목록 로딩은 안 막고 fire-and-forget. `m-prefetch-result.txt`에 `M13_PREFETCH` 로깅.
 
-- [ ] Build 15 두 타겟 업로드·처리
+- [x] Build 15 두 타겟 업로드·처리 완료 (`CURRENT_PROJECT_VERSION` 14→15), 둘 다 `processingState: VALID`
 - [ ] **재검증**: Wi-Fi에서 보관함 진입 후 잠시 뒤 최근 세션 3개가 즉시 재생되는지(스피너 없이/짧게).
 
 ```
