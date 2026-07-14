@@ -36,9 +36,16 @@ struct SessionPlaybackView: View {
                 if viewModel.isLive && webRTCReceiver.isConnectingLive {
                     LiveConnectingOverlay(statusText: webRTCReceiver.statusText)
                 }
+
+                // Ended-session replay is still fetching/composing — show a spinner
+                // so the wait isn't a blank tap-and-nothing-happens screen.
+                if !viewModel.isLive && viewModel.isPreparingReplay {
+                    ReplayLoadingOverlay()
+                }
             }
             .frame(maxWidth: .infinity, minHeight: 260, maxHeight: .infinity)
             .layoutPriority(1)
+            .animation(.easeInOut(duration: 0.2), value: viewModel.isPreparingReplay)
 
             if viewModel.isLive {
                 LiveControlBar(
@@ -176,6 +183,26 @@ private struct LiveConnectingOverlay: View {
                     .multilineTextAlignment(.center)
             }
             .padding(24)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .transition(.opacity)
+    }
+}
+
+/// Spinner shown over the black video surface while an ended session's recording is
+/// being fetched and stitched, before the first frame is playable.
+private struct ReplayLoadingOverlay: View {
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.55)
+            VStack(spacing: 12) {
+                ProgressView()
+                    .controlSize(.large)
+                    .tint(.white)
+                Text("replay_loading_title")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.white.opacity(0.9))
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .transition(.opacity)

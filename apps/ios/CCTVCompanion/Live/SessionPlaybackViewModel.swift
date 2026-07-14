@@ -23,6 +23,9 @@ final class SessionPlaybackViewModel: ObservableObject {
     @Published private(set) var isExportingVideo = false
     @Published private(set) var exportStatusText = ""
     @Published private(set) var exportedVideoURL: IdentifiableURL?
+    /// True while an ended session's replay is still being fetched/composed and has
+    /// nothing playable yet — drives a loading overlay so the wait isn't a blank screen.
+    @Published private(set) var isPreparingReplay = false
 
     let player: AVQueuePlayer
 
@@ -225,6 +228,14 @@ final class SessionPlaybackViewModel: ObservableObject {
     /// chunks not already in the local cache. A session watched live or re-opened
     /// plays effectively instantly; a first-time one downloads only what's missing.
     private func refreshReplay() async {
+        // Show the loading overlay only on the first load (when nothing plays yet);
+        // later refreshes (e.g. catching late-flushed chunks) shouldn't flash it.
+        let showLoading = !hasPlayableContent
+        if showLoading {
+            isPreparingReplay = true
+        }
+        defer { isPreparingReplay = false }
+
         do {
             let metadata = try await store.fetchChunkMetadata(sessionID: session.id, limit: 800)
             let resolved = try await resolveReplayChunks(metadata)

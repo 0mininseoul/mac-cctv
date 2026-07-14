@@ -750,6 +750,12 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Hold for siren" } },
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "꾹 눌러 사이렌" } }
       }
+    },
+    "replay_loading_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Loading video…" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "영상 불러오는 중…" } }
+      }
     }
   },
   "version" : "1.0"
