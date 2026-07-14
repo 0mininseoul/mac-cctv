@@ -331,7 +331,7 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 
 build 12 실기기에서 라이브 하단 사이렌 버튼이 화면 절반을 차지하며 부풀던 문제. **원인**: `SirenHoldButton` 안의 채움용 `GeometryReader`가 greedy인데 버튼이 `minHeight`만 지정돼 상한 없이 남는 세로 공간을 다 먹었음. **수정**: 컨트롤 독을 **고정 58pt 높이**로 바꾸고(비디오가 `maxHeight:.infinity`로 남는 공간 차지), frontend-design으로 재구성 — 사이렌은 홀드 시 빨강 그라디언트가 좌→우로 쓸고 글로우+햅틱이 나는 pill(힌트는 라벨 `꾹 눌러 사이렌`에 흡수), 종료는 중립 secondary(66pt), 상단 헤어라인 구분선. `event value:true` 폴백 푸시(build 12)로 이미 푸시는 도착 확인됨.
 
-- [ ] Build 13 두 타겟 업로드·처리
+- [x] Build 13 두 타겟 업로드·처리 완료 (`CURRENT_PROJECT_VERSION` 12→13), 둘 다 `processingState: VALID`
 - [ ] **재검증**: 라이브 하단 컨트롤(사이렌 pill 크기·홀드 애니메이션·종료 버튼), 사이렌 풀스크린 텍스트 크기(build 11).
 
 ```
