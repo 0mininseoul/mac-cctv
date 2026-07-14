@@ -312,7 +312,7 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 **해결 — 자동 폴백(스키마 상태와 무관하게 푸시 보장):** `synchronizeSubscriptions`가 per-type(`type==X`, 친근 문구)를 시도하고, 하나라도 실패하면 `value:true` 전체매치 구독(`event-all-v1`, 제너릭 문구 `event_generic_notification_body`)을 만들어 푸시가 무조건 도착하게 한다. 인덱스가 실제로 배포되면 per-type이 성공하며 폴백은 자동 제거(self-healing). 모드는 `m-notif-result.txt`의 `M11_SUBS_MODE per-type|fallback`으로 확인.
 
 - [x] Build 12 두 타겟 업로드·처리 완료 (`CURRENT_PROJECT_VERSION` 11→12), 둘 다 `processingState: VALID`
-- [ ] **사람 작업(선택 — 친근 per-type 문구를 원하면)**: CloudKit Dashboard에서 **Development 환경 → "Deploy Schema Changes…"** 를 실제로 실행해 Event `type` queryable 인덱스를 프로덕션에 배포. (프로덕션 화면에 인덱스가 "보이는" 것과 실제 배포는 다름 — 배포 전엔 프로덕션이 `type==X` 구독을 거부함.) 배포 후 앱 재실행 시 자동으로 per-type 문구로 승격.
+- [x] **사람 작업 완료**: CloudKit Dashboard에서 Event `type` queryable 인덱스를 프로덕션에 실제 배포함. 배포 후 앱 재실행 시 폴백이 자동으로 per-type 친근 문구로 승격됨 — **실기기에서 친근 per-type 푸시 도착 확인 완료(2026-07-14)**. (프로덕션 화면에 인덱스가 "보이는" 것과 실제 배포는 다름 — 배포 전엔 프로덕션이 `type==X` 구독을 거부했음.)
 - [ ] **재검증**: 꺼진 앱에서 이벤트 → 푸시 도착(폴백이면 "🚨 Mac에서 이상이 감지됐어요", 인덱스 배포됐으면 "사람이 감지됐어요!" 등 per-type).
 
 ```
@@ -332,7 +332,7 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 build 12 실기기에서 라이브 하단 사이렌 버튼이 화면 절반을 차지하며 부풀던 문제. **원인**: `SirenHoldButton` 안의 채움용 `GeometryReader`가 greedy인데 버튼이 `minHeight`만 지정돼 상한 없이 남는 세로 공간을 다 먹었음. **수정**: 컨트롤 독을 **고정 58pt 높이**로 바꾸고(비디오가 `maxHeight:.infinity`로 남는 공간 차지), frontend-design으로 재구성 — 사이렌은 홀드 시 빨강 그라디언트가 좌→우로 쓸고 글로우+햅틱이 나는 pill(힌트는 라벨 `꾹 눌러 사이렌`에 흡수), 종료는 중립 secondary(66pt), 상단 헤어라인 구분선. `event value:true` 폴백 푸시(build 12)로 이미 푸시는 도착 확인됨.
 
 - [x] Build 13 두 타겟 업로드·처리 완료 (`CURRENT_PROJECT_VERSION` 12→13), 둘 다 `processingState: VALID`
-- [ ] **재검증**: 라이브 하단 컨트롤(사이렌 pill 크기·홀드 애니메이션·종료 버튼), 사이렌 풀스크린 텍스트 크기(build 11).
+- [x] **재검증 완료(2026-07-14)**: 라이브 하단 컨트롤(콤팩트 사이렌 pill·홀드 애니메이션·종료 버튼) 정상, 사이렌 풀스크린 텍스트 크기 정상, 친근 per-type 푸시 정상 도착.
 
 ```
 xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
