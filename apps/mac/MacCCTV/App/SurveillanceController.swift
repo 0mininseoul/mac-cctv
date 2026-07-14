@@ -134,6 +134,14 @@ final class SurveillanceController: ObservableObject {
                 await ChunkCatchUpUploader(store: store, baseDirectory: chunksBaseDirectory).run()
             }
         }
+
+        // 7-day retention sweep on the normal launch path — previously only ran behind
+        // the `--m2-sweep` flag. Fire-and-forget, matching iOS's library-load sweep
+        // (PRD M5).
+        let sweepStore = store
+        Task {
+            _ = try? await sweepStore.sweepExpired()
+        }
     }
 
     func toggleFromButton() {
