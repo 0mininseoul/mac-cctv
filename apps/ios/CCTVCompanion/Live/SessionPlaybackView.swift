@@ -37,7 +37,8 @@ struct SessionPlaybackView: View {
                     LiveConnectingOverlay(statusText: webRTCReceiver.statusText)
                 }
             }
-            .frame(minHeight: 260)
+            .frame(maxWidth: .infinity, minHeight: 260, maxHeight: .infinity)
+            .layoutPriority(1)
 
             if viewModel.isLive {
                 LiveControlBar(
@@ -181,18 +182,20 @@ private struct LiveConnectingOverlay: View {
     }
 }
 
-/// Live control bar with a deliberate hierarchy: the siren is the single red
-/// emergency action (hold-to-activate, full width), and ending the session is a
-/// neutral, compact secondary tap — so the two never read as competing red buttons
-/// (the old awkwardness). One caption line carries the hold hint or action status.
+/// Bottom control dock for a live session. Fixed, compact height (the video takes
+/// the rest of the screen) with a clear hierarchy: the siren is the single red
+/// emergency action — a hold-to-activate pill whose gradient sweeps as you hold —
+/// and ending the session is a neutral, narrow secondary. The hold affordance lives
+/// in the pill's own label, so no separate permanent hint line is needed; the
+/// caption slot below is used only for transient action status.
 private struct LiveControlBar: View {
     @ObservedObject var viewModel: SessionPlaybackViewModel
     @ObservedObject var webRTCReceiver: WebRTCReceiver
     let onRequestEnd: () -> Void
 
     var body: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 12) {
+        VStack(spacing: 8) {
+            HStack(spacing: 10) {
                 Group {
                     if viewModel.isSirenActive {
                         SilenceSirenButton(isSending: viewModel.isSendingSilenceSiren) {
@@ -212,9 +215,10 @@ private struct LiveControlBar: View {
 
                 EndSessionButton(isSending: viewModel.isSendingEndSession, action: onRequestEnd)
             }
+            .frame(height: LiveControlMetrics.height)
 
-            if let caption = controlCaption {
-                Text(caption)
+            if let status = controlStatus {
+                Text(status)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -228,16 +232,22 @@ private struct LiveControlBar: View {
             }
         }
         .padding(.horizontal, 16)
-        .padding(.top, 14)
-        .padding(.bottom, 12)
+        .padding(.top, 12)
+        .padding(.bottom, 10)
+        .frame(maxWidth: .infinity)
         .background(.regularMaterial)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Color.primary.opacity(0.08))
+                .frame(height: 0.5)
+        }
         .animation(.easeInOut(duration: 0.2), value: viewModel.isSirenActive)
         .animation(.easeInOut(duration: 0.2), value: viewModel.isEscalationPending)
     }
 
-    /// One shared caption line: prefers whatever action feedback is live, otherwise
-    /// the hold hint so first-time users know the siren needs a long press.
-    private var controlCaption: String? {
+    /// Transient action feedback only (sending / sent / failed). The hold hint now
+    /// lives inside the siren pill's label, so there's no permanent hint line.
+    private var controlStatus: String? {
         if !viewModel.endSessionStatusText.isEmpty {
             return viewModel.endSessionStatusText
         }
@@ -247,18 +257,19 @@ private struct LiveControlBar: View {
         if !viewModel.sirenCommandStatusText.isEmpty {
             return viewModel.sirenCommandStatusText
         }
-        return String(localized: "siren_button_hold_hint")
+        return nil
     }
 }
 
 private enum LiveControlMetrics {
-    static let height: CGFloat = 52
-    static let corner: CGFloat = 14
+    static let height: CGFloat = 58
+    static let corner: CGFloat = 18
 }
 
-/// Hold-to-activate siren. A gradient fills left→right while pressed so the
-/// hold-not-tap affordance is unmistakable, the label flips to a "keep holding"
-/// state, and a success haptic fires on completion.
+/// Hold-to-activate siren pill. A red gradient sweeps left→right as you hold, the
+/// label flips from the "hold" call-to-action to "keep holding", a soft red glow
+/// grows with progress, and a success haptic fires on completion. Fixed height so it
+/// never balloons to fill the screen.
 private struct SirenHoldButton: View {
     let isSending: Bool
     let action: () -> Void
@@ -267,13 +278,19 @@ private struct SirenHoldButton: View {
     @State private var fillProgress: CGFloat = 0
     @State private var fireHaptic = false
 
+    private var shape: some Shape {
+        RoundedRectangle(cornerRadius: LiveControlMetrics.corner, style: .continuous)
+    }
+
     var body: some View {
         ZStack {
+            shape.fill(Color.red.opacity(0.10))
+
             GeometryReader { geometry in
-                RoundedRectangle(cornerRadius: LiveControlMetrics.corner, style: .continuous)
+                shape
                     .fill(
                         LinearGradient(
-                            colors: [Color.red.opacity(0.95), Color(red: 0.74, green: 0.09, blue: 0.11)],
+                            colors: [Color(red: 0.87, green: 0.17, blue: 0.19), Color(red: 0.69, green: 0.06, blue: 0.09)],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -281,24 +298,18 @@ private struct SirenHoldButton: View {
                     .frame(width: geometry.size.width * fillProgress)
             }
 
-            Label(
-                isPressing ? "siren_button_hold_progress" : "siren_button_title",
-                systemImage: "speaker.wave.3.fill"
-            )
+            HStack(spacing: 8) {
+                Image(systemName: "speaker.wave.3.fill")
+                Text(isPressing ? "siren_button_hold_progress" : "siren_button_hold_cta")
+            }
             .font(.headline)
-            .foregroundStyle(fillProgress > 0.55 ? Color.white : Color.red)
-            .animation(.easeInOut(duration: 0.15), value: fillProgress > 0.55)
+            .foregroundStyle(fillProgress > 0.5 ? Color.white : Color.red)
+            .animation(.easeInOut(duration: 0.15), value: fillProgress > 0.5)
         }
-        .frame(maxWidth: .infinity, minHeight: LiveControlMetrics.height)
-        .background(
-            RoundedRectangle(cornerRadius: LiveControlMetrics.corner, style: .continuous)
-                .fill(Color.red.opacity(0.12))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: LiveControlMetrics.corner, style: .continuous)
-                .stroke(Color.red.opacity(0.45), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: LiveControlMetrics.corner, style: .continuous))
+        .frame(height: LiveControlMetrics.height)
+        .overlay(shape.stroke(Color.red.opacity(0.4), lineWidth: 1))
+        .clipShape(shape)
+        .shadow(color: Color.red.opacity(Double(fillProgress) * 0.4), radius: 12, y: 4)
         .opacity(isSending ? 0.55 : 1)
         .contentShape(Rectangle())
         .onLongPressGesture(
@@ -308,7 +319,7 @@ private struct SirenHoldButton: View {
                     return
                 }
                 isPressing = pressing
-                withAnimation(pressing ? .linear(duration: holdDuration) : .easeOut(duration: 0.2)) {
+                withAnimation(pressing ? .linear(duration: holdDuration) : .easeOut(duration: 0.25)) {
                     fillProgress = pressing ? 1 : 0
                 }
             },
@@ -318,7 +329,7 @@ private struct SirenHoldButton: View {
                 }
                 isPressing = false
                 fireHaptic.toggle()
-                withAnimation(.easeOut(duration: 0.2)) {
+                withAnimation(.easeOut(duration: 0.25)) {
                     fillProgress = 0
                 }
                 action()
@@ -345,7 +356,8 @@ private struct SilenceSirenButton: View {
         Button(action: action) {
             Label("silence_siren_button_title", systemImage: "speaker.slash.fill")
                 .font(.headline)
-                .frame(maxWidth: .infinity, minHeight: LiveControlMetrics.height)
+                .frame(maxWidth: .infinity)
+                .frame(height: LiveControlMetrics.height)
         }
         .buttonStyle(.borderedProminent)
         .tint(.red)
@@ -354,8 +366,8 @@ private struct SilenceSirenButton: View {
     }
 }
 
-/// Neutral, compact secondary control — deliberately not red so it doesn't compete
-/// with the siren for "danger" weight. Icon-over-label keeps it narrow.
+/// Neutral, narrow secondary control — deliberately not red so it doesn't compete
+/// with the siren for "danger" weight. Icon-over-label keeps it compact.
 private struct EndSessionButton: View {
     let isSending: Bool
     let action: () -> Void
@@ -364,15 +376,15 @@ private struct EndSessionButton: View {
         Button(action: action) {
             VStack(spacing: 3) {
                 Image(systemName: "stop.fill")
-                    .font(.subheadline.weight(.bold))
+                    .font(.system(size: 15, weight: .bold))
                 Text("end_session_button_title")
-                    .font(.caption.weight(.semibold))
+                    .font(.caption2.weight(.semibold))
             }
-            .frame(width: 74, height: LiveControlMetrics.height)
-            .foregroundStyle(.primary)
+            .frame(width: 66, height: LiveControlMetrics.height)
+            .foregroundStyle(.secondary)
             .background(
                 RoundedRectangle(cornerRadius: LiveControlMetrics.corner, style: .continuous)
-                    .fill(Color(uiColor: .tertiarySystemFill))
+                    .fill(Color(uiColor: .secondarySystemFill))
             )
         }
         .buttonStyle(.plain)

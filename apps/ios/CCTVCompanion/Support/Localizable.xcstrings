@@ -744,6 +744,12 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "🚨 Something was detected on your Mac" } },
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "🚨 Mac에서 이상이 감지됐어요" } }
       }
+    },
+    "siren_button_hold_cta" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Hold for siren" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "꾹 눌러 사이렌" } }
+      }
     }
   },
   "version" : "1.0"
