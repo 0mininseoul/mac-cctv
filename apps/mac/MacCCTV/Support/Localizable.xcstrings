@@ -495,8 +495,8 @@
     },
     "surveillance_siren_warning_text_placeholder" : {
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "This device is recording and tracked" } },
-        "ko" : { "stringUnit" : { "state" : "translated", "value" : "이 기기는 녹화·추적 중" } }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Hello there, thief?" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "도둑님 안녕하세요?" } }
       }
     },
     "surveillance_siren_warning_text_reset" : {
@@ -591,8 +591,8 @@
     },
     "siren_warning_title" : {
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "This device is recording and tracked" } },
-        "ko" : { "stringUnit" : { "state" : "translated", "value" : "이 기기는 녹화·추적 중" } }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Hello there, thief?" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "도둑님 안녕하세요?" } }
       }
     }
   },
