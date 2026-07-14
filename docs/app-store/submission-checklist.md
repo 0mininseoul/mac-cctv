@@ -311,7 +311,7 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 
 **해결 — 자동 폴백(스키마 상태와 무관하게 푸시 보장):** `synchronizeSubscriptions`가 per-type(`type==X`, 친근 문구)를 시도하고, 하나라도 실패하면 `value:true` 전체매치 구독(`event-all-v1`, 제너릭 문구 `event_generic_notification_body`)을 만들어 푸시가 무조건 도착하게 한다. 인덱스가 실제로 배포되면 per-type이 성공하며 폴백은 자동 제거(self-healing). 모드는 `m-notif-result.txt`의 `M11_SUBS_MODE per-type|fallback`으로 확인.
 
-- [ ] Build 12 두 타겟 업로드·처리
+- [x] Build 12 두 타겟 업로드·처리 완료 (`CURRENT_PROJECT_VERSION` 11→12), 둘 다 `processingState: VALID`
 - [ ] **사람 작업(선택 — 친근 per-type 문구를 원하면)**: CloudKit Dashboard에서 **Development 환경 → "Deploy Schema Changes…"** 를 실제로 실행해 Event `type` queryable 인덱스를 프로덕션에 배포. (프로덕션 화면에 인덱스가 "보이는" 것과 실제 배포는 다름 — 배포 전엔 프로덕션이 `type==X` 구독을 거부함.) 배포 후 앱 재실행 시 자동으로 per-type 문구로 승격.
 - [ ] **재검증**: 꺼진 앱에서 이벤트 → 푸시 도착(폴백이면 "🚨 Mac에서 이상이 감지됐어요", 인덱스 배포됐으면 "사람이 감지됐어요!" 등 per-type).
 
@@ -325,7 +325,7 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 # Delivery UUID: ef8e73c4-d53c-4b69-b972-f033f9d82f8d — build 12 (UPLOAD SUCCEEDED)
 ```
 
-> 두 타겟 모두 업로드 접수 완료(UPLOAD SUCCEEDED). 업로드 시점 개발 Mac의 네트워크(DNS)가 불안정해 `processingState VALID` 확인 폴링은 지연됨 — App Store Connect에서 처리 완료 후 TestFlight 배정.
+> 두 타겟 모두 `processingState VALID` 확인 완료. (업로드 시점 개발 Mac의 DNS가 일시 불안정해 iOS 업로드/폴링을 재시도했으나 최종 성공.)
 
 ### 버전 번호 참고
 
