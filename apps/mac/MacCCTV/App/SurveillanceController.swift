@@ -1,3 +1,4 @@
+import AppKit
 import CCTVKit
 import CloudKit
 import Foundation
@@ -142,6 +143,29 @@ final class SurveillanceController: ObservableObject {
         Task {
             _ = try? await sweepStore.sweepExpired()
         }
+
+        // On quit / logout / shutdown, best-effort finalize the in-progress chunk to
+        // disk so the footage right before the app closes isn't lost. Uploading isn't
+        // possible in the shutdown window; the startup catch-up re-uploads it next
+        // launch (PRD M8). (A true SIGKILL force-quit can't run any code — nothing can
+        // help there — but a graceful terminate is the common "closing" case.)
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.willTerminateNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.flushInProgressChunkForTermination()
+            }
+        }
+    }
+
+    private func flushInProgressChunkForTermination() {
+        guard let engine = captureEngine, let sessionID = activeSessionID else {
+            return
+        }
+        _ = engine.flushCurrentChunk(timeout: 2)
+        appendDiagnostic("M8_TERMINATE_FLUSH session=\(sessionID)", filename: "m8-terminate-result.txt")
     }
 
     func toggleFromButton() {
