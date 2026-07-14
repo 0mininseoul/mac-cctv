@@ -154,6 +154,22 @@ public final class CloudKitStore: @unchecked Sendable {
         .sorted { $0.index < $1.index }
     }
 
+    /// Warms the local chunk cache for a session by downloading only the chunks not
+    /// already on disk (fetching a chunk's video asset copies it into `ChunkAssetCache`
+    /// via `makeVideoChunk`). The library uses this to prefetch recent recordings in
+    /// the background so opening them plays without a download wait. Returns how many
+    /// chunks were actually downloaded (0 if already fully cached).
+    @discardableResult
+    public func prefetchSessionChunks(sessionID: String, limit: Int = 800) async throws -> Int {
+        let metadata = try await fetchChunkMetadata(sessionID: sessionID, limit: limit)
+        let uncachedIDs = metadata.filter { $0.assetFileURL == nil }.map(\.id)
+        guard !uncachedIDs.isEmpty else {
+            return 0
+        }
+        let downloaded = try await fetchChunks(ids: uncachedIDs)
+        return downloaded.count
+    }
+
     public func fetchSessions(limit: Int = 100) async throws -> [SurveillanceSession] {
         let query = CKQuery(
             recordType: CKSchema.RecordType.session,

@@ -27,7 +27,10 @@ final class SessionLibraryViewModel: ObservableObject {
     @Published private(set) var statusText = String(localized: "library_status_ready")
     @Published private(set) var isLoading = false
 
+    /// How many of the most recent ended sessions to warm the cache for.
+    private let prefetchCount = 3
     private let store = CloudKitStore()
+    private var prefetchTask: Task<Void, Never>?
 
     func load() async {
         guard !isLoading else {
@@ -64,8 +67,42 @@ final class SessionLibraryViewModel: ObservableObject {
             statusText = sessions.isEmpty
                 ? String(localized: "library_status_empty")
                 : String(format: String(localized: "library_status_loaded_format"), sessions.count)
+            prefetchRecentSessions()
         } catch {
             statusText = String(format: String(localized: "library_status_failed_format"), error.localizedDescription)
+        }
+    }
+
+    /// Warm the local video cache for the most recent ended sessions in the
+    /// background, but only on Wi-Fi, so the ones you're most likely to open next
+    /// play instantly instead of downloading on tap. Fire-and-forget; never blocks or
+    /// affects the list.
+    private func prefetchRecentSessions() {
+        prefetchTask?.cancel()
+
+        let sessionIDs = sessions
+            .filter { !$0.isLive }
+            .prefix(prefetchCount)
+            .map(\.session.id)
+        guard !sessionIDs.isEmpty else {
+            return
+        }
+
+        let store = store
+        prefetchTask = Task {
+            guard await Reachability.isOnUnmeteredConnection() else {
+                return
+            }
+            for sessionID in sessionIDs {
+                if Task.isCancelled {
+                    return
+                }
+                let downloaded = (try? await store.prefetchSessionChunks(sessionID: sessionID)) ?? 0
+                IOSDiagnostics.append(
+                    "M13_PREFETCH session=\(sessionID) downloaded=\(downloaded)",
+                    filename: "m-prefetch-result.txt"
+                )
+            }
         }
     }
 
