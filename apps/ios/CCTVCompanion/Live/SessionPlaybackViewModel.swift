@@ -26,6 +26,10 @@ final class SessionPlaybackViewModel: ObservableObject {
     /// True while an ended session's replay is still being fetched/composed and has
     /// nothing playable yet — drives a loading overlay so the wait isn't a blank screen.
     @Published private(set) var isPreparingReplay = false
+    /// Whether the live delayed-playback queue currently has any footage. When the
+    /// realtime stream has given up and this is still false, the Mac is unreachable
+    /// (asleep / offline) rather than merely slow — the view says so.
+    @Published private(set) var liveHasContent = false
 
     let player: AVQueuePlayer
 
@@ -461,6 +465,7 @@ final class SessionPlaybackViewModel: ObservableObject {
     /// composition from yet. Replay (below) is the one-shot, fixed-timeline case.
     private func applyLiveQueue(chunks: [VideoChunk]) {
         let nextIDs = chunks.map(\.id)
+        liveHasContent = !nextIDs.isEmpty
         guard nextIDs != loadedLiveChunkIDs else {
             if !nextIDs.isEmpty {
                 liveQueuePlayer.play()

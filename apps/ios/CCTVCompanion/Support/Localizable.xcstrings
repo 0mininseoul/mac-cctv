@@ -756,6 +756,18 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Loading video…" } },
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "영상 불러오는 중…" } }
       }
+    },
+    "live_unreachable_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Can't reach your Mac" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "Mac에 연결할 수 없어요" } }
+      }
+    },
+    "live_unreachable_subtitle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "It may be asleep (lid closed) or offline. Live video resumes when it wakes." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "절전 상태(뚜껑 닫힘)거나 오프라인일 수 있어요. 깨어나면 실시간 영상이 다시 나옵니다." } }
+      }
     }
   },
   "version" : "1.0"

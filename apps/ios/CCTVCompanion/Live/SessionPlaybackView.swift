@@ -42,10 +42,19 @@ struct SessionPlaybackView: View {
                 if !viewModel.isLive && viewModel.isPreparingReplay {
                     ReplayLoadingOverlay()
                 }
+
+                // Live, but the realtime stream gave up *and* no delayed footage is
+                // arriving — the Mac is unreachable (asleep / offline), e.g. its lid was
+                // closed. Say so instead of showing an endless black screen.
+                if viewModel.isLive && webRTCReceiver.usesDelayedPlayback && !viewModel.liveHasContent {
+                    MacUnreachableOverlay()
+                }
             }
             .frame(maxWidth: .infinity, minHeight: 260, maxHeight: .infinity)
             .layoutPriority(1)
             .animation(.easeInOut(duration: 0.2), value: viewModel.isPreparingReplay)
+            .animation(.easeInOut(duration: 0.2), value: viewModel.liveHasContent)
+            .animation(.easeInOut(duration: 0.2), value: webRTCReceiver.usesDelayedPlayback)
 
             if viewModel.isLive {
                 LiveControlBar(
@@ -203,6 +212,32 @@ private struct ReplayLoadingOverlay: View {
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.white.opacity(0.9))
             }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .transition(.opacity)
+    }
+}
+
+/// Shown on a live session when the realtime stream couldn't connect and no delayed
+/// footage is arriving — i.e. the Mac is unreachable (most often asleep because its
+/// lid was closed). Clearer than an endless black screen.
+private struct MacUnreachableOverlay: View {
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.7)
+            VStack(spacing: 14) {
+                Image(systemName: "wifi.slash")
+                    .font(.system(size: 40, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.85))
+                Text("live_unreachable_title")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                Text("live_unreachable_subtitle")
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.75))
+                    .multilineTextAlignment(.center)
+            }
+            .padding(28)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .transition(.opacity)
