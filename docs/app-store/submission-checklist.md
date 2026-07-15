@@ -400,6 +400,25 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 # Delivery UUID: 64b9eeb0-6de2-4484-8717-e3968daaf0c2 — build 16
 ```
 
+### Build 17 (2026-07-15) — 뚜껑 닫힘 도난 대응 (자동 사이렌 + iOS 오프라인 표시)
+
+뚜껑을 닫으면 MacBook은 (배터리 시) clamshell 절전에 들어가고, `SleepBlocker`(idle 절전만 차단)로는 못 막는 하드웨어 한계다. 그 위에서 도난 대응을 강화:
+- **B (Mac) 도난 신호 자동 사이렌 (M8)**: 뚜껑 닫힘/전원 분리는 유예 기간 이후 강한 도난 신호로 보고 **바로 사이렌 발동**(`AutoSirenTriggerPolicy.isDefinitiveTheftSignal`, 단위 테스트 3개 추가 → 64→67). 전원 분리(깨어있음)는 즉시 소리. 뚜껑 닫힘은 곧 잠들므로 상태만 세팅 후, **깨어날 때 `handleSystemWake`가 사이렌 재개**(`SirenController.resume` — 절전이 죽인 오디오 재무장). 유예 기간이 본인의 무장 직후 조작 오발동을 막고, iOS 무음/⌃⌘C로 중지 가능.
+- **A (iOS) 오프라인 상태 명확화**: 실시간 연결 실패(20초) + 지연 청크도 안 오면 = Mac 응답 없음(절전/오프라인). 검은 화면 대신 **"Mac에 연결할 수 없어요 / 절전 상태일 수 있어요, 깨어나면 다시 재생"** 오버레이 표시(`liveHasContent` 플래그). 깨어나 청크가 오면 자동 해제.
+
+- [x] Build 17 두 타겟 업로드·처리 VALID (Mac 54b488d5 / iOS 1f4efcd7)
+- [ ] **재검증**: (a) 무장 후 유예 지나고 전원 분리 → 즉시 사이렌, (b) 무장 후 뚜껑 닫고 다시 열면 사이렌 발동, (c) 뚜껑 닫힌 동안 iOS 실시간에서 "Mac에 연결할 수 없어요" 표시.
+
+```
+xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 54b488d5-c9cf-45f4-ba16-ed690bf7f55f — build 17 · 처리 VALID
+
+xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 1f4efcd7-21ae-4ca5-a3f1-d69d9498e075 — build 17 · 처리 VALID
+```
+
 ### 버전 번호 참고
 
 현재 `project.yml`은 `MARKETING_VERSION: 0.1.0`, `CURRENT_PROJECT_VERSION: 1`이다. 최초 정식 제출이라면 "1.0"으로 올리는 것이 관례적이지만, 이는 제품 의사결정이라 임의로 바꾸지 않았다 — 원하면 알려주면 반영한다.
