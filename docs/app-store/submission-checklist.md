@@ -419,6 +419,26 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 # Delivery UUID: 1f4efcd7-21ae-4ca5-a3f1-d69d9498e075 — build 17 · 처리 VALID
 ```
 
+### Build 18 (2026-07-15) — 도난 자동 사이렌 온보딩 안내 + 사용자 on/off
+
+Build 17의 도난 자동 사이렌(뚜껑 닫힘/전원 분리 시 자동 발동)이 항상 켜져 있고 안내가 없었다. 전체화면·최대 볼륨의 공격적 반응이므로 존재를 알리고 끌 수 있게 함:
+- **온보딩 마지막 단계 추가**: 동작(감시 중 뚜껑 닫힘/전원 분리 → 자동 사이렌, 잠들어 있었으면 깨어날 때 발동, iPhone/⌃⌘C로 무음화)을 설명하고 **기본 ON 토글** 제공.
+- **메뉴막대 팝오버 토글 + 설명 캡션**: 온보딩 이후에도 언제든 변경.
+- `SurveillanceController.theftSirenEnabled`를 UserDefaults에 영속화하고 `evaluateTheftSignalSiren`을 게이팅 → OFF면 자동 사이렌만 완전 차단(수동/원격 사이렌·알림은 그대로).
+
+- [x] Build 18 두 타겟 업로드·처리 VALID (Mac 317bdc2e / iOS 4d810888)
+- [ ] **재검증**: (a) 신규 설치 온보딩 마지막 화면에 자동 사이렌 안내+토글, (b) 팝오버 토글 OFF 후 무장→전원 분리 시 사이렌 안 울림, (c) 토글 ON 기본값으로 build 17 도난 시나리오 정상 동작.
+
+```
+xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 317bdc2e-54d1-4f97-b7c8-648555d1ca15 — build 18 · 처리 VALID
+
+xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 4d810888-b53a-444e-8dad-185f5b4a5eb8 — build 18 · 처리 VALID
+```
+
 ### 버전 번호 참고
 
 현재 `project.yml`은 `MARKETING_VERSION: 0.1.0`, `CURRENT_PROJECT_VERSION: 1`이다. 최초 정식 제출이라면 "1.0"으로 올리는 것이 관례적이지만, 이는 제품 의사결정이라 임의로 바꾸지 않았다 — 원하면 알려주면 반영한다.
