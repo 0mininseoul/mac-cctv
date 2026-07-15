@@ -34,6 +34,15 @@ final class SurveillanceController: ObservableObject {
     }
     @Published var selectedQuality = SurveillanceQuality.medium
     @Published var notificationsEnabled = true
+    /// Whether a lid-close / power-disconnect while armed auto-triggers the siren.
+    /// Introduced in onboarding and toggleable from the popover; persisted so the
+    /// user's choice survives relaunch. Defaults on (theft response is the app's
+    /// headline behavior) but fully opt-out.
+    @Published var theftSirenEnabled = true {
+        didSet {
+            UserDefaults.standard.set(theftSirenEnabled, forKey: Self.theftSirenEnabledKey)
+        }
+    }
     @Published var sirenWarningText = "" {
         didSet {
             UserDefaults.standard.set(sirenWarningText, forKey: Self.sirenWarningTextKey)
@@ -64,6 +73,7 @@ final class SurveillanceController: ObservableObject {
     private var escalationDeadline: Date?
 
     private static let sirenWarningTextKey = "siren.warningText"
+    private static let theftSirenEnabledKey = "siren.theftAutoArm"
     private static var defaultSirenWarningText: String {
         String(localized: "siren_warning_title")
     }
@@ -99,6 +109,7 @@ final class SurveillanceController: ObservableObject {
 
     init() {
         sirenWarningText = UserDefaults.standard.string(forKey: Self.sirenWarningTextKey) ?? Self.defaultSirenWarningText
+        theftSirenEnabled = UserDefaults.standard.object(forKey: Self.theftSirenEnabledKey) as? Bool ?? true
         hotkeyManager.onPressed = { [weak self] in
             Task { @MainActor in
                 self?.writeHotkeyDiagnostic("M3_HOTKEY_PRESSED shortcut=\(self?.selectedShortcut.display ?? "unknown")")
@@ -479,7 +490,8 @@ final class SurveillanceController: ObservableObject {
     /// a lid close the Mac sleeps immediately after this, so the siren state is set
     /// now and re-sounded on wake by `handleSystemWake` (PRD M8 theft response).
     private func evaluateTheftSignalSiren(type: SecurityEventType, now: Date) async {
-        guard !autoSirenTriggered,
+        guard theftSirenEnabled,
+              !autoSirenTriggered,
               case .armed = machine.state,
               let activeStartedAt else {
             return

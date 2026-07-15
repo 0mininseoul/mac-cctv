@@ -8,7 +8,7 @@ struct MacCCTVRootView: View {
         if isOnboardingCompleted {
             SurveillancePopoverView(controller: controller)
         } else {
-            MacOnboardingView {
+            MacOnboardingView(theftSirenEnabled: $controller.theftSirenEnabled) {
                 isOnboardingCompleted = true
             }
         }

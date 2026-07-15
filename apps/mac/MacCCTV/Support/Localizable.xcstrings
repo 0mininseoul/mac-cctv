@@ -594,6 +594,42 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Hello there, thief?" } },
         "ko" : { "stringUnit" : { "state" : "translated", "value" : "도둑님 안녕하세요?" } }
       }
+    },
+    "surveillance_theft_siren_label" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Auto-siren on theft signals" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "도난 신호 시 자동 사이렌" } }
+      }
+    },
+    "surveillance_theft_siren_caption" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sounds the siren automatically if the lid is closed or power is unplugged while armed. If the Mac is asleep, it sounds the moment it wakes." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "감시 중 뚜껑이 닫히거나 전원이 뽑히면 자동으로 사이렌을 울립니다. 잠들어 있으면 깨어나는 즉시 울립니다." } }
+      }
+    },
+    "onboarding_theft_title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Auto-siren for theft" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "도난 방지 자동 사이렌" } }
+      }
+    },
+    "onboarding_theft_message" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "While armed, closing the lid or unplugging power is treated as a theft attempt and triggers the fullscreen siren automatically — sounding the instant the Mac wakes if it was asleep. You can silence it anytime from your iPhone or with ⌃⌘C." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "감시 중에 뚜껑을 닫거나 전원을 뽑으면 도난 시도로 보고 전체화면 사이렌을 자동으로 울립니다. 잠들어 있었다면 깨어나는 즉시 울립니다. iPhone이나 ⌃⌘C로 언제든 끌 수 있어요." } }
+      }
+    },
+    "onboarding_theft_toggle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enable auto-siren" } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "자동 사이렌 켜기" } }
+      }
+    },
+    "onboarding_theft_toggle_caption" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "You can change this later in the menu bar app." } },
+        "ko" : { "stringUnit" : { "state" : "translated", "value" : "메뉴 막대 앱에서 언제든 바꿀 수 있어요." } }
+      }
     }
   },
   "version" : "1.0"

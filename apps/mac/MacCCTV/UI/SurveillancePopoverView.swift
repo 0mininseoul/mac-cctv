@@ -48,6 +48,14 @@ struct SurveillancePopoverView: View {
 
                 Toggle("surveillance_notifications_label", isOn: $controller.notificationsEnabled)
 
+                VStack(alignment: .leading, spacing: 4) {
+                    Toggle("surveillance_theft_siren_label", isOn: $controller.theftSirenEnabled)
+                    Text("surveillance_theft_siren_caption")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
                         Text("surveillance_siren_warning_text_label")

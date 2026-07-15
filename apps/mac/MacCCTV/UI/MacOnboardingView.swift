@@ -6,6 +6,7 @@ import CoreImage.CIFilterBuiltins
 import SwiftUI
 
 struct MacOnboardingView: View {
+    @Binding var theftSirenEnabled: Bool
     let onComplete: () -> Void
 
     @StateObject private var viewModel = MacOnboardingViewModel()
@@ -24,6 +25,8 @@ struct MacOnboardingView: View {
                 iCloudStep
             case .iPhone:
                 iPhoneStep
+            case .theftSiren:
+                theftSirenStep
             }
 
             Divider()
@@ -151,20 +154,38 @@ struct MacOnboardingView: View {
         }
     }
 
+    private var theftSirenStep: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            OnboardingStepTitle(
+                systemImage: "speaker.wave.3.fill",
+                titleKey: "onboarding_theft_title",
+                messageKey: "onboarding_theft_message"
+            )
+
+            VStack(alignment: .leading, spacing: 4) {
+                Toggle("onboarding_theft_toggle", isOn: $theftSirenEnabled)
+                    .toggleStyle(.switch)
+                Text("onboarding_theft_toggle_caption")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
     private var isPrimaryButtonDisabled: Bool {
         switch step {
         case .camera:
             !viewModel.canContinueFromCamera
         case .iCloud:
             viewModel.isCheckingICloud
-        case .iPhone:
+        case .iPhone, .theftSiren:
             false
         }
     }
 
     private var primaryButtonKey: LocalizedStringKey {
         switch step {
-        case .camera, .iPhone:
+        case .camera, .iPhone, .theftSiren:
             step.primaryButtonKey
         case .iCloud:
             viewModel.canContinueFromICloud ? "onboarding_continue" : "onboarding_icloud_check"
@@ -172,7 +193,7 @@ struct MacOnboardingView: View {
     }
 
     private func handlePrimaryAction() {
-        if step == .iPhone {
+        if step == .theftSiren {
             onComplete()
             return
         }
@@ -194,6 +215,7 @@ private enum MacOnboardingStep: Int, CaseIterable {
     case camera
     case iCloud
     case iPhone
+    case theftSiren
 
     var next: MacOnboardingStep {
         switch self {
@@ -202,7 +224,9 @@ private enum MacOnboardingStep: Int, CaseIterable {
         case .iCloud:
             .iPhone
         case .iPhone:
-            .iPhone
+            .theftSiren
+        case .theftSiren:
+            .theftSiren
         }
     }
 
@@ -214,14 +238,16 @@ private enum MacOnboardingStep: Int, CaseIterable {
             .camera
         case .iPhone:
             .iCloud
+        case .theftSiren:
+            .iPhone
         }
     }
 
     var primaryButtonKey: LocalizedStringKey {
         switch self {
-        case .camera, .iCloud:
+        case .camera, .iCloud, .iPhone:
             "onboarding_continue"
-        case .iPhone:
+        case .theftSiren:
             "onboarding_finish"
         }
     }
