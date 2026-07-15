@@ -189,4 +189,32 @@ final class AutoSirenTriggerPolicyTests: XCTestCase {
 
         XCTAssertEqual(decision, .notifyOnly)
     }
+
+    func testLidCloseAndPowerDisconnectAreDefinitiveTheftSignalsAfterGrace() {
+        let policy = AutoSirenTriggerPolicy()
+        let armedAt = Date(timeIntervalSince1970: 1_000)
+        let now = armedAt.addingTimeInterval(policy.armGracePeriod + 1)
+
+        XCTAssertTrue(policy.isDefinitiveTheftSignal(.lidClose, armedAt: armedAt, now: now))
+        XCTAssertTrue(policy.isDefinitiveTheftSignal(.powerDisconnect, armedAt: armedAt, now: now))
+    }
+
+    func testDefinitiveTheftSignalHeldOffDuringGracePeriod() {
+        let policy = AutoSirenTriggerPolicy()
+        let armedAt = Date(timeIntervalSince1970: 1_000)
+        let withinGrace = armedAt.addingTimeInterval(policy.armGracePeriod - 0.1)
+
+        XCTAssertFalse(policy.isDefinitiveTheftSignal(.lidClose, armedAt: armedAt, now: withinGrace))
+        XCTAssertFalse(policy.isDefinitiveTheftSignal(.powerDisconnect, armedAt: armedAt, now: withinGrace))
+    }
+
+    func testOtherEventTypesAreNotDefinitiveTheftSignals() {
+        let policy = AutoSirenTriggerPolicy()
+        let armedAt = Date(timeIntervalSince1970: 1_000)
+        let now = armedAt.addingTimeInterval(60)
+
+        for type in [SecurityEventType.inputTouch, .deviceMotion, .personMotion] {
+            XCTAssertFalse(policy.isDefinitiveTheftSignal(type, armedAt: armedAt, now: now))
+        }
+    }
 }

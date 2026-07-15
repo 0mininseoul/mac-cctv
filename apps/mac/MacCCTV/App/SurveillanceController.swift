@@ -206,6 +206,19 @@ final class SurveillanceController: ObservableObject {
         guard !isTransitioning, machine.state != .idle else {
             return
         }
+        // If the theft siren is armed (e.g. a lid close tripped it right before the
+        // Mac slept), the reopen is most likely whoever took it — re-sound the alarm
+        // now (sleep silenced the audio) instead of the clean auto-stop used for a
+        // benign wake. The owner can still silence it from iOS or stop with ⌃⌘C.
+        if case .siren = machine.state {
+            sirenController.resume(warningText: effectiveSirenWarningText)
+            appendDiagnostic(
+                "M9_WAKE_SIREN_RESUMED session=\(activeSessionID ?? "unknown")",
+                filename: "m7-result.txt"
+            )
+            await broadcastMacState()
+            return
+        }
         writeDiagnostic("M9_WAKE_AUTO_STOP session=\(activeSessionID ?? "unknown")")
         await stopSurveillance(finalStatus: .interrupted)
     }
@@ -445,6 +458,7 @@ final class SurveillanceController: ObservableObject {
         // self-guards on there being an active recording, so this no-ops when idle.)
         if type == .lidClose || type == .powerDisconnect {
             await flushCurrentChunkForEvent()
+            await evaluateTheftSignalSiren(type: type, now: occurredAt)
         }
 
         guard notificationsEnabled,
@@ -458,6 +472,28 @@ final class SurveillanceController: ObservableObject {
         }
 
         await saveSecurityEvent(type: type, confidence: confidence, occurredAt: occurredAt, sessionID: sessionID)
+    }
+
+    /// Lid close and power disconnect are deliberate theft signals: once past the arm
+    /// grace period they sound the siren directly (no reinforcing motion needed). For
+    /// a lid close the Mac sleeps immediately after this, so the siren state is set
+    /// now and re-sounded on wake by `handleSystemWake` (PRD M8 theft response).
+    private func evaluateTheftSignalSiren(type: SecurityEventType, now: Date) async {
+        guard !autoSirenTriggered,
+              case .armed = machine.state,
+              let activeStartedAt else {
+            return
+        }
+        guard autoSirenPolicy.isDefinitiveTheftSignal(type, armedAt: activeStartedAt, now: now) else {
+            return
+        }
+        resetEscalationState()
+        autoSirenTriggered = true
+        appendDiagnostic(
+            "M8_THEFT_SIREN type=\(type.rawValue) session=\(activeSessionID ?? "unknown")",
+            filename: "m7-result.txt"
+        )
+        await triggerSiren(source: .automatic, triggeredAt: now)
     }
 
     private var isRecordingEventState: Bool {

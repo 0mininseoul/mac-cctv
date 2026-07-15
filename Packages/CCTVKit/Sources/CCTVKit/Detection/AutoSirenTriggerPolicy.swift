@@ -65,6 +65,18 @@ public struct AutoSirenTriggerPolicy: Equatable, Sendable {
         return .notifyOnly
     }
 
+    /// Lid close and power disconnect are deliberate, high-confidence theft signals —
+    /// unlike ambient motion they need no reinforcing evidence — so once past the arm
+    /// grace period they arm the siren directly. (Within the grace period they stay
+    /// notify-only, so the owner's own "just armed and still fiddling" moment doesn't
+    /// trip the alarm.)
+    public func isDefinitiveTheftSignal(_ type: SecurityEventType, armedAt: Date, now: Date) -> Bool {
+        guard type == .lidClose || type == .powerDisconnect else {
+            return false
+        }
+        return now.timeIntervalSince(armedAt) >= armGracePeriod
+    }
+
     private func hasRecentReinforcingSignal(now: Date, evidence: [AutoSirenEvidence]) -> Bool {
         evidence.contains { item in
             let age = now.timeIntervalSince(item.occurredAt)

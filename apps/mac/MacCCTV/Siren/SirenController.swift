@@ -26,6 +26,25 @@ final class SirenController {
         showWarningWindows(warningText: warningText)
     }
 
+    /// Sleep silences the alarm audio (and can push the fullscreen windows behind the
+    /// login screen) without clearing `isActive`. Call this on wake to re-sound the
+    /// siren and re-assert the warning windows — used when a theft siren was armed
+    /// before the Mac slept and is reopened.
+    func resume(warningText: String) {
+        guard isActive else {
+            start(warningText: warningText)
+            return
+        }
+        sound?.stop()
+        startSoundLoop()
+        if warningWindows.isEmpty {
+            showWarningWindows(warningText: warningText)
+        } else {
+            warningWindows.forEach { $0.orderFrontRegardless() }
+            NSApp.activate(ignoringOtherApps: true)
+        }
+    }
+
     func stop() {
         guard isActive else {
             return
