@@ -439,6 +439,31 @@ xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
 # Delivery UUID: 4d810888-b53a-444e-8dad-185f5b4a5eb8 — build 18 · 처리 VALID
 ```
 
+### Build 19 (2026-07-16) — build 18 재현 실패 2건 근본 원인 수정
+
+Build 18 검증에서 A/B 둘 다 재현 실패. 진단 로그(`m7-result.txt`, `m5-event-result.txt`)로 원인 확정 후 수정:
+
+- **Mac 사이렌 미발동 + 깨어나면 감시 종료** — *순서 문제였고 감지 문제가 아니었음*. 뚜껑 닫힘은 `willSleepNotification`으로 오는데 창이 매우 짧다. 그런데 `recordSecurityEvent`가 `await flushCurrentChunkForEvent()`(**블로킹 5초 청크 finalize + CloudKit 업로드**)를 사이렌 평가보다 먼저 실행 → flush 도중 Mac이 잠들어 상태 전환이 아예 실행되지 않음 → 깨어날 때 `handleSystemWake`가 `.siren`이 아닌 `.armed`를 보고 auto-stop 분기로 세션 종료. 증거: 해당 세션의 `M8_THEFT_SIREN`/`M7_SIREN_STARTED` 로그 전무.
+  → `triggerSiren`을 **`beginSiren`(상태·오디오·전체화면 창, 완전 동기·suspension point 없음)** 과 **`publishSirenSideEffects`(클라우드 저장·상태 브로드캐스트, 늦게 끝나도 안전)** 로 분리하고, **사이렌을 flush보다 먼저** 무장.
+  → 사이렌/wake 진단을 `writeDiagnostic`(덮어쓰기)에서 `appendDiagnostic`로 전환 — 덮어쓰기가 진단에 필요한 이력을 지우고 있었음.
+
+- **iOS "Mac에 연결할 수 없어요" 미표시** — *비어있음(emptiness)이 아니라 신선도(staleness)가 올바른 신호*. 오버레이가 `liveHasContent == false`에 걸려 있었는데, 잠든 Mac은 이미 업로드한 청크를 남기므로 이 값이 영원히 true → 오버레이 영구 차단.
+  → 세션이 마지막으로 청크를 얻은 시점을 추적해 **25초간 새 영상이 없으면 `liveContentIsStale`** (Mac 업로드 주기 ~3초 대비 충분히 여유). 실시간 스트림이 이미 포기한 경우에만 노출되고, 청크가 재개되면 자동 해제.
+
+- [x] Build 19 **Mac** 업로드 (8fd5da6c)
+- [ ] Build 19 **iOS** 업로드 — 서명 차단: 키체인에 `Apple Distribution` 인증서가 없고 Xcode의 Apple ID 세션 만료(`Unable to log in with account`). ASC API 키로 우회 시도했으나 `Cloud signing permission error`(키에 인증서 생성 권한 없음). **해소 방법**: Xcode > Settings > Accounts에서 재로그인 후 `ASC_KEY_ID=... ASC_ISSUER_ID=... script/archive_and_export.sh ios` 재실행 (또는 ASC에서 API 키 역할을 Admin으로 상향)
+- [ ] **재검증**: (a) 무장→유예 후 뚜껑 닫고 다시 열면 **사이렌 발동 + 감시 유지**, (b) 뚜껑 닫힌 동안 iOS 실시간 진입 시 ~25초 후 **"Mac에 연결할 수 없어요"** 표시, (c) 다시 열면 오버레이 사라지고 재생 재개, (d) 전원 분리(깨어있음) 즉시 사이렌.
+
+```
+xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: 8fd5da6c-8e09-4a33-9343-fe912e58c831 — build 19
+
+xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
+  --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
+# Delivery UUID: <IOS_UUID> — build 19
+```
+
 ### 버전 번호 참고
 
 현재 `project.yml`은 `MARKETING_VERSION: 0.1.0`, `CURRENT_PROJECT_VERSION: 1`이다. 최초 정식 제출이라면 "1.0"으로 올리는 것이 관례적이지만, 이는 제품 의사결정이라 임의로 바꾸지 않았다 — 원하면 알려주면 반영한다.
