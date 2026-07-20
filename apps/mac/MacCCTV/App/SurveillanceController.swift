@@ -230,6 +230,12 @@ final class SurveillanceController: ObservableObject {
             await broadcastMacState()
             return
         }
+        // Appended to the siren log too: m3-result.txt is overwritten by the stop that
+        // follows, which previously erased every trace of why a wake ended the session.
+        appendDiagnostic(
+            "M9_WAKE_AUTO_STOP session=\(activeSessionID ?? "unknown") state=\(machine.state)",
+            filename: "m7-result.txt"
+        )
         writeDiagnostic("M9_WAKE_AUTO_STOP session=\(activeSessionID ?? "unknown")")
         await stopSurveillance(finalStatus: .interrupted)
     }
@@ -468,8 +474,19 @@ final class SurveillanceController: ObservableObject {
         // only affect the event *record* saved below. (flushCurrentChunkForEvent
         // self-guards on there being an active recording, so this no-ops when idle.)
         if type == .lidClose || type == .powerDisconnect {
+            // Order matters, and it is not cosmetic. A lid close reaches us through
+            // `willSleepNotification`, which grants only a brief window before the Mac
+            // suspends — while the flush below is a blocking 5s chunk finalize plus a
+            // CloudKit upload that reliably outlives it. Arming the siren after the
+            // flush meant the state transition never ran before sleep, so the wake
+            // handler saw `.armed` and auto-stopped the session instead of re-sounding
+            // the alarm. Everything that must survive sleep happens synchronously here;
+            // the cloud-facing tail is safe to finish late (even after wake).
+            let armedTheftSiren = armTheftSirenIfNeeded(type: type, now: occurredAt)
             await flushCurrentChunkForEvent()
-            await evaluateTheftSignalSiren(type: type, now: occurredAt)
+            if armedTheftSiren {
+                await publishSirenSideEffects(source: .automatic, triggeredAt: occurredAt)
+            }
         }
 
         guard notificationsEnabled,
@@ -489,23 +506,26 @@ final class SurveillanceController: ObservableObject {
     /// grace period they sound the siren directly (no reinforcing motion needed). For
     /// a lid close the Mac sleeps immediately after this, so the siren state is set
     /// now and re-sounded on wake by `handleSystemWake` (PRD M8 theft response).
-    private func evaluateTheftSignalSiren(type: SecurityEventType, now: Date) async {
+    /// Fully synchronous on purpose — see the call site: this has to complete inside the
+    /// `willSleepNotification` window, so it must not contain a suspension point.
+    /// Returns whether the siren was actually armed, so the caller can publish the
+    /// cloud-facing side effects once the sleep-critical work is done.
+    private func armTheftSirenIfNeeded(type: SecurityEventType, now: Date) -> Bool {
         guard theftSirenEnabled,
               !autoSirenTriggered,
               case .armed = machine.state,
               let activeStartedAt else {
-            return
+            return false
         }
         guard autoSirenPolicy.isDefinitiveTheftSignal(type, armedAt: activeStartedAt, now: now) else {
-            return
+            return false
         }
         resetEscalationState()
-        autoSirenTriggered = true
         appendDiagnostic(
             "M8_THEFT_SIREN type=\(type.rawValue) session=\(activeSessionID ?? "unknown")",
             filename: "m7-result.txt"
         )
-        await triggerSiren(source: .automatic, triggeredAt: now)
+        return beginSiren(source: .automatic, triggeredAt: now)
     }
 
     private var isRecordingEventState: Bool {
@@ -675,28 +695,46 @@ final class SurveillanceController: ObservableObject {
     }
 
     private func triggerSiren(source: SirenTriggerSource, triggeredAt: Date = Date()) async {
+        guard beginSiren(source: source, triggeredAt: triggeredAt) else {
+            return
+        }
+        await publishSirenSideEffects(source: source, triggeredAt: triggeredAt)
+    }
+
+    /// The sleep-critical half of sounding the siren: state transition, audio, and the
+    /// fullscreen warning windows, with no suspension point anywhere in it. Kept
+    /// synchronous so a lid close can complete it before the Mac suspends.
+    private func beginSiren(source: SirenTriggerSource, triggeredAt: Date) -> Bool {
         guard case let .armed(startedAt) = machine.state,
               let sessionID = activeSessionID else {
-            return
+            return false
         }
 
         do {
             try machine.apply(.triggerSiren(triggeredAt: triggeredAt))
         } catch {
-            writeDiagnostic(
+            appendDiagnostic(
                 "M7_SIREN_FAILED session=\(sessionID) source=\(source.rawValue) error=\(error.localizedDescription)",
                 filename: "m7-result.txt"
             )
-            return
+            return false
         }
 
         autoSirenTriggered = true
         sirenController.start(warningText: effectiveSirenWarningText)
         statusText = String(localized: "surveillance_status_siren")
-        writeDiagnostic(
+        appendDiagnostic(
             "M7_SIREN_STARTED session=\(sessionID) source=\(source.rawValue) elapsed=\(String(format: "%.2f", triggeredAt.timeIntervalSince(startedAt)))",
             filename: "m7-result.txt"
         )
+        return true
+    }
+
+    /// The half that can safely finish late — including after the Mac wakes back up.
+    private func publishSirenSideEffects(source: SirenTriggerSource, triggeredAt: Date) async {
+        guard let sessionID = activeSessionID else {
+            return
+        }
         await saveSecurityEvent(
             type: source.eventType,
             confidence: 1,
@@ -833,7 +871,7 @@ final class SurveillanceController: ObservableObject {
         }
         let sessionID = activeSessionID ?? "unknown"
         sirenController.stop()
-        writeDiagnostic("M7_SIREN_STOPPED session=\(sessionID) reason=\(reason)", filename: "m7-result.txt")
+        appendDiagnostic("M7_SIREN_STOPPED session=\(sessionID) reason=\(reason)", filename: "m7-result.txt")
     }
 
     private static func outputDirectory(for sessionID: String) throws -> URL {
