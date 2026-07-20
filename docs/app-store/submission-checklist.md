@@ -450,18 +450,20 @@ Build 18 검증에서 A/B 둘 다 재현 실패. 진단 로그(`m7-result.txt`, 
 - **iOS "Mac에 연결할 수 없어요" 미표시** — *비어있음(emptiness)이 아니라 신선도(staleness)가 올바른 신호*. 오버레이가 `liveHasContent == false`에 걸려 있었는데, 잠든 Mac은 이미 업로드한 청크를 남기므로 이 값이 영원히 true → 오버레이 영구 차단.
   → 세션이 마지막으로 청크를 얻은 시점을 추적해 **25초간 새 영상이 없으면 `liveContentIsStale`** (Mac 업로드 주기 ~3초 대비 충분히 여유). 실시간 스트림이 이미 포기한 경우에만 노출되고, 청크가 재개되면 자동 해제.
 
-- [x] Build 19 **Mac** 업로드 (8fd5da6c)
-- [ ] Build 19 **iOS** 업로드 — 서명 차단: 키체인에 `Apple Distribution` 인증서가 없고 Xcode의 Apple ID 세션 만료(`Unable to log in with account`). ASC API 키로 우회 시도했으나 `Cloud signing permission error`(키에 인증서 생성 권한 없음). **해소 방법**: Xcode > Settings > Accounts에서 재로그인 후 `ASC_KEY_ID=... ASC_ISSUER_ID=... script/archive_and_export.sh ios` 재실행 (또는 ASC에서 API 키 역할을 Admin으로 상향)
+- [x] Build 19 **Mac** 업로드 (8fd5da6c) · 처리 VALID
+- [x] Build 19 **iOS** 업로드 (90d81d25) · 처리 VALID
+  - 서명 일시 차단됐다가 해소: 키체인에 `Apple Distribution` 인증서가 없고 Xcode Apple ID 세션이 만료(`Unable to log in with account`)된 상태였음. ASC API 키 우회는 `Cloud signing permission error`(키에 인증서 관리 권한 없음)로 실패. Xcode 세션이 갱신되자 자동 서명이 인증서를 발급받아 export 성공.
+  - 교훈: 이 증상이 다시 나오면 Xcode > Settings > Accounts를 한 번 열어 세션을 깨운 뒤 `script/archive_and_export.sh ios` 재실행.
 - [ ] **재검증**: (a) 무장→유예 후 뚜껑 닫고 다시 열면 **사이렌 발동 + 감시 유지**, (b) 뚜껑 닫힌 동안 iOS 실시간 진입 시 ~25초 후 **"Mac에 연결할 수 없어요"** 표시, (c) 다시 열면 오버레이 사라지고 재생 재개, (d) 전원 분리(깨어있음) 즉시 사이렌.
 
 ```
 xcrun altool --upload-app -f "build/export/mac/CCTV for Mac.pkg" -t macos \
   --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
-# Delivery UUID: 8fd5da6c-8e09-4a33-9343-fe912e58c831 — build 19
+# Delivery UUID: 8fd5da6c-8e09-4a33-9343-fe912e58c831 — build 19 · 처리 VALID
 
 xcrun altool --upload-app -f "build/export/ios/CCTV Companion.ipa" -t ios \
   --apiKey <API_KEY_ID> --apiIssuer <ISSUER_ID>
-# Delivery UUID: <IOS_UUID> — build 19
+# Delivery UUID: 90d81d25-422f-4cf2-bf73-7ecf0d01d708 — build 19 · 처리 VALID
 ```
 
 ### 버전 번호 참고
