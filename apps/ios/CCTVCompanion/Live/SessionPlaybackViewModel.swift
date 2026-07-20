@@ -26,10 +26,13 @@ final class SessionPlaybackViewModel: ObservableObject {
     /// True while an ended session's replay is still being fetched/composed and has
     /// nothing playable yet — drives a loading overlay so the wait isn't a blank screen.
     @Published private(set) var isPreparingReplay = false
-    /// Whether the live delayed-playback queue currently has any footage. When the
-    /// realtime stream has given up and this is still false, the Mac is unreachable
-    /// (asleep / offline) rather than merely slow — the view says so.
-    @Published private(set) var liveHasContent = false
+    /// True when a live session has stopped producing new footage for long enough that
+    /// the Mac has to be asleep or offline rather than merely slow. Staleness — not
+    /// emptiness — is the signal: a Mac whose lid was closed leaves behind whatever it
+    /// already uploaded, so "has any chunk at all" stays true forever and would never
+    /// surface the problem. Paired with the realtime stream having given up, this drives
+    /// the "can't reach your Mac" state, and clears itself as soon as footage resumes.
+    @Published private(set) var liveContentIsStale = false
 
     let player: AVQueuePlayer
 
@@ -47,6 +50,13 @@ final class SessionPlaybackViewModel: ObservableObject {
     private var replayComposition: AVComposition?
     private var escalationDeadline: Date?
     private var escalationTickTask: Task<Void, Never>?
+    private var lastLiveChunkCount = 0
+    private var lastLiveContentArrivalAt = Date()
+
+    /// The Mac uploads live chunks every ~3s, so this many seconds of silence means it
+    /// stopped recording — comfortably past normal jitter, and it only ever surfaces
+    /// alongside a failed realtime stream.
+    private static let liveStaleThreshold: TimeInterval = 25
 
     init(session: SurveillanceSession) {
         self.session = session
@@ -216,6 +226,7 @@ final class SessionPlaybackViewModel: ObservableObject {
     private func refreshLive() async {
         do {
             let chunks = try await store.fetchChunks(sessionID: session.id, limit: 800)
+            updateLiveFreshness(chunkCount: chunks.count)
             let nextPlaylist = FallbackPlaylist.live(chunks: chunks, now: Date(), targetLatency: 18)
             let playableChunks = nextPlaylist.items.filter { $0.assetFileURL != nil }
             playlist = nextPlaylist
@@ -463,9 +474,19 @@ final class SessionPlaybackViewModel: ObservableObject {
     /// Live/fallback playback keeps queueing individual chunk files as they arrive —
     /// the set of chunks keeps growing, so there's no fixed timeline to build a
     /// composition from yet. Replay (below) is the one-shot, fixed-timeline case.
+    /// Tracks when the session last gained a chunk. The count only ever grows while the
+    /// Mac is recording, so a count that stops moving is the Mac going quiet.
+    private func updateLiveFreshness(chunkCount: Int) {
+        let now = Date()
+        if chunkCount > lastLiveChunkCount {
+            lastLiveChunkCount = chunkCount
+            lastLiveContentArrivalAt = now
+        }
+        liveContentIsStale = now.timeIntervalSince(lastLiveContentArrivalAt) >= Self.liveStaleThreshold
+    }
+
     private func applyLiveQueue(chunks: [VideoChunk]) {
         let nextIDs = chunks.map(\.id)
-        liveHasContent = !nextIDs.isEmpty
         guard nextIDs != loadedLiveChunkIDs else {
             if !nextIDs.isEmpty {
                 liveQueuePlayer.play()

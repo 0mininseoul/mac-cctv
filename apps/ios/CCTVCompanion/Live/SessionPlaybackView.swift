@@ -43,17 +43,17 @@ struct SessionPlaybackView: View {
                     ReplayLoadingOverlay()
                 }
 
-                // Live, but the realtime stream gave up *and* no delayed footage is
-                // arriving — the Mac is unreachable (asleep / offline), e.g. its lid was
-                // closed. Say so instead of showing an endless black screen.
-                if viewModel.isLive && webRTCReceiver.usesDelayedPlayback && !viewModel.liveHasContent {
+                // Live, but the realtime stream gave up *and* the session has stopped
+                // gaining footage — the Mac is unreachable (asleep / offline), e.g. its
+                // lid was closed. Say so instead of showing an endless black screen.
+                if viewModel.isLive && webRTCReceiver.usesDelayedPlayback && viewModel.liveContentIsStale {
                     MacUnreachableOverlay()
                 }
             }
             .frame(maxWidth: .infinity, minHeight: 260, maxHeight: .infinity)
             .layoutPriority(1)
             .animation(.easeInOut(duration: 0.2), value: viewModel.isPreparingReplay)
-            .animation(.easeInOut(duration: 0.2), value: viewModel.liveHasContent)
+            .animation(.easeInOut(duration: 0.2), value: viewModel.liveContentIsStale)
             .animation(.easeInOut(duration: 0.2), value: webRTCReceiver.usesDelayedPlayback)
 
             if viewModel.isLive {
